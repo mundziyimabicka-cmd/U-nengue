@@ -21,7 +21,9 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
+html { overflow-x: auto; }
 body {
+    overflow-x: auto;
     font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
     background: var(--bg);
     color: var(--text);
@@ -103,6 +105,10 @@ body {
     margin-left: 270px;
     min-height: 100vh;
     padding: 1.5rem 2rem;
+
+    overflow-x: auto;
+    max-width: 100%;
+    -webkit-overflow-scrolling: touch;
 }
 
 .page-header {
@@ -621,4 +627,26 @@ html[data-theme="foret-okoume"] {
     filter: brightness(1.08);
     transform: translateY(-1px);
     box-shadow: 0 6px 18px rgba(217, 70, 239, 0.45);
+}
+
+
+/* horizontal scroll edt */
+.tt-wrap, .table-wrap, .card {
+    max-width: 100%;
+}
+.tt-wrap {
+    overflow-x: auto !important;
+    overflow-y: visible;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+}
+.tt-table {
+    min-width: 900px;
+}
+.main {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+.page-header {
+    max-width: 100%;
 }

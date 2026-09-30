@@ -871,14 +871,23 @@ def before_request_migrate():
             os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], 'publications'), exist_ok=True)
             db.create_all()
             migrate_schema()
-            if not User.query.filter_by(username='admin').first():
+            admin = User.query.filter_by(username='admin').first()
+            force_pwd = os.environ.get('FORCE_ADMIN_PASSWORD', 'admin123')
+            if not admin:
                 db.session.add(User(
                     username='admin',
-                    password_hash=generate_password_hash('admin123'),
+                    password_hash=generate_password_hash(force_pwd),
                     full_name='Directeur(trice)',
                     role='Directeur'
                 ))
                 db.session.commit()
+            else:
+                # Réharmonise le mot de passe admin au démarrage (utile sur Render Free)
+                # Désactiver en prod durable : variable FORCE_ADMIN_PASSWORD= (vide)
+                if os.environ.get('RESET_ADMIN', '1') == '1':
+                    admin.password_hash = generate_password_hash(force_pwd)
+                    admin.role = 'Directeur'
+                    db.session.commit()
             if not SchoolSettings.query.first():
                 db.session.add(SchoolSettings(
                     school_name='École Publique Primaire',
@@ -924,6 +933,8 @@ def login():
         password = request.form.get('password')
         role_choice = request.form.get('role_choice', '')
         user = User.query.filter_by(username=username).first()
+        if not user and username and '@' in username:
+            user = User.query.filter_by(email=username).first()
         if user and check_password_hash(user.password_hash, password):
             if role_choice and user.role != role_choice:
                 flash(f'Ce compte est un compte « {user.role} ». Veuillez choisir le bon profil.', 'danger')
@@ -3172,7 +3183,64 @@ def fiche_pedagogique_pdf(id):
 
 
 
+
 # ==================== EMPLOI DU TEMPS ====================
+
+def _slot_signature(slots):
+    """Signature pour fusionner les cases identiques sur plusieurs jours."""
+    if not slots:
+        return None
+    parts = []
+    for s in sorted(slots, key=lambda x: (x.group_label or '', x.subject or '')):
+        parts.append((
+            (s.subject or '').strip(),
+            (s.group_label or '').strip(),
+            (s.teacher or '').strip(),
+            (s.room or '').strip(),
+            (s.color or '').strip(),
+            (s.notes or '').strip(),
+        ))
+    return tuple(parts)
+
+def _build_timetable_rows(slots, days=None):
+    """Construit les lignes avec cellules fusionnées (colspan) comme un vrai EDT papier."""
+    days = days or SCHEDULE_DAYS
+    bands = sorted(set((s.start_time, s.end_time) for s in slots),
+                   key=lambda x: x[0].replace('h', ':'))
+    grid = {}
+    for s in slots:
+        grid.setdefault((s.day, s.start_time, s.end_time), []).append(s)
+
+    rows = []
+    for start, end in bands:
+        cells = []
+        i = 0
+        while i < len(days):
+            day = days[i]
+            cell_slots = grid.get((day, start, end), [])
+            sig = _slot_signature(cell_slots)
+            span = 1
+            j = i + 1
+            while j < len(days) and sig is not None:
+                other = grid.get((days[j], start, end), [])
+                if _slot_signature(other) != sig:
+                    break
+                span += 1
+                j += 1
+            cells.append({
+                'day': day,
+                'colspan': span,
+                'slots': cell_slots,
+                'merged': span > 1,
+            })
+            i += span
+        rows.append({
+            'start': start,
+            'end': end,
+            'label': f'{start} – {end}',
+            'cells': cells,
+        })
+    return rows
 
 @app.route('/emploi-du-temps')
 @login_required
@@ -3185,8 +3253,7 @@ def emploi_du_temps():
     class_id = request.args.get('class_id', type=int)
     selected = None
     slots = []
-    grid = {}
-    time_rows = []
+    rows = []
     if class_id:
         selected = ClassRoom.query.get(class_id)
     elif rooms:
@@ -3200,21 +3267,48 @@ def emploi_du_temps():
                 return redirect(url_for('emploi_du_temps'))
         slots = ScheduleSlot.query.filter_by(class_id=selected.id).order_by(
             ScheduleSlot.start_time, ScheduleSlot.day).all()
-        bands = sorted(set((s.start_time, s.end_time) for s in slots),
-                       key=lambda x: x[0].replace('h', ':'))
-        time_rows = [f'{a}-{b}' for a, b in bands]
-        for s in slots:
-            key = (s.day, f'{s.start_time}-{s.end_time}')
-            grid.setdefault(key, []).append(s)
+        rows = _build_timetable_rows(slots)
     settings = SchoolSettings.query.first()
+    logos = _public_logo_urls(settings)
     return render_template(
         'emploi_du_temps.html',
-        rooms=rooms, selected=selected, slots=slots, grid=grid,
-        days=SCHEDULE_DAYS, time_rows=time_rows,
+        rooms=rooms, selected=selected, slots=slots, rows=rows,
+        days=SCHEDULE_DAYS,
         subjects=DEFAULT_SCHEDULE_SUBJECTS,
         subject_color=subject_color,
         settings=settings,
+        logos=logos,
     )
+
+def _public_logo_urls(settings):
+    """Liste d'URLs (static) pour les logos configurés + dossier static/logos."""
+    urls = []
+    base = os.path.dirname(__file__)
+    seen = set()
+    if settings:
+        for attr in ('logo_path', 'logo2_path', 'logo3_path', 'logo4_path'):
+            rel = (getattr(settings, attr, None) or '').strip()
+            if not rel:
+                continue
+            # normalise vers chemin sous static/
+            rel2 = rel.replace('\\', '/')
+            if rel2.startswith('static/'):
+                rel2 = rel2[7:]
+            full = os.path.join(base, 'static', rel2)
+            if os.path.isfile(full) and full not in seen:
+                seen.add(full)
+                urls.append(rel2)
+    default_dir = os.path.join(base, 'static', 'logos')
+    if os.path.isdir(default_dir):
+        for name in sorted(os.listdir(default_dir)):
+            if name.startswith('.'):
+                continue
+            if name.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg')):
+                full = os.path.join(default_dir, name)
+                if full not in seen:
+                    seen.add(full)
+                    urls.append('logos/' + name)
+    return urls
 
 @app.route('/emploi-du-temps/ajouter', methods=['POST'])
 @login_required
@@ -3253,7 +3347,7 @@ def ajouter_creneau():
         db.session.add(slot)
         count += 1
     db.session.commit()
-    flash(f'{count} créneau(x) ajouté(s).', 'success')
+    flash(f'{count} créneau(x) ajouté(s)' + (' — affiché(s) fusionné(s) sur la semaine.' if count > 1 else '.'), 'success')
     return redirect(url_for('emploi_du_temps', class_id=class_id))
 
 @app.route('/emploi-du-temps/<int:id>/modifier', methods=['POST'])
@@ -3306,40 +3400,84 @@ def vider_emploi(class_id):
     flash('Emploi du temps vidé.', 'success')
     return redirect(url_for('emploi_du_temps', class_id=class_id))
 
-def _schedule_logo_paths(settings):
-    """Retourne les chemins absolus des logos existants."""
-    paths = []
+@app.route('/parametres/logos', methods=['POST'])
+@login_required
+def upload_logos():
+    """Téléversement des logos (jusqu'à 4 fichiers)."""
+    if session.get('role') != 'Directeur':
+        flash('Accès réservé au directeur.', 'danger')
+        return redirect(url_for('dashboard'))
+    settings = SchoolSettings.query.first()
     if not settings:
-        return paths
-    base = os.path.dirname(__file__)
-    for attr in ('logo_path', 'logo2_path', 'logo3_path', 'logo4_path'):
-        rel = getattr(settings, attr, None) or ''
-        if not rel:
+        settings = SchoolSettings()
+        db.session.add(settings)
+        db.session.commit()
+    folder = os.path.join(app.config['UPLOAD_FOLDER'], 'logos')
+    os.makedirs(folder, exist_ok=True)
+    attrs = ['logo_path', 'logo2_path', 'logo3_path', 'logo4_path']
+    fields = ['logo1', 'logo2', 'logo3', 'logo4']
+    saved = 0
+    for field, attr in zip(fields, attrs):
+        f = request.files.get(field)
+        if not f or not f.filename:
             continue
-        full = rel if os.path.isabs(rel) else os.path.join(base, rel)
-        if not os.path.isfile(full):
-            full = os.path.join(base, 'static', rel.replace('static/', '').lstrip('/'))
-        if os.path.isfile(full):
-            paths.append(full)
-    # logos par défaut dans static/logos si présents
+        fname = secure_filename(f.filename)
+        if not fname:
+            continue
+        ext = fname.rsplit('.', 1)[-1].lower() if '.' in fname else ''
+        if ext not in ('png', 'jpg', 'jpeg', 'gif', 'webp'):
+            continue
+        dest_name = f'{attr}_{fname}'
+        dest = os.path.join(folder, dest_name)
+        f.save(dest)
+        rel = f'static/uploads/logos/{dest_name}'
+        setattr(settings, attr, rel)
+        # also copy to static/logos for easy serving
+        logos_dir = os.path.join(os.path.dirname(__file__), 'static', 'logos')
+        os.makedirs(logos_dir, exist_ok=True)
+        try:
+            import shutil
+            shutil.copy2(dest, os.path.join(logos_dir, dest_name))
+        except Exception:
+            pass
+        saved += 1
+    db.session.commit()
+    flash(f'{saved} logo(s) enregistré(s).' if saved else 'Aucun fichier valide (png/jpg).', 'success' if saved else 'warning')
+    return redirect(url_for('parametres'))
+
+def _schedule_logo_paths(settings):
+    paths = []
+    base = os.path.dirname(__file__)
+    if settings:
+        for attr in ('logo_path', 'logo2_path', 'logo3_path', 'logo4_path'):
+            rel = (getattr(settings, attr, None) or '').strip()
+            if not rel:
+                continue
+            candidates = [
+                rel if os.path.isabs(rel) else os.path.join(base, rel),
+                os.path.join(base, 'static', rel.replace('static/', '').lstrip('/')),
+            ]
+            for full in candidates:
+                if os.path.isfile(full):
+                    paths.append(full)
+                    break
     default_dir = os.path.join(base, 'static', 'logos')
-    if os.path.isdir(default_dir) and len(paths) < 4:
+    if os.path.isdir(default_dir):
         for name in sorted(os.listdir(default_dir)):
+            if name.startswith('.'):
+                continue
             if name.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.webp')):
                 p = os.path.join(default_dir, name)
                 if p not in paths:
                     paths.append(p)
-                if len(paths) >= 4:
-                    break
-    return paths[:4]
+    return paths[:6]
 
 @app.route('/emploi-du-temps/<int:class_id>/pdf')
 @login_required
 def emploi_pdf(class_id):
     from reportlab.lib.pagesizes import A4, landscape
     from reportlab.lib import colors
-    from reportlab.platypus import (SimpleDocTemplate, Table, TableStyle, Paragraph,
-                                    Spacer, Image, KeepTogether)
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     from reportlab.lib.units import cm, mm
     from reportlab.lib.enums import TA_CENTER
@@ -3352,77 +3490,101 @@ def emploi_pdf(class_id):
             return redirect(url_for('emploi_du_temps'))
     settings = SchoolSettings.query.first()
     slots = ScheduleSlot.query.filter_by(class_id=class_id).all()
-    bands = sorted(set((s.start_time, s.end_time) for s in slots),
-                   key=lambda x: x[0].replace('h', ':'))
-    grid = {}
-    for s in slots:
-        grid.setdefault((s.day, s.start_time, s.end_time), []).append(s)
+    rows_data = _build_timetable_rows(slots)
 
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=landscape(A4),
-                            leftMargin=1*cm, rightMargin=1*cm,
-                            topMargin=0.8*cm, bottomMargin=0.8*cm)
+                            leftMargin=0.8*cm, rightMargin=0.8*cm,
+                            topMargin=0.6*cm, bottomMargin=0.6*cm)
     styles = getSampleStyleSheet()
-    title_style = ParagraphStyle('t', parent=styles['Normal'], fontSize=14,
+    title_style = ParagraphStyle('t', parent=styles['Normal'], fontSize=13,
                                  alignment=TA_CENTER, fontName='Helvetica-Bold',
                                  textColor=colors.HexColor('#a21caf'), spaceAfter=2)
-    sub_style = ParagraphStyle('s', parent=styles['Normal'], fontSize=9,
-                               alignment=TA_CENTER, spaceAfter=6)
+    sub_style = ParagraphStyle('s', parent=styles['Normal'], fontSize=8,
+                               alignment=TA_CENTER, spaceAfter=5)
     cell_style = ParagraphStyle('c', parent=styles['Normal'], fontSize=6.5,
                                 alignment=TA_CENTER, leading=8)
+    small = ParagraphStyle('sm', parent=styles['Normal'], fontSize=6, alignment=TA_CENTER)
 
     elements = []
-    # Logos en en-tête
     logo_paths = _schedule_logo_paths(settings)
     if logo_paths:
         imgs = []
         for lp in logo_paths:
             try:
-                im = Image(lp, width=2.2*cm, height=2.2*cm, kind='proportional')
-                imgs.append(im)
+                imgs.append(Image(lp, width=2.4*cm, height=2.0*cm, kind='proportional'))
             except Exception:
                 pass
         if imgs:
-            while len(imgs) < 4:
-                imgs.append(Paragraph('', cell_style))
-            logo_table = Table([imgs[:4]], colWidths=[6.5*cm]*4)
+            n = len(imgs)
+            logo_table = Table([imgs], colWidths=[26*cm / n] * n)
             logo_table.setStyle(TableStyle([
                 ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
                 ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ]))
             elements.append(logo_table)
-            elements.append(Spacer(1, 3*mm))
+            elements.append(Spacer(1, 2*mm))
+    else:
+        # Bandeau texte type officiel si aucun logo fichier
+        school = (settings.school_name if settings else 'École Primaire')
+        banner = Table([[
+            Paragraph(f'<b>{school}</b><br/><font size="6">République Gabonaise</font>', small),
+            Paragraph('<b>HOMOLOGATION</b><br/><font size="6">Ministère de l\'Éducation</font>', small),
+            Paragraph('<b>AEFE</b><br/><font size="6">Enseignement français</font>', small),
+            Paragraph('<b>DIRECTION</b><br/><font size="6">Circonscription</font>', small),
+        ]], colWidths=[6.5*cm]*4)
+        banner.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#fdf4ff')),
+            ('BOX', (0, 0), (-1, -1), 0.8, colors.HexColor('#c026d3')),
+            ('INNERGRID', (0, 0), (-1, -1), 0.4, colors.HexColor('#e879f9')),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('TOPPADDING', (0, 0), (-1, -1), 6),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+        ]))
+        elements.append(banner)
+        elements.append(Spacer(1, 2*mm))
 
     school = settings.school_name if settings else 'École Primaire'
     annee = settings.annee_scolaire if settings else ''
-    elements.append(Paragraph(f'U nengue — Emploi du temps', title_style))
+    elements.append(Paragraph('U nengue — Emploi du temps', title_style))
     elements.append(Paragraph(
         f'{school} — {room.name} ({room.level}) — {annee} — Enseignant(e) : {room.teacher or "—"}',
         sub_style))
 
+    # Table with colspan support via nested content spanning visual cells
+    # ReportLab Table doesn't support colspan easily in platypus the same way —
+    # build one row of 6 columns; for merged days put text in first and SPAN
     header = ['Horaires'] + SCHEDULE_DAYS
     data = [header]
-    for start, end in bands:
-        row = [Paragraph(f'<b>{start}<br/>{end}</b>', cell_style)]
-        for day in SCHEDULE_DAYS:
-            cell_slots = grid.get((day, start, end), [])
-            if cell_slots:
-                parts = []
-                for s in cell_slots:
-                    bit = f'<b>{s.subject}</b>'
-                    if s.group_label:
-                        bit = f'<b>{s.group_label} :</b> ' + bit
-                    if s.teacher:
-                        bit += f'<br/><font size="5.5">{s.teacher}</font>'
-                    if s.room:
-                        bit += f'<br/><font size="5">{s.room}</font>'
-                    parts.append(bit)
-                row.append(Paragraph('<br/>'.join(parts), cell_style))
-            else:
-                row.append('')
-        data.append(row)
+    span_cmds = []
+    for ri, row in enumerate(rows_data, start=1):
+        line = [Paragraph(f'<b>{row["start"]}<br/>{row["end"]}</b>', cell_style)]
+        # expand to 5 day columns
+        day_cells = [''] * 5
+        col = 0
+        for cell in row['cells']:
+            parts = []
+            for s in cell['slots']:
+                bit = f'<b>{s.subject}</b>'
+                if s.group_label:
+                    bit = f'<b>{s.group_label}:</b> {bit}'
+                if s.teacher:
+                    bit += f'<br/><font size="5.5">{s.teacher}</font>'
+                if s.room:
+                    bit += f'<br/><font size="5">{s.room}</font>'
+                parts.append(bit)
+            txt = Paragraph('<br/>'.join(parts) if parts else '', cell_style)
+            day_cells[col] = txt
+            if cell['colspan'] > 1:
+                # SPAN (start_col, row) to (end_col, row) — +1 because col 0 is horaires
+                c0 = col + 1
+                c1 = col + cell['colspan']
+                span_cmds.append(('SPAN', (c0, ri), (c1, ri)))
+            col += cell['colspan']
+        data.append(line + day_cells)
 
-    col_w = [2.6*cm] + [4.5*cm] * 5
+    col_w = [2.4*cm] + [4.6*cm] * 5
     t = Table(data, colWidths=col_w, repeatRows=1)
     style_cmds = [
         ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
@@ -3435,28 +3597,33 @@ def emploi_pdf(class_id):
         ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#a21caf')),
         ('TOPPADDING', (0, 0), (-1, -1), 4),
         ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
-    ]
-    for ri, (start, end) in enumerate(bands, start=1):
-        for ci, day in enumerate(SCHEDULE_DAYS, start=1):
-            cell_slots = grid.get((day, start, end), [])
-            if len(cell_slots) == 1 and cell_slots[0].color:
+    ] + span_cmds
+
+    for ri, row in enumerate(rows_data, start=1):
+        col = 0
+        for cell in row['cells']:
+            if cell['slots'] and len(cell['slots']) == 1 and cell['slots'][0].color:
                 try:
-                    style_cmds.append(
-                        ('BACKGROUND', (ci, ri), (ci, ri), colors.HexColor(cell_slots[0].color))
-                    )
-                    style_cmds.append(('TEXTCOLOR', (ci, ri), (ci, ri), colors.white))
+                    c0 = col + 1
+                    c1 = col + cell['colspan']
+                    style_cmds.append(('BACKGROUND', (c0, ri), (c1, ri),
+                                       colors.HexColor(cell['slots'][0].color)))
+                    style_cmds.append(('TEXTCOLOR', (c0, ri), (c1, ri), colors.white))
                 except Exception:
                     pass
-            elif len(cell_slots) > 1:
+            elif cell['merged'] and cell['slots']:
                 try:
-                    style_cmds.append(
-                        ('BACKGROUND', (ci, ri), (ci, ri), colors.HexColor('#ede9fe'))
-                    )
+                    c0 = col + 1
+                    c1 = col + cell['colspan']
+                    style_cmds.append(('BACKGROUND', (c0, ri), (c1, ri),
+                                       colors.HexColor('#ddd6fe')))
                 except Exception:
                     pass
+            col += cell['colspan']
+
     t.setStyle(TableStyle(style_cmds))
     elements.append(t)
-    elements.append(Spacer(1, 6*mm))
+    elements.append(Spacer(1, 5*mm))
     elements.append(Paragraph(
         'Document généré par U nengue — Na buranghe ô dji icole di Gabu — MM',
         ParagraphStyle('f', parent=styles['Normal'], fontSize=7, alignment=TA_CENTER,
@@ -3823,13 +3990,18 @@ def init_db():
         os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], 'publications'), exist_ok=True)
         db.create_all()
         migrate_schema()
-        if not User.query.filter_by(username='admin').first():
+        admin = User.query.filter_by(username='admin').first()
+        force_pwd = os.environ.get('FORCE_ADMIN_PASSWORD', 'admin123')
+        if not admin:
             db.session.add(User(
                 username='admin',
-                password_hash=generate_password_hash('admin123'),
+                password_hash=generate_password_hash(force_pwd),
                 full_name='Directeur(trice)',
                 role='Directeur'
             ))
+        elif os.environ.get('RESET_ADMIN', '1') == '1':
+            admin.password_hash = generate_password_hash(force_pwd)
+            admin.role = 'Directeur'
         if not SchoolSettings.query.first():
             db.session.add(SchoolSettings(
                 school_name='École Publique Primaire',

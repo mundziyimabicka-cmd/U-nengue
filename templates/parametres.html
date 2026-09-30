@@ -1,5 +1,24 @@
 {% extends "base.html" %}
-{% block title %}Paramètres — U nengue{% endblock %}
+{% block title %}Paramètres — U nengue
+<div class="card" style="margin-top:1.5rem;max-width:720px">
+    <h3 style="color:#a21caf;margin-bottom:0.75rem">🏫 Téléverser les logos</h3>
+    <p style="font-size:0.85rem;color:#6b7280;margin-bottom:1rem">
+        Logos école, homologation, AEFE, direction… (PNG ou JPG). Affichés en en-tête de l’emploi du temps.
+    </p>
+    <form method="POST" action="{{ url_for('upload_logos') }}" enctype="multipart/form-data">
+        <div class="form-row">
+            <div class="form-group"><label>Logo 1</label><input type="file" name="logo1" class="form-control" accept="image/*"></div>
+            <div class="form-group"><label>Logo 2</label><input type="file" name="logo2" class="form-control" accept="image/*"></div>
+        </div>
+        <div class="form-row">
+            <div class="form-group"><label>Logo 3</label><input type="file" name="logo3" class="form-control" accept="image/*"></div>
+            <div class="form-group"><label>Logo 4</label><input type="file" name="logo4" class="form-control" accept="image/*"></div>
+        </div>
+        <button type="submit" class="btn btn-primary">📷 Enregistrer les logos</button>
+    </form>
+</div>
+{% endblock %}
+
 {% block content %}
 <div class="page-header"><h2>⚙️ Paramètres de l'école</h2></div>
 <div class="card" style="max-width:700px;margin-bottom:1.5rem">
@@ -164,4 +183,23 @@
     </div>
 </form>
 </div>
+
+<div class="card" style="margin-top:1.5rem;max-width:720px">
+    <h3 style="color:#a21caf;margin-bottom:0.75rem">🏫 Téléverser les logos</h3>
+    <p style="font-size:0.85rem;color:#6b7280;margin-bottom:1rem">
+        Logos école, homologation, AEFE, direction… (PNG ou JPG). Affichés en en-tête de l’emploi du temps.
+    </p>
+    <form method="POST" action="{{ url_for('upload_logos') }}" enctype="multipart/form-data">
+        <div class="form-row">
+            <div class="form-group"><label>Logo 1</label><input type="file" name="logo1" class="form-control" accept="image/*"></div>
+            <div class="form-group"><label>Logo 2</label><input type="file" name="logo2" class="form-control" accept="image/*"></div>
+        </div>
+        <div class="form-row">
+            <div class="form-group"><label>Logo 3</label><input type="file" name="logo3" class="form-control" accept="image/*"></div>
+            <div class="form-group"><label>Logo 4</label><input type="file" name="logo4" class="form-control" accept="image/*"></div>
+        </div>
+        <button type="submit" class="btn btn-primary">📷 Enregistrer les logos</button>
+    </form>
+</div>
 {% endblock %}
+
