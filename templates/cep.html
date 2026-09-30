@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Sélection CEP — U nengue{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>🎓 Sélection des élèves de 5ème année pour le CEP</h2>
+    <div class="btn-group">
+        <a href="{{ url_for('cep_candidats') }}" class="btn btn-primary">📋 Liste &amp; relevé des candidats</a>
+        <a href="{{ url_for('cep_candidats_pdf') }}" class="btn btn-fuchsia">📄 PDF candidats CEP</a>
+    </div>
+</div>
+<div class="card">
+    <p style="margin-bottom:1rem;color:#6b7280">Cochez les élèves autorisés à composer le Certificat d'Études Primaires. Ensuite consultez la liste nominative et le relevé de notes des candidats.</p>
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>Photo</th><th>Nom et Prénom</th><th>Matricule</th><th>Né(e) le / à</th><th>Classe</th><th>Statut</th><th>Sélection CEP</th></tr></thead>
+            <tbody>
+            {% for s in students %}
+            <tr style="{% if s.cep_selected %}background:#f5d0fe{% endif %}">
+                <td>{% if s.photo_path %}<img src="{{ url_for('static', filename=s.photo_path) }}" style="width:36px;height:42px;object-fit:cover;border-radius:4px">{% else %}—{% endif %}</td>
+                <td><strong>{{ s.full_name }}</strong></td>
+                <td>{{ s.matricule or '—' }}</td>
+                <td>{{ s.birth_date.strftime('%d/%m/%Y') if s.birth_date else '—' }} — {{ s.birth_place or '' }}</td>
+                <td>{{ s.classroom.name if s.classroom else '—' }}</td>
+                <td><span class="badge badge-info">{{ s.status }}</span></td>
+                <td>
+                    <a href="{{ url_for('cep_toggle', id=s.id) }}" class="btn btn-sm {% if s.cep_selected %}btn-success{% else %}btn-outline{% endif %}">
+                        {% if s.cep_selected %}✓ Sélectionné{% else %}Sélectionner{% endif %}
+                    </a>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="7" style="text-align:center;padding:2rem">Aucun élève de 5ème année</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

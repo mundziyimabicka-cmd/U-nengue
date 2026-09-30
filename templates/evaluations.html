@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Évaluations{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>📝 Évaluations (saisie des notes par compétences)</h2>
+</div>
+<div class="card" style="margin-bottom:1.25rem">
+    <form method="GET" style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:end">
+        <div class="form-group" style="margin:0">
+            <label>Classe</label>
+            <select name="class_id" class="form-control" onchange="this.form.submit()">
+                {% for r in rooms %}
+                <option value="{{ r.id }}" {% if selected and selected.id == r.id %}selected{% endif %}>{{ r.name }} ({{ r.level }})</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group" style="margin:0">
+            <label>Palier</label>
+            <select name="palier" class="form-control" onchange="this.form.submit()">
+                {% for p in PALIERS %}<option value="{{ p }}" {% if palier == p %}selected{% endif %}>{{ p }}</option>{% endfor %}
+            </select>
+        </div>
+    </form>
+</div>
+{% if selected %}
+<div class="card">
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>Élève</th><th>Classe</th><th>Action</th></tr></thead>
+            <tbody>
+            {% for s in students %}
+            <tr>
+                <td><strong>{{ s.full_name }}</strong></td>
+                <td>{{ selected.name }}</td>
+                <td><a href="{{ url_for('saisir_evaluation', student_id=s.id, palier=palier) }}" class="btn btn-primary btn-sm">Saisir / Modifier notes</a></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="3" style="text-align:center;padding:2rem">Aucun élève dans cette classe</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

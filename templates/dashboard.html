@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% block title %}Accueil — U nengue{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2>Bonjour {{ session.get('full_name', session.get('username', '')) }} 👋</h2>
+        <p style="color:var(--text-muted);margin-top:0.25rem">Bienvenue sur U nengue — {{ session.get('role', '') }}</p>
+    </div>
+    <span style="font-weight:600">{{ settings.annee_scolaire if settings else '' }}</span>
+</div>
+
+<div class="stats-grid">
+    <div class="card hero-stat"><div class="card-title">Élèves inscrits</div><div class="card-value">{{ total }}</div></div>
+    <div class="card hero-stat"><div class="card-title">Classes</div><div class="card-value">{{ classes }}</div></div>
+    <div class="card hero-stat"><div class="card-title">Sélectionnés CEP</div><div class="card-value">{{ cep_count }}</div></div>
+</div>
+
+{% set ns_m = max_level if max_level else 1 %}
+
+<div class="dashboard-grid" style="margin-bottom:1.25rem">
+    <div class="card">
+        <div class="card-title">📊 Effectifs par niveau</div>
+        <div class="css-bars">
+            {% for name, count in by_level %}
+            <div class="css-bar-row">
+                <div class="css-bar-label">{{ name }}</div>
+                <div class="css-bar-track">
+                    <div class="css-bar-fill" style="width: {{ (count / ns_m * 100) if ns_m else 0 }}%; background: {% if loop.index==1 %}#c026d3{% elif loop.index==2 %}#7c3aed{% elif loop.index==3 %}#2563eb{% elif loop.index==4 %}#0891b2{% else %}#16a34a{% endif %}">
+                        {% if count %}<span>{{ count }}</span>{% endif %}
+                    </div>
+                </div>
+                <div class="css-bar-val">{{ count }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-title">👥 Répartition filles / garçons</div>
+        {% set g = gender_counts.G if gender_counts else 0 %}
+        {% set f = gender_counts.F if gender_counts else 0 %}
+        {% set tot = g + f if (g + f) > 0 else 1 %}
+        <div class="donut-wrap">
+            <div class="donut" style="background: conic-gradient(#3b82f6 0% {{ (g/tot*100)|round(1) }}%, #ec4899 {{ (g/tot*100)|round(1) }}% 100%);">
+                <div class="donut-hole">
+                    <strong>{{ g + f }}</strong>
+                    <small>élèves</small>
+                </div>
+            </div>
+            <div class="donut-legend">
+                <div><span class="dot" style="background:#3b82f6"></span> Garçons : <strong>{{ g }}</strong> ({{ ((g/tot)*100)|round(0) }}%)</div>
+                <div><span class="dot" style="background:#ec4899"></span> Filles : <strong>{{ f }}</strong> ({{ ((f/tot)*100)|round(0) }}%)</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="dashboard-grid">
+    <div class="card">
+        <div class="card-title">Effectifs (détail)</div>
+        {% for name, count in by_level %}
+        <div style="display:flex;justify-content:space-between;padding:0.4rem 0;border-bottom:1px solid var(--border)">
+            <span>{{ name }}</span>
+            <strong>{{ count }}</strong>
+        </div>
+        {% endfor %}
+    </div>
+    <div class="card">
+        <div class="card-title">Derniers inscrits</div>
+        {% for s in recent %}
+        <div class="student-card" style="margin-bottom:0.5rem">
+            {% if s.photo_path %}
+            <img src="{{ url_for('static', filename=s.photo_path) }}" class="photo-preview" style="width:50px;height:60px">
+            {% else %}
+            <div class="photo-preview" style="width:50px;height:60px;display:flex;align-items:center;justify-content:center">👤</div>
+            {% endif %}
+            <div>
+                <strong>{{ s.full_name }}</strong><br>
+                <small>{{ s.classroom.name if s.classroom else '—' }}</small>
+            </div>
+        </div>
+        {% else %}
+        <p style="color:var(--text-muted)">Aucun élève</p>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="card" style="margin-top:1.25rem">
+    <div class="page-header" style="margin-bottom:0.75rem">
+        <h3 style="margin:0">📰 Actualités de l'école</h3>
+        <a href="{{ url_for('actualites') }}" class="btn btn-outline btn-sm">Tout voir</a>
+    </div>
+    {% if news %}
+    <div class="dashboard-grid">
+        {% for n in news %}
+        <div style="padding:0.85rem;border:2px solid var(--border);border-radius:14px">
+            <div style="font-size:0.75rem;text-transform:uppercase;font-weight:700">{{ n.kind }}</div>
+            <strong>{{ n.title }}</strong>
+            {% if n.body %}<p style="font-size:0.85rem;margin-top:0.35rem">{{ n.body[:140] }}{% if n.body|length > 140 %}…{% endif %}</p>{% endif %}
+            {% if n.filename %}
+            {% if n.kind == 'photo' %}
+            <img src="{{ url_for('static', filename=n.filename) }}" style="max-width:100%;border-radius:10px;margin-top:0.5rem">
+            {% elif n.kind == 'video' %}
+            <video controls style="max-width:100%;border-radius:10px;margin-top:0.5rem"><source src="{{ url_for('static', filename=n.filename) }}"></video>
+            {% else %}
+            <a href="{{ url_for('static', filename=n.filename) }}" class="btn btn-sm btn-primary" style="margin-top:0.5rem" download>Télécharger</a>
+            {% endif %}
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p style="color:var(--text-muted)">Aucune publication pour le moment.</p>
+    {% endif %}
+</div>
+
+<style>
+.hero-stat {
+    background: linear-gradient(135deg, #fdf4ff, #ede9fe) !important;
+    border: 2px solid #e9d5ff !important;
+}
+.hero-stat .card-value { color: #7c3aed; font-size: 2rem; }
+.css-bars { display:flex; flex-direction:column; gap:0.65rem; padding:0.5rem 0; }
+.css-bar-row { display:grid; grid-template-columns: 110px 1fr 32px; gap:0.5rem; align-items:center; }
+.css-bar-label { font-size:0.8rem; font-weight:600; color:#6b21a8; }
+.css-bar-track { height:22px; background:#f3e8ff; border-radius:999px; overflow:hidden; }
+.css-bar-fill { height:100%; min-width:0; border-radius:999px; display:flex; align-items:center; justify-content:flex-end; padding-right:0.4rem; transition:width 0.5s ease; }
+.css-bar-fill span { color:#fff; font-size:0.7rem; font-weight:800; }
+.css-bar-val { text-align:right; font-weight:800; color:#7c3aed; }
+.donut-wrap { display:flex; align-items:center; gap:1.25rem; flex-wrap:wrap; padding:0.5rem 0; }
+.donut {
+    width:160px; height:160px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow: 0 8px 24px rgba(124,58,237,0.15);
+}
+.donut-hole {
+    width:90px; height:90px; border-radius:50%; background:#fff;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+}
+.donut-hole strong { font-size:1.4rem; color:#7c3aed; }
+.donut-hole small { color:#64748b; font-size:0.75rem; }
+.donut-legend { font-size:0.9rem; line-height:1.8; }
+.donut-legend .dot { display:inline-block; width:12px; height:12px; border-radius:50%; margin-right:0.35rem; vertical-align:middle; }
+</style>
+{% endblock %}

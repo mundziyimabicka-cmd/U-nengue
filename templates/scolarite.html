@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Scolarité{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>Scolarité</h2>
+    <a href="{{ url_for('verser_scolarite') }}" class="btn btn-primary">+ Enregistrer un versement</a>
+</div>
+
+<div class="card" style="margin-bottom:1.25rem">
+    <div class="card-title">Suivi des frais de scolarité</div>
+    <div class="table-wrap" style="margin-top:0.75rem">
+        <table>
+            <thead>
+                <tr>
+                    <th>Élève</th>
+                    <th>Scolarité annuelle</th>
+                    <th>Versé</th>
+                    <th>Solde</th>
+                    <th>Statut</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for f in fees %}
+                <tr>
+                    <td>
+                        <strong>{{ f.student.last_name }} {{ f.student.first_name }}</strong>
+                        <small style="color:var(--text-muted)">({{ f.student.classroom.name if f.student.classroom else '?' }})</small>
+                    </td>
+                    <td>{{ "{:,.0f}".format(f.annual_amount) }} {{ settings.currency_symbol }}</td>
+                    <td style="color:var(--success)">{{ "{:,.0f}".format(f.paid_amount) }} {{ settings.currency_symbol }}</td>
+                    <td style="color:{{ 'var(--danger)' if f.balance > 0 else 'var(--success)' }}">
+                        {{ "{:,.0f}".format(f.balance) }} {{ settings.currency_symbol }}
+                    </td>
+                    <td>
+                        {% if f.status == 'Soldé' %}
+                        <span class="badge badge-success">Soldé</span>
+                        {% else %}
+                        <span class="badge badge-warning">En cours</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5" style="text-align:center;color:var(--text-muted)">Aucun frais enregistré</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-title">Historique des versements</div>
+    <div class="table-wrap" style="margin-top:0.75rem">
+        <table>
+            <thead>
+                <tr>
+                    <th>Élève</th>
+                    <th>Date</th>
+                    <th>Mode</th>
+                    <th>Montant</th>
+                    <th>Reçu</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in payments %}
+                <tr>
+                    <td>{{ p.student.last_name }} {{ p.student.first_name }}</td>
+                    <td>{{ p.date.strftime('%d/%m/%Y') }}</td>
+                    <td>{{ p.method }}</td>
+                    <td><strong>{{ "{:,.0f}".format(p.amount) }} {{ settings.currency_symbol }}</strong></td>
+                    <td><span class="badge badge-info">{{ p.receipt_number }}</span></td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5" style="text-align:center;color:var(--text-muted)">Aucun versement</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

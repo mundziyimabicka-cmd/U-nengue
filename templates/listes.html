@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Listes nominatives — U nengue{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>📋 Listes nominatives</h2>
+    {% if session.get('role') == 'Directeur' and all_students %}
+    <a href="{{ url_for('supprimer_tous_eleves') }}" class="btn btn-danger"
+       onclick="return confirm('ATTENTION : Supprimer TOUS les élèves de l\'école ? Cette action est irréversible !')">
+        🗑️ Supprimer tout le fichier nominatif
+    </a>
+    {% endif %}
+</div>
+<div class="card" style="margin-bottom:1.25rem">
+    <h3 style="color:#a21caf;margin-bottom:1rem">Liste de tous les élèves ({{ all_students|length }})</h3>
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>N°</th><th>Nom et Prénom</th><th>Matricule</th><th>Classe</th><th>Né(e) à</th><th>Statut</th>
+            {% if session.get('role') == 'Directeur' %}<th>Action</th>{% endif %}
+            </tr></thead>
+            <tbody>
+            {% for s in all_students %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td><strong>{{ s.full_name }}</strong></td>
+                <td>{{ s.matricule or '—' }}</td>
+                <td>{{ s.classroom.name if s.classroom else '—' }}</td>
+                <td>{{ s.birth_place or '—' }}</td>
+                <td><span class="badge badge-info">{{ s.status }}</span></td>
+                {% if session.get('role') == 'Directeur' %}
+                <td>
+                    <a href="{{ url_for('supprimer_eleve', id=s.id) }}" class="btn btn-danger btn-sm"
+                       onclick="return confirm('Supprimer {{ s.full_name }} ?')">Supprimer</a>
+                </td>
+                {% endif %}
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+<div class="card">
+    <h3 style="color:#a21caf;margin-bottom:1rem">Listes par classe</h3>
+    <div style="display:flex;flex-wrap:wrap;gap:0.5rem">
+    {% for c in classes %}
+    <a href="{{ url_for('liste_classe', id=c.id) }}" class="btn btn-outline">{{ c.name }} ({{ c.students|length }})</a>
+    {% endfor %}
+    </div>
+</div>
+{% endblock %}

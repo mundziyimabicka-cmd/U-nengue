@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Ajouter une charge{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>Ajouter une charge</h2>
+    <a href="{{ url_for('charges') }}" class="btn btn-outline">← Retour</a>
+</div>
+
+<div class="card" style="max-width:450px">
+    <form method="POST">
+        <div class="form-group">
+            <label>Libellé *</label>
+            <input type="text" name="label" class="form-control" required placeholder="ex. Achat de bancs">
+        </div>
+        <div class="form-group">
+            <label>Catégorie</label>
+            <select name="category" class="form-control">
+                <option>Salaires</option>
+                <option>Fournitures</option>
+                <option>Entretien</option>
+                <option>Électricité</option>
+                <option>Eau</option>
+                <option>Internet</option>
+                <option>Autre</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Montant (FCFA) *</label>
+            <input type="number" name="amount" class="form-control" required min="1" step="100">
+        </div>
+        <div class="form-group">
+            <label>Date</label>
+            <input type="date" name="date" class="form-control">
+        </div>
+        <button type="submit" class="btn btn-primary">Enregistrer</button>
+    </form>
+</div>
+{% endblock %}

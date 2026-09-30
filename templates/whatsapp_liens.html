@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Liens WhatsApp — U nengue{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>📱 Liens WhatsApp prêts à envoyer</h2>
+    <a href="{{ url_for('whatsapp') }}" class="btn btn-outline">← Retour</a>
+</div>
+
+<div class="card" style="margin-bottom:1rem">
+    <strong>Message :</strong>
+    <p style="margin-top:0.4rem;padding:0.75rem;background:#f0fdf4;border-radius:10px;border:1px solid #86efac">{{ message }}</p>
+    <p style="margin-top:0.5rem;color:#6b7280;font-size:0.85rem">{{ links|length }} destinataire(s) avec numéro de téléphone. Cliquez sur chaque bouton pour ouvrir WhatsApp.</p>
+</div>
+
+<div class="card">
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr><th>Élève</th><th>Parent</th><th>Téléphone</th><th>Action</th></tr>
+            </thead>
+            <tbody>
+            {% for l in links %}
+            <tr>
+                <td><strong>{{ l.student.full_name }}</strong></td>
+                <td>{{ l.parent }}</td>
+                <td>{{ l.phone }}</td>
+                <td>
+                    <a href="{{ l.url }}" target="_blank" rel="noopener" class="btn btn-success btn-sm">
+                        Ouvrir WhatsApp
+                    </a>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="4" style="text-align:center;padding:1.5rem;color:#6b7280">
+                Aucun numéro de téléphone trouvé pour cette sélection.
+            </td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

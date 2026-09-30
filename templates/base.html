@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="{{ theme|default("fuchsia") }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}U nengue{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h1>U nengue <span class="mm-badge">MM</span></h1>
+            <div class="subtitle">Na buranghe ô dji icole di Gabu</div>
+            <div class="mm-credit" style="opacity:0.85;margin-top:0.25rem">Mundziyi MABICKA</div>
+            <div class="school-name">{{ settings.school_name if settings else 'École Primaire' }}</div>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="{{ url_for('dashboard') }}" class="nav-item {% if request.endpoint == 'dashboard' %}active{% endif %}">🏠 Accueil</a>
+            <a href="{{ url_for('actualites') }}" class="nav-item {% if request.endpoint and 'actualite' in request.endpoint %}active{% endif %}">📰 Actualités</a>
+            <a href="{{ url_for('statistiques') }}" class="nav-item {% if request.endpoint and 'statistique' in request.endpoint %}active{% endif %}">📈 Statistiques</a>
+            <a href="{{ url_for('eleves') }}" class="nav-item {% if 'eleve' in (request.endpoint or '') %}active{% endif %}">👨‍🎓 Élèves <span class="badge">{{ students_count }}</span></a>
+            {% if session.get('role') == 'Directeur' %}
+            <a href="{{ url_for('classes') }}" class="nav-item {% if 'classe' in (request.endpoint or '') %}active{% endif %}">🏫 Classes</a>
+            {% endif %}
+            <a href="{{ url_for('listes') }}" class="nav-item {% if 'liste' in (request.endpoint or '') %}active{% endif %}">📋 Listes nominatives</a>
+            <a href="{{ url_for('appels') }}" class="nav-item {% if request.endpoint and 'appel' in request.endpoint %}active{% endif %}">📋 Appels</a>
+            <a href="{{ url_for('cahier_journal') }}" class="nav-item {% if request.endpoint and 'cahier' in request.endpoint %}active{% endif %}">📓 Cahier journal</a>
+            <a href="{{ url_for('evaluations') }}" class="nav-item {% if 'evaluation' in (request.endpoint or '') or request.endpoint == 'saisir_evaluation' %}active{% endif %}">📝 Évaluations</a>
+            <a href="{{ url_for('bulletins') }}" class="nav-item {% if request.endpoint in ('bulletins', 'bulletin', 'bulletin_pdf') %}active{% endif %}">📄 Bulletins</a>
+            <a href="{{ url_for('releves') }}" class="nav-item {% if request.endpoint == 'releves' %}active{% endif %}">📊 Relevés de notes</a>
+            <a href="{{ url_for('cartes') }}" class="nav-item {% if 'carte' in (request.endpoint or '') %}active{% endif %}">🪪 Cartes scolaires</a>
+            {% if session.get('role') == 'Directeur' %}
+            <a href="{{ url_for('cep') }}" class="nav-item {% if request.endpoint == 'cep' %}active{% endif %}">🎓 Sélection CEP</a>
+            <a href="{{ url_for('cep_candidats') }}" class="nav-item {% if 'cep_candidats' in (request.endpoint or '') %}active{% endif %}">📋 Candidats CEP</a>
+            <a href="{{ url_for('reinscription') }}" class="nav-item {% if 'reinscription' in (request.endpoint or '') %}active{% endif %}">🔄 Réinscription / Passage</a>
+            <a href="{{ url_for('enseignants') }}" class="nav-item {% if 'enseignant' in (request.endpoint or '') %}active{% endif %}">👩‍🏫 Enseignants</a>
+            <a href="{{ url_for('parametres') }}" class="nav-item {% if request.endpoint == 'parametres' %}active{% endif %}">⚙️ Paramètres</a>
+            {% endif %}
+            <a href="{{ url_for('messages') }}" class="nav-item {% if 'message' in (request.endpoint or '') %}active{% endif %}">💬 Messagerie</a>
+            <a href="{{ url_for('whatsapp') }}" class="nav-item {% if 'whatsapp' in (request.endpoint or '') %}active{% endif %}">📱 WhatsApp</a>
+            <a href="{{ url_for('sms_notifications') }}" class="nav-item {% if request.endpoint and 'sms' in request.endpoint %}active{% endif %}">📲 SMS</a>
+            <a href="{{ url_for('rechercher_eleve') }}" class="nav-item {% if request.endpoint == 'rechercher_eleve' %}active{% endif %}">🔍 Rechercher élève</a>
+            <a href="{{ url_for('mon_compte') }}" class="nav-item {% if request.endpoint == 'mon_compte' %}active{% endif %}">👤 Mon compte</a>
+        </nav>
+        
+        <div class="theme-picker" style="padding:0.85rem 1.1rem;border-top:1px solid rgba(255,255,255,0.18);background:rgba(0,0,0,0.15)">
+            <div style="font-size:0.78rem;margin-bottom:0.45rem;font-weight:700;letter-spacing:0.03em">🎨 Changer le thème</div>
+            <div style="display:flex;flex-wrap:wrap;gap:0.45rem">
+                <a href="{{ url_for('set_theme', name='fuchsia') }}" title="Fuchsia" class="theme-dot" style="background:#d946ef"></a>
+                <a href="{{ url_for('set_theme', name='mauve-spatial') }}" title="Mauve spatial" class="theme-dot" style="background:#7c3aed"></a>
+                <a href="{{ url_for('set_theme', name='emeraude-mer') }}" title="Émeraude mer" class="theme-dot" style="background:#0d9488"></a>
+                <a href="{{ url_for('set_theme', name='cristal-miranda') }}" title="Cristal Miranda" class="theme-dot" style="background:#e2e8f0;border:1px solid #94a3b8"></a>
+                <a href="{{ url_for('set_theme', name='orange-vert') }}" title="Orangé vert" class="theme-dot" style="background:#f97316"></a>
+                <a href="{{ url_for('set_theme', name='soleil-or') }}" title="Soleil or" class="theme-dot" style="background:#eab308"></a>
+                <a href="{{ url_for('set_theme', name='nuit-indigo') }}" title="Nuit indigo" class="theme-dot" style="background:#312e81"></a>
+                <a href="{{ url_for('set_theme', name='foret-okoume') }}" title="Forêt okoumé" class="theme-dot" style="background:#166534"></a>
+            </div>
+        </div>
+        <div class="sidebar-footer">
+            <div class="mm-credit">Conception MM — Mundziyi MABICKA</div>
+            <div><strong>{{ session.get('full_name', '') }}</strong></div>
+            <div>{{ session.get('role', '') }}</div>
+            <a href="{{ url_for('logout') }}" style="color:#f9a8d4;font-size:0.8rem;margin-top:0.5rem;display:inline-block">Déconnexion</a>
+        </div>
+    </aside>
+    <main class="main">
+        <div class="theme-bar-top">
+            <span>🎨 Thème :</span>
+            <a href="{{ url_for('set_theme', name='fuchsia') }}" class="theme-dot" style="background:#d946ef" title="Fuchsia"></a>
+            <a href="{{ url_for('set_theme', name='mauve-spatial') }}" class="theme-dot" style="background:#7c3aed" title="Mauve"></a>
+            <a href="{{ url_for('set_theme', name='emeraude-mer') }}" class="theme-dot" style="background:#0d9488" title="Émeraude"></a>
+            <a href="{{ url_for('set_theme', name='cristal-miranda') }}" class="theme-dot" style="background:#e2e8f0;border:1px solid #94a3b8" title="Cristal"></a>
+            <a href="{{ url_for('set_theme', name='orange-vert') }}" class="theme-dot" style="background:#f97316" title="Orange"></a>
+            <a href="{{ url_for('set_theme', name='soleil-or') }}" class="theme-dot" style="background:#eab308" title="Soleil"></a>
+            <a href="{{ url_for('set_theme', name='nuit-indigo') }}" class="theme-dot" style="background:#312e81" title="Indigo"></a>
+            <a href="{{ url_for('set_theme', name='foret-okoume') }}" class="theme-dot" style="background:#166534" title="Forêt"></a>
+        </div>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>

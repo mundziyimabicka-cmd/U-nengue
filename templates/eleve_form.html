@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Modifier' if student else 'Inscrire' }} un élève{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>{{ 'Modifier' if student else 'Inscrire' }} un élève</h2>
+    <a href="{{ url_for('eleves') }}" class="btn btn-outline">← Retour</a>
+</div>
+<div class="card" style="max-width:800px">
+<form method="POST" enctype="multipart/form-data">
+    <div class="form-row">
+        <div class="form-group">
+            <label>Nom *</label>
+            <input type="text" name="last_name" class="form-control" required value="{{ student.last_name if student else '' }}">
+        </div>
+        <div class="form-group">
+            <label>Prénom *</label>
+            <input type="text" name="first_name" class="form-control" required value="{{ student.first_name if student else '' }}">
+        </div>
+    </div>
+    <div class="form-row">
+        <div class="form-group">
+            <label>Matricule</label>
+            <input type="text" name="matricule" class="form-control" value="{{ student.matricule if student else '' }}" placeholder="Auto si vide">
+        </div>
+        <div class="form-group">
+            <label>Sexe</label>
+            <select name="gender" class="form-control">
+                <option value="">—</option>
+                <option value="M" {% if student and student.gender == 'M' %}selected{% endif %}>Masculin</option>
+                <option value="F" {% if student and student.gender == 'F' %}selected{% endif %}>Féminin</option>
+            </select>
+        </div>
+    </div>
+    <div class="form-row">
+        <div class="form-group">
+            <label>Date de naissance</label>
+            <input type="date" name="birth_date" class="form-control" value="{{ student.birth_date.isoformat() if student and student.birth_date else '' }}">
+        </div>
+        <div class="form-group">
+            <label>Lieu de naissance *</label>
+            <input type="text" name="birth_place" class="form-control" required value="{{ student.birth_place if student else '' }}" placeholder="ex. Libreville">
+        </div>
+    </div>
+    <div class="form-row">
+        <div class="form-group">
+            <label>Classe</label>
+            <select name="class_id" class="form-control">
+                <option value="">—</option>
+                {% for c in classes %}
+                <option value="{{ c.id }}" {% if student and student.class_id == c.id %}selected{% endif %}>{{ c.name }} ({{ c.level }})</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Statut</label>
+            <select name="status" class="form-control">
+                <option value="Nouveau" {% if student and student.status == 'Nouveau' %}selected{% endif %}>Nouveau</option>
+                <option value="Redoublant" {% if student and student.status == 'Redoublant' %}selected{% endif %}>Redoublant</option>
+            </select>
+        </div>
+    </div>
+    <hr style="margin:1.25rem 0;border:none;border-top:2px solid #fde68a">
+    <h3 style="color:#7c3aed;margin-bottom:1rem">👨‍👩‍👧 Parent / Tuteur</h3>
+    <div class="form-row">
+        <div class="form-group">
+            <label>Nom du parent</label>
+            <input type="text" name="parent_name" class="form-control" value="{{ student.parent_name if student else '' }}">
+        </div>
+        <div class="form-group">
+            <label>Téléphone</label>
+            <input type="text" name="parent_phone" class="form-control" value="{{ student.parent_phone if student else '' }}">
+        </div>
+    </div>
+    <div class="form-row">
+        <div class="form-group">
+            <label>Lien</label>
+            <select name="parent_relation" class="form-control">
+                {% for r in ['Père','Mère','Tuteur','Tutrice'] %}
+                <option value="{{ r }}" {% if student and student.parent_relation == r %}selected{% endif %}>{{ r }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Adresse</label>
+            <input type="text" name="address" class="form-control" value="{{ student.address if student else '' }}">
+        </div>
+    </div>
+    <hr style="margin:1.25rem 0;border:none;border-top:2px solid #fde68a">
+    <h3 style="color:#7c3aed;margin-bottom:1rem">📷 Photo d'identité</h3>
+    <div class="form-row">
+        <div class="form-group">
+            <label>Téléverser une photo</label>
+            <input type="file" name="photo" class="form-control" accept="image/*">
+            {% if student and student.photo_path %}
+            <img src="{{ url_for('static', filename=student.photo_path) }}" class="photo-preview" style="margin-top:0.5rem">
+            {% endif %}
+        </div>
+        <div class="form-group">
+            <label>Ou prendre avec la webcam</label>
+            <div id="webcam-container">
+                <video id="webcam-video" autoplay playsinline style="display:none"></video>
+                <canvas id="webcam-canvas"></canvas>
+                <div id="webcam-preview"></div>
+            </div>
+            <div class="btn-group" style="margin-top:0.5rem">
+                <button type="button" class="btn btn-info btn-sm" onclick="startWebcam()">Activer webcam</button>
+                <button type="button" class="btn btn-success btn-sm" onclick="capturePhoto()">Prendre photo</button>
+            </div>
+            <input type="hidden" name="webcam_data" id="webcam_data">
+        </div>
+    </div>
+    {% if not student %}
+    <hr style="margin:1.25rem 0;border:none;border-top:2px solid #fde68a">
+    <h3 style="color:#7c3aed;margin-bottom:1rem">📎 Documents</h3>
+    <div class="form-row">
+        <div class="form-group">
+            <label>Acte de naissance</label>
+            <input type="file" name="doc_acte_naissance" class="form-control" accept=".pdf,image/*">
+        </div>
+        <div class="form-group">
+            <label>Certificat médical / Autre</label>
+            <input type="file" name="doc_autre" class="form-control" accept=".pdf,image/*">
+        </div>
+    </div>
+    {% endif %}
+    <button type="submit" class="btn btn-primary" style="margin-top:1rem;padding:0.7rem 2rem">Enregistrer</button>
+
+        <div class="form-group">
+            <label>Nationalité</label>
+            <input type="text" name="nationality" class="form-control" value="{{ student.nationality if student and student.nationality else 'Gabonaise' }}">
+        </div>
+        <div class="form-group">
+            <label>Provenance</label>
+            <select name="provenance" class="form-control">
+                {% set prov = student.provenance if student else 'meme_ecole' %}
+                <option value="meme_ecole" {% if prov=='meme_ecole' %}selected{% endif %}>Même école</option>
+                <option value="meme_circonscription" {% if prov=='meme_circonscription' %}selected{% endif %}>Différentes écoles — même circonscription</option>
+                <option value="autres_circonscriptions" {% if prov=='autres_circonscriptions' %}selected{% endif %}>Autres circonscriptions</option>
+                <option value="autres" {% if prov=='autres' %}selected{% endif %}>Autres</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label><input type="checkbox" name="is_handicapped" value="1" {% if student and student.is_handicapped %}checked{% endif %}> Élève handicapé</label>
+        </div>
+        <div class="form-group">
+            <label><input type="checkbox" name="is_primal" value="1" {% if student and student.is_primal %}checked{% endif %}> Primaux arrivés</label>
+        </div>
+</form>
+</div>
+<script>
+let stream = null;
+async function startWebcam() {
+    try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        const v = document.getElementById('webcam-video');
+        v.srcObject = stream;
+        v.style.display = 'block';
+    } catch(e) { alert('Impossible d\'accéder à la webcam : ' + e.message); }
+}
+function capturePhoto() {
+    const v = document.getElementById('webcam-video');
+    const c = document.getElementById('webcam-canvas');
+    c.width = v.videoWidth; c.height = v.videoHeight;
+    c.getContext('2d').drawImage(v, 0, 0);
+    const data = c.toDataURL('image/jpeg', 0.85);
+    document.getElementById('webcam_data').value = data;
+    document.getElementById('webcam-preview').innerHTML = '<img src="'+data+'" class="photo-preview" style="margin-top:0.5rem">';
+    if (stream) { stream.getTracks().forEach(t => t.stop()); v.style.display = 'none'; }
+}
+</script>
+{% endblock %}

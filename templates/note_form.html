@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Saisir une note{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>Saisir une note</h2>
+    <a href="{{ url_for('notes') }}" class="btn btn-outline">← Retour</a>
+</div>
+
+<div class="card" style="max-width:500px">
+    <form method="POST">
+        <div class="form-group">
+            <label>Élève *</label>
+            <select name="student_id" class="form-control" required>
+                <option value="">Choisir...</option>
+                {% for s in students %}
+                <option value="{{ s.id }}">{{ s.last_name }} {{ s.first_name }} ({{ s.classroom.name if s.classroom else '?' }})</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Matière *</label>
+            <select name="subject_id" class="form-control" required>
+                <option value="">Choisir...</option>
+                {% for s in subjects %}
+                <option value="{{ s.id }}">{{ s.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Trimestre</label>
+                <select name="trimester" class="form-control">
+                    <option>Trimestre 1</option>
+                    <option>Trimestre 2</option>
+                    <option>Trimestre 3</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Type d'évaluation</label>
+                <select name="evaluation_type_id" class="form-control">
+                    <option value="">—</option>
+                    {% for e in eval_types %}
+                    <option value="{{ e.id }}">{{ e.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Intitulé de l'évaluation</label>
+            <input type="text" name="title" class="form-control" placeholder="ex. Contrôle chapitre 3">
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Note obtenue *</label>
+                <input type="number" name="score" class="form-control" step="0.25" min="0" required>
+            </div>
+            <div class="form-group">
+                <label>Note maximale</label>
+                <input type="number" name="max_score" class="form-control" value="20" step="1">
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Coefficient</label>
+            <input type="number" name="coefficient" class="form-control" value="1" step="0.5" min="0.5">
+        </div>
+        <button type="submit" class="btn btn-primary">Enregistrer</button>
+    </form>
+</div>
+{% endblock %}

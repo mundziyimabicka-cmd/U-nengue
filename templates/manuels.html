@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Manuels en usage — U nengue{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>📚 Manuels en usage</h2>
+    <a href="{{ url_for('statistiques') }}" class="btn btn-outline">← Statistiques</a>
+</div>
+<div class="card" style="margin-bottom:1.25rem;max-width:640px">
+    <h3 style="color:var(--fuchsia-dark);margin-bottom:0.75rem">Ajouter un manuel</h3>
+    <form method="POST">
+        <div class="form-row">
+            <div class="form-group">
+                <label>Discipline</label>
+                <select name="discipline" class="form-control">
+                    <option>Français</option>
+                    <option>Maths</option>
+                    <option>Éveil</option>
+                    <option>Histoire-Géographie</option>
+                    <option>Sciences</option>
+                    <option>Autre</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Éditeur</label>
+                <input type="text" name="editor" class="form-control" value="IPN">
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Titre</label>
+            <input type="text" name="title" class="form-control" required placeholder="ex. Super Efficace en français 5e année">
+        </div>
+        <button class="btn btn-primary">Enregistrer</button>
+    </form>
+</div>
+<div class="card">
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>Discipline</th><th>Titre</th><th>Éditeur</th><th></th></tr></thead>
+            <tbody>
+            {% for b in books %}
+            <tr>
+                <td><strong>{{ b.discipline }}</strong></td>
+                <td>{{ b.title }}</td>
+                <td>{{ b.editor }}</td>
+                <td><a href="{{ url_for('manuels_supprimer', id=b.id) }}" class="btn btn-danger btn-sm">Supprimer</a></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="4" style="text-align:center;color:#64748b;padding:1.5rem">Aucun manuel</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

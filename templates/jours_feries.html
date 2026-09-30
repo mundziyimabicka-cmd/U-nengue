@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Jours fériés — U nengue{% endblock %}
+{% block content %}
+<div class="page-header"><h2>📅 Jours fériés</h2></div>
+<div class="card" style="margin-bottom:1rem;max-width:500px">
+    <h3 style="color:#a21caf;margin-bottom:0.75rem">Ajouter un jour férié / non ouvré</h3>
+    <form method="POST">
+        <div class="form-group"><label>Date</label><input type="date" name="date" class="form-control" required></div>
+        <div class="form-group"><label>Libellé</label><input type="text" name="label" class="form-control" value="Jour férié"></div>
+        <button class="btn btn-primary">Ajouter</button>
+    </form>
+</div>
+<div class="card" style="margin-bottom:1rem">
+    <h3 style="color:#a21caf">Fériés fixes (Gabon) — déjà pris en compte</h3>
+    <div style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-top:0.5rem">
+    {% for key, lab in fixed.items() %}
+    <span class="tag">{{ key[1] }}/{{ key[0] }} — {{ lab }}</span>
+    {% endfor %}
+    </div>
+</div>
+<div class="card">
+    <h3 style="color:#a21caf;margin-bottom:0.75rem">Fériés personnalisés</h3>
+    <table>
+        <thead><tr><th>Date</th><th>Libellé</th><th></th></tr></thead>
+        <tbody>
+        {% for h in holidays %}
+        <tr>
+            <td>{{ h.date.strftime('%d/%m/%Y') }}</td>
+            <td>{{ h.label }}</td>
+            <td><a href="{{ url_for('supprimer_ferie', id=h.id) }}" class="btn btn-danger btn-sm">Supprimer</a></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="3" style="color:#6b7280">Aucun férié personnalisé</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

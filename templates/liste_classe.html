@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Liste — {{ room.name }}{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>Liste nominative — {{ room.name }}</h2>
+    <div class="btn-group">
+        <a href="{{ url_for('cartes_classe', id=room.id) }}" class="btn btn-purple">Cartes scolaires</a>
+        <a href="{{ url_for('classe_pdf', class_id=room.id) }}" class="btn btn-primary">📄 PDF liste</a>
+        <a href="{{ url_for('appels_pdf', class_id=room.id) }}" class="btn btn-info">📄 PDF appels</a>
+        <a href="{{ url_for('cahier_pdf', class_id=room.id) }}" class="btn btn-fuchsia">📄 PDF journal</a>
+        <a href="{{ url_for('listes') }}" class="btn btn-outline">← Retour</a>
+    </div>
+</div>
+<div class="card">
+    <p style="margin-bottom:1rem"><strong>Niveau :</strong> {{ room.level }} · <strong>Enseignant :</strong> {{ room.teacher or '—' }} · <strong>Effectif :</strong> {{ students|length }}</p>
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>N°</th><th>Photo</th><th>Nom et Prénom</th><th>Matricule</th><th>Date / Lieu de naissance</th><th>Sexe</th><th>Statut</th></tr></thead>
+            <tbody>
+            {% for s in students %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>{% if s.photo_path %}<img src="{{ url_for('static', filename=s.photo_path) }}" style="width:36px;height:42px;object-fit:cover;border-radius:4px">{% else %}—{% endif %}</td>
+                <td><strong>{{ s.full_name }}</strong></td>
+                <td>{{ s.matricule or '—' }}</td>
+                <td>{{ s.birth_date.strftime('%d/%m/%Y') if s.birth_date else '—' }} — {{ s.birth_place or '' }}</td>
+                <td>{{ s.gender or '—' }}</td>
+                <td><span class="badge badge-info">{{ s.status }}</span></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="7" style="text-align:center;padding:2rem">Aucun élève</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

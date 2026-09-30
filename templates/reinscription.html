@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Réinscription / Passage de classe{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>🔄 Fin d'année — Réinscription & Passage de classe</h2>
+    <span style="color:#7c3aed;font-weight:600">Année : {{ settings.annee_scolaire if settings else '' }}</span>
+</div>
+
+<div class="card" style="margin-bottom:1.25rem;background:linear-gradient(135deg,#fce7f3,#fef3c7)">
+    <p><strong>Règles appliquées :</strong></p>
+    <ul style="margin:0.5rem 0 0 1.25rem;font-size:0.9rem">
+        <li>Passage en classe supérieure si maîtrise minimale sur au moins 2 des paliers 3, 4 et 5</li>
+        <li>5ème année + sélection CEP + résultats OK → <strong>Admis CEP</strong> (félicitations + bon courage pour le collège)</li>
+        <li>Sinon → redoublement</li>
+    </ul>
+</div>
+
+<form method="POST" action="{{ url_for('appliquer_reinscription') }}">
+<div class="card">
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th><input type="checkbox" onclick="document.querySelectorAll('.sid').forEach(c=>c.checked=this.checked)"></th>
+                    <th>Élève</th>
+                    <th>Classe actuelle</th>
+                    <th>Décision proposée</th>
+                    <th>Message</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for r in results %}
+            <tr style="{% if r.decision == 'promu' or r.decision == 'cep_admis' %}background:#dcfce7{% elif r.decision == 'redouble' %}background:#fef3c7{% endif %}">
+                <td><input type="checkbox" class="sid" name="student_id" value="{{ r.student.id }}" checked></td>
+                <td><strong>{{ r.student.full_name }}</strong></td>
+                <td>{{ r.level or '—' }}</td>
+                <td>
+                    {% if r.decision == 'promu' %}
+                    <span class="badge badge-success">→ {{ r.next }}</span>
+                    {% elif r.decision == 'cep_admis' %}
+                    <span class="badge badge-maxi">🎓 Admis CEP</span>
+                    {% elif r.decision == 'redouble' %}
+                    <span class="badge badge-warning">Redouble</span>
+                    {% else %}
+                    <span class="badge badge-secondary">{{ r.decision }}</span>
+                    {% endif %}
+                </td>
+                <td style="font-size:0.85rem">{{ r.message }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5" style="text-align:center;padding:2rem">Aucun élève</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <button type="submit" class="btn btn-primary" style="margin-top:1rem;padding:0.7rem 1.5rem"
+            onclick="return confirm('Appliquer les passages de classe et passer à la nouvelle année scolaire ?')">
+        ✅ Appliquer les décisions sélectionnées
+    </button>
+</div>
+</form>
+{% endblock %}

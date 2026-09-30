@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Paramètres — U nengue{% endblock %}
+{% block content %}
+<div class="page-header"><h2>⚙️ Paramètres de l'école</h2></div>
+<div class="card" style="max-width:700px;margin-bottom:1.5rem">
+<form method="POST">
+    <h3 style="color:#a21caf;margin-bottom:1rem">École</h3>
+    <div class="form-group">
+        <label>Nom de l'école</label>
+        <input type="text" name="school_name" class="form-control" value="{{ settings.school_name }}">
+    </div>
+    <div class="form-row">
+        <div class="form-group">
+            <label>Province (Direction d'Académie)</label>
+            <input type="text" name="province" class="form-control" value="{{ settings.province }}">
+        </div>
+        <div class="form-group">
+            <label>Circonscription / Secteur</label>
+            <input type="text" name="circonscription" class="form-control" value="{{ settings.circonscription }}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label>Adresse</label>
+        <input type="text" name="address" class="form-control" value="{{ settings.address }}">
+    </div>
+    <div class="form-row">
+        <div class="form-group">
+            <label>Téléphone</label>
+            <input type="text" name="phone" class="form-control" value="{{ settings.phone }}">
+        </div>
+        <div class="form-group">
+            <label>E-mail</label>
+            <input type="email" name="email" class="form-control" value="{{ settings.email }}">
+        </div>
+    </div>
+    <div class="form-row">
+        <div class="form-group">
+            <label>Nom du (de la) directeur(trice)</label>
+            <input type="text" name="director_name" class="form-control" value="{{ settings.director_name }}">
+        </div>
+        <div class="form-group">
+            <label>Année scolaire</label>
+            <input type="text" name="annee_scolaire" class="form-control" value="{{ settings.annee_scolaire }}">
+        </div>
+    </div>
+
+    <hr style="margin:1.5rem 0;border:none;border-top:2px solid #f0abfc">
+    <h3 style="color:#a21caf;margin-bottom:1rem">📲 Configuration SMS (notifications)</h3>
+    <div class="form-group">
+        <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer">
+            <input type="checkbox" name="sms_enabled" {% if settings.sms_enabled %}checked{% endif %}>
+            Activer l'envoi automatique de SMS (API)
+        </label>
+    </div>
+    <div class="form-group">
+        <label>Fournisseur</label>
+        <select name="sms_provider" class="form-control">
+            <option value="twilio" {% if settings.sms_provider == 'twilio' %}selected{% endif %}>Twilio</option>
+            <option value="manuel" {% if settings.sms_provider == 'manuel' %}selected{% endif %}>Manuel uniquement (liens SMS)</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label>Account SID (Twilio)</label>
+        <input type="text" name="sms_account_sid" class="form-control" value="{{ settings.sms_account_sid or '' }}" placeholder="ACxxxxxxxx">
+    </div>
+    <div class="form-group">
+        <label>Auth Token (Twilio)</label>
+        <input type="password" name="sms_auth_token" class="form-control" value="{{ settings.sms_auth_token or '' }}" placeholder="Token secret">
+    </div>
+    <div class="form-group">
+        <label>Numéro d'expéditeur (From)</label>
+        <input type="text" name="sms_from_number" class="form-control" value="{{ settings.sms_from_number or '' }}" placeholder="+1415... ou numéro Twilio">
+    </div>
+    <p style="font-size:0.8rem;color:#6b7280;margin-bottom:1rem">
+        Créez un compte sur <a href="https://www.twilio.com" target="_blank" rel="noopener">twilio.com</a>,
+        obtenez un numéro et collez SID + Token ici. Sans configuration, le mode manuel reste disponible.
+    </p>
+
+    <button type="submit" class="btn btn-primary">Enregistrer</button>
+</form>
+</div>
+{% endblock %}

@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}WhatsApp — U nengue{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>📱 Envoyer un message WhatsApp</h2>
+</div>
+
+<div class="card" style="margin-bottom:1rem;background:linear-gradient(135deg,#dcfce7,#f0fdf4);border-color:#86efac">
+    <p style="margin:0;font-size:0.9rem">
+        Les messages s’ouvrent dans <strong>WhatsApp</strong> (application ou WhatsApp Web) vers le numéro du parent enregistré pour chaque élève.
+        Rédigez le texte, choisissez la cible, puis cliquez sur chaque lien pour envoyer.
+    </p>
+</div>
+
+<div class="dashboard-grid">
+    <div class="card">
+        <h3 style="color:#16a34a;margin-bottom:1rem">👤 Message individuel</h3>
+        <form method="POST" action="{{ url_for('whatsapp_preparer') }}">
+            <input type="hidden" name="mode" value="individual">
+            <div class="form-group">
+                <label>Élève</label>
+                <select name="student_id" class="form-control" required>
+                    <option value="">Choisir...</option>
+                    {% for s in students %}
+                    <option value="{{ s.id }}">{{ s.full_name }} — {{ s.parent_phone or 'pas de téléphone' }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Message</label>
+                <textarea name="message" class="form-control" rows="3" required placeholder="Bonjour, concernant votre enfant..."></textarea>
+            </div>
+            <button type="submit" class="btn btn-success">Préparer WhatsApp</button>
+        </form>
+    </div>
+
+    <div class="card">
+        <h3 style="color:#16a34a;margin-bottom:1rem">🏫 Message à une classe</h3>
+        <form method="POST" action="{{ url_for('whatsapp_preparer') }}">
+            <input type="hidden" name="mode" value="class">
+            <div class="form-group">
+                <label>Classe</label>
+                <select name="class_id" class="form-control" required>
+                    <option value="">Choisir...</option>
+                    {% for c in classes %}
+                    <option value="{{ c.id }}">{{ c.name }} ({{ c.students|length }} élèves)</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Message</label>
+                <textarea name="message" class="form-control" rows="3" required placeholder="Message aux parents de la classe..."></textarea>
+            </div>
+            <button type="submit" class="btn btn-success">Préparer WhatsApp</button>
+        </form>
+    </div>
+
+    {% if session.get('role') == 'Directeur' %}
+    <div class="card">
+        <h3 style="color:#16a34a;margin-bottom:1rem">🌍 Toute l'école</h3>
+        <form method="POST" action="{{ url_for('whatsapp_preparer') }}">
+            <input type="hidden" name="mode" value="school">
+            <div class="form-group">
+                <label>Message à tous les parents</label>
+                <textarea name="message" class="form-control" rows="3" required placeholder="Annonce à tous les parents..."></textarea>
+            </div>
+            <button type="submit" class="btn btn-success">Préparer WhatsApp</button>
+        </form>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

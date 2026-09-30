@@ -1,0 +1,309 @@
+{% extends "base.html" %}
+{% block title %}Statistiques officielles — U nengue{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2>📈 Statistiques officielles</h2>
+        <p style="color:var(--text-muted);margin:0">Année {{ stats.year_label }} — remplissage automatique</p>
+    </div>
+    <div class="btn-group">
+        <a href="{{ url_for('statistiques_pdf', class_id=class_id) }}" class="btn btn-primary">📄 PDF complet</a>
+        {% if session.get('role') == 'Directeur' %}
+        <a href="{{ url_for('manuels') }}" class="btn btn-outline">📚 Manuels</a>
+        {% endif %}
+    </div>
+</div>
+
+{% if session.get('role') == 'Directeur' and rooms %}
+<form method="GET" class="card" style="margin-bottom:1rem;display:flex;gap:0.75rem;align-items:end;flex-wrap:wrap">
+    <div class="form-group" style="margin:0">
+        <label>Périmètre</label>
+        <select name="class_id" class="form-control" onchange="this.form.submit()">
+            <option value="">🏫 Toute l'école</option>
+            {% for r in rooms %}
+            <option value="{{ r.id }}" {% if class_id == r.id %}selected{% endif %}>{{ r.name }} ({{ r.level }})</option>
+            {% endfor %}
+        </select>
+    </div>
+</form>
+{% endif %}
+
+{# ===== RÉPARTITION ===== #}
+<div class="card stats-official" style="margin-bottom:1.25rem">
+    <div class="official-title">TABLEAU DE RÉPARTITION DES ÉLÈVES</div>
+    <div class="table-wrap">
+        <table class="table-stat">
+            <thead>
+                <tr>
+                    <th rowspan="2"></th>
+                    <th colspan="3" class="th-debut">En début d'année</th>
+                    <th colspan="3" class="th-fin">En fin d'année</th>
+                </tr>
+                <tr>
+                    <th class="c-g">Garçons</th><th class="c-f">Filles</th><th class="c-t">Total</th>
+                    <th class="c-g">Garçons</th><th class="c-f">Filles</th><th class="c-t">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% set rp = stats.repartition %}
+            {% for key, label in [('inscrits','Inscrits'),('nouveaux','Nouveaux'),('redoublants','Redoublants'),('primaux','Primaux arrivés'),('handicapes','Handicapés')] %}
+            <tr class="{% if key == 'primaux' %}row-highlight{% endif %}">
+                <td><strong>{{ label }}</strong></td>
+                <td class="c-g">{{ rp[key].G }}</td>
+                <td class="c-f">{{ rp[key].F }}</td>
+                <td class="c-t"><span class="pill">{{ rp[key].T }}</span></td>
+                <td class="muted">—</td><td class="muted">—</td><td class="muted">—</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{# ===== NATIONALITÉ ===== #}
+<div class="card stats-official" style="margin-bottom:1.25rem">
+    <div class="official-title">TABLEAU DE NATIONALITÉ</div>
+    <div class="table-wrap">
+        <table class="table-stat">
+            <thead>
+                <tr>
+                    <th colspan="3" class="th-gab">Élèves gabonais</th>
+                    <th colspan="3" class="th-nongab">Élèves non-gabonais</th>
+                </tr>
+                <tr>
+                    <th class="c-g">Garçons</th><th class="c-f">Filles</th><th class="c-t">Total</th>
+                    <th class="c-g">Garçons</th><th class="c-f">Filles</th><th class="c-t">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td class="c-g">{{ stats.nationalite.gabonais.G }}</td>
+                <td class="c-f">{{ stats.nationalite.gabonais.F }}</td>
+                <td class="c-t"><span class="pill pill-green">{{ stats.nationalite.gabonais.T }}</span></td>
+                <td class="c-g">{{ stats.nationalite.non_gabonais.G }}</td>
+                <td class="c-f">{{ stats.nationalite.non_gabonais.F }}</td>
+                <td class="c-t"><span class="pill pill-orange">{{ stats.nationalite.non_gabonais.T }}</span></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{# ===== EFFECTIFS MENSUELS ===== #}
+<div class="card stats-official" style="margin-bottom:1.25rem">
+    <div class="official-title">EFFECTIFS MENSUELS</div>
+    <div class="table-wrap">
+        <table class="table-stat">
+            <thead>
+                <tr><th>Mois</th><th class="c-g">Garçons</th><th class="c-f">Filles</th><th class="c-t">Total</th></tr>
+            </thead>
+            <tbody>
+            {% for m in stats.effectifs_mensuels %}
+            <tr style="{% if m.future %}opacity:0.4{% endif %}">
+                <td><strong>{{ m.label|upper }}</strong></td>
+                {% if m.future %}
+                <td class="muted">—</td><td class="muted">—</td><td class="muted">—</td>
+                {% else %}
+                <td class="c-g">{{ m.G }}</td><td class="c-f">{{ m.F }}</td><td class="c-t"><span class="pill">{{ m.T }}</span></td>
+                {% endif %}
+            </tr>
+            {% endfor %}
+            <tr class="row-total">
+                <td><strong>En fin d'année</strong></td>
+                <td class="c-g">{{ stats.repartition.inscrits.G }}</td>
+                <td class="c-f">{{ stats.repartition.inscrits.F }}</td>
+                <td class="c-t"><span class="pill pill-purple">{{ stats.repartition.inscrits.T }}</span></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{# ===== MOBILITÉ ===== #}
+<div class="card stats-official" style="margin-bottom:1.25rem">
+    <div class="official-title">MOBILITÉ GÉOGRAPHIQUE DES ÉLÈVES</div>
+    <div class="table-wrap">
+        <table class="table-stat">
+            <thead>
+                <tr><th>Provenance</th><th class="c-g">Garçons</th><th class="c-f">Filles</th><th class="c-t">Total</th></tr>
+            </thead>
+            <tbody>
+            {% for key, m in stats.mobilite.items() %}
+            <tr class="{% if key == 'total' %}row-total{% endif %}">
+                <td><strong>{{ m.label }}</strong></td>
+                <td class="c-g">{{ m.G }}</td>
+                <td class="c-f">{{ m.F }}</td>
+                <td class="c-t"><span class="pill {% if key == 'total' %}pill-purple{% endif %}">{{ m.T }}</span></td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{# ===== ÂGES ===== #}
+<div class="card stats-official" style="margin-bottom:1.25rem">
+    <div class="official-title">RÉPARTITION PAR ÂGE DES ÉLÈVES</div>
+    <div class="table-wrap">
+        <table class="table-stat">
+            <thead>
+                <tr>
+                    <th>Année de naissance</th>
+                    <th class="c-g">Garçons</th><th class="c-f">Filles</th><th class="c-t">Total</th>
+                    <th>Âges</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for a in stats.ages %}
+            {% if a.T > 0 or a.age >= 6 %}
+            <tr>
+                <td><strong>{{ a.birth_year }}</strong></td>
+                <td class="c-g">{{ a.G }}</td>
+                <td class="c-f">{{ a.F }}</td>
+                <td class="c-t"><span class="pill">{{ a.T }}</span></td>
+                <td><span class="age-badge">{{ a.label }}</span></td>
+            </tr>
+            {% endif %}
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{# ===== PYRAMIDE ===== #}
+<div class="card stats-official" style="margin-bottom:1.25rem">
+    <div class="official-title">PYRAMIDE DES ÂGES DES ÉLÈVES</div>
+    <div class="pyramid">
+        {% set max_t = stats.max_pyramid if stats.max_pyramid else 1 %}
+        {% for a in stats.pyramide|reverse %}
+        <div class="pyramid-row">
+            <div class="pyr-age">{{ '%02d'|format(a.age) }}</div>
+            <div class="pyr-bar-wrap left">
+                <div class="pyr-bar g" style="width:{{ (a.G / max_t * 100)|int }}%">
+                    {% if a.G %}<span>{{ a.G }}</span>{% endif %}
+                </div>
+            </div>
+            <div class="pyr-center">
+                <span class="pyr-t">{{ a.T }}</span>
+            </div>
+            <div class="pyr-bar-wrap right">
+                <div class="pyr-bar f" style="width:{{ (a.F / max_t * 100)|int }}%">
+                    {% if a.F %}<span>{{ a.F }}</span>{% endif %}
+                </div>
+            </div>
+            <div class="pyr-age">{{ '%02d'|format(a.age) }}</div>
+        </div>
+        {% endfor %}
+        <div class="pyramid-legend">
+            <span class="leg-g">■ Garçons ({{ stats.repartition.inscrits.G }})</span>
+            <span class="leg-t">Total {{ stats.repartition.inscrits.T }}</span>
+            <span class="leg-f">■ Filles ({{ stats.repartition.inscrits.F }})</span>
+        </div>
+    </div>
+</div>
+
+{# ===== MANUELS ===== #}
+<div class="card stats-official">
+    <div class="official-title">MANUELS EN USAGE</div>
+    <div class="table-wrap">
+        <table class="table-stat">
+            <thead>
+                <tr><th>Disciplines</th><th>Titres</th><th>Éditeurs</th></tr>
+            </thead>
+            <tbody>
+            {% for tb in stats.textbooks %}
+            <tr>
+                <td><strong>{{ tb.discipline }}</strong></td>
+                <td>{{ tb.title }}</td>
+                <td><span class="pill pill-blue">{{ tb.editor }}</span></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="3" style="text-align:center;color:#64748b;padding:1.5rem">
+                Aucun manuel enregistré.
+                {% if session.get('role') == 'Directeur' %}
+                <a href="{{ url_for('manuels') }}">Ajouter des manuels</a>
+                {% endif %}
+            </td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+.official-title {
+    text-align: center;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    color: var(--fuchsia-dark, #a21caf);
+    margin-bottom: 1rem;
+    padding: 0.6rem 1rem;
+    background: linear-gradient(90deg, #fdf4ff, #fce7f3, #fdf4ff);
+    border-radius: 12px;
+    border: 2px solid #f0abfc;
+}
+.table-stat { width: 100%; border-collapse: collapse; }
+.table-stat th, .table-stat td {
+    border: 1.5px solid #e9d5ff;
+    padding: 0.55rem 0.7rem;
+    text-align: center;
+}
+.table-stat thead th { color: #fff; font-size: 0.82rem; }
+.th-debut { background: linear-gradient(135deg, #7c3aed, #c026d3) !important; }
+.th-fin { background: linear-gradient(135deg, #0891b2, #06b6d4) !important; }
+.th-gab { background: linear-gradient(135deg, #16a34a, #22c55e) !important; }
+.th-nongab { background: linear-gradient(135deg, #ea580c, #f97316) !important; }
+.table-stat thead tr:last-child th { background: #581c87; }
+.c-g { color: #1d4ed8; font-weight: 700; }
+.c-f { color: #be185d; font-weight: 700; }
+.c-t { font-weight: 800; }
+.muted { color: #94a3b8; }
+.row-highlight td { background: #fff1f2; }
+.row-total td { background: linear-gradient(90deg, #fdf4ff, #fae8ff); font-weight: 700; }
+.pill {
+    display: inline-block; min-width: 2rem; padding: 0.15rem 0.55rem;
+    border-radius: 999px; background: #f3e8ff; color: #6b21a8; font-weight: 800;
+}
+.pill-green { background: #dcfce7; color: #166534; }
+.pill-orange { background: #ffedd5; color: #9a3412; }
+.pill-purple { background: #ede9fe; color: #5b21b6; }
+.pill-blue { background: #e0f2fe; color: #075985; }
+.age-badge {
+    display: inline-block; padding: 0.2rem 0.6rem; border-radius: 8px;
+    background: linear-gradient(135deg, #fae8ff, #fce7f3); color: #9d174d; font-weight: 700; font-size: 0.8rem;
+}
+/* Pyramide */
+.pyramid { padding: 1rem 0.5rem; }
+.pyramid-row {
+    display: grid;
+    grid-template-columns: 40px 1fr 50px 1fr 40px;
+    align-items: center;
+    gap: 0.35rem;
+    margin-bottom: 0.35rem;
+}
+.pyr-age { text-align: center; font-weight: 800; font-size: 0.8rem; color: #6b21a8; }
+.pyr-bar-wrap { height: 22px; display: flex; align-items: center; }
+.pyr-bar-wrap.left { justify-content: flex-end; }
+.pyr-bar-wrap.right { justify-content: flex-start; }
+.pyr-bar {
+    height: 100%; border-radius: 6px; display: flex; align-items: center;
+    min-width: 4px; transition: width 0.4s ease;
+}
+.pyr-bar.g { background: linear-gradient(90deg, #3b82f6, #60a5fa); justify-content: flex-start; padding-left: 0.35rem; }
+.pyr-bar.f { background: linear-gradient(90deg, #f472b6, #ec4899); justify-content: flex-end; padding-right: 0.35rem; }
+.pyr-bar span { color: #fff; font-size: 0.7rem; font-weight: 800; }
+.pyr-center { text-align: center; }
+.pyr-t {
+    display: inline-block; min-width: 1.8rem; padding: 0.15rem 0.4rem;
+    border-radius: 8px; background: #fdf4ff; border: 2px solid #e879f9;
+    font-weight: 800; color: #a21caf; font-size: 0.8rem;
+}
+.pyramid-legend {
+    display: flex; justify-content: center; gap: 1.5rem; margin-top: 1rem;
+    font-weight: 700; font-size: 0.85rem;
+}
+.leg-g { color: #1d4ed8; }
+.leg-f { color: #be185d; }
+.leg-t { color: #7c3aed; }
+</style>
+{% endblock %}

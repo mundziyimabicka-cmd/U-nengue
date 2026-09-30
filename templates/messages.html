@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Messagerie — U nengue{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>💬 Messagerie interne
+        {% if unread %}<span class="badge badge-danger">{{ unread }} non lu(s)</span>{% endif %}
+    </h2>
+</div>
+
+<div class="dashboard-grid">
+    <div class="card">
+        <h3 style="color:#a21caf;margin-bottom:1rem">✉️ Nouveau message</h3>
+        <form method="POST" action="{{ url_for('envoyer_message') }}">
+            <div class="form-group">
+                <label>Destinataire *</label>
+                <select name="to_user_id" class="form-control" required>
+                    <option value="">Choisir...</option>
+                    {% for c in contacts %}
+                    <option value="{{ c.id }}">{{ c.full_name }} ({{ c.role }}{% if c.classroom %} — {{ c.classroom.name }}{% endif %})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Sujet</label>
+                <input type="text" name="subject" class="form-control" placeholder="Objet du message">
+            </div>
+            <div class="form-group">
+                <label>Message *</label>
+                <textarea name="body" class="form-control" rows="4" required placeholder="Votre message..."></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Envoyer</button>
+        </form>
+    </div>
+
+    <div class="card">
+        <h3 style="color:#a21caf;margin-bottom:1rem">📥 Boîte de réception</h3>
+        {% for m in inbox %}
+        <div style="padding:0.75rem;margin-bottom:0.5rem;border-radius:10px;border:1px solid #f0abfc;
+                    background:{% if not m.is_read %}#fdf4ff{% else %}#fff{% endif %}">
+            <div style="display:flex;justify-content:space-between;gap:0.5rem;flex-wrap:wrap">
+                <strong>{{ m.sender.full_name if m.sender else '?' }}</strong>
+                <small style="color:#6b7280">{{ m.created_at.strftime('%d/%m/%Y %H:%M') if m.created_at else '' }}</small>
+            </div>
+            {% if m.subject %}<div style="font-weight:600;color:#86198f">{{ m.subject }}</div>{% endif %}
+            <div style="margin-top:0.3rem">{{ m.body }}</div>
+            {% if not m.is_read %}
+            <a href="{{ url_for('message_lu', id=m.id) }}" class="btn btn-sm btn-outline" style="margin-top:0.4rem">Marquer comme lu</a>
+            {% endif %}
+        </div>
+        {% else %}
+        <p style="color:#6b7280">Aucun message reçu.</p>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="card" style="margin-top:1.25rem">
+    <h3 style="color:#a21caf;margin-bottom:1rem">📤 Messages envoyés</h3>
+    {% for m in sent %}
+    <div style="padding:0.6rem 0;border-bottom:1px solid #f0abfc">
+        <strong>À :</strong> {{ m.recipient.full_name if m.recipient else '?' }}
+        — <small>{{ m.created_at.strftime('%d/%m/%Y %H:%M') if m.created_at else '' }}</small>
+        {% if m.subject %}<div style="font-weight:600">{{ m.subject }}</div>{% endif %}
+        <div>{{ m.body }}</div>
+    </div>
+    {% else %}
+    <p style="color:#6b7280">Aucun message envoyé.</p>
+    {% endfor %}
+</div>
+{% endblock %}

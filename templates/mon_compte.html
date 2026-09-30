@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Mon compte — U nengue{% endblock %}
+{% block content %}
+<div class="page-header"><h2>👤 Mon compte</h2></div>
+<div class="card" style="max-width:560px">
+<form method="POST">
+    <div class="form-group">
+        <label>Nom affiché</label>
+        <input type="text" name="full_name" class="form-control" value="{{ user.full_name }}">
+    </div>
+    <div class="form-group">
+        <label>E-mail</label>
+        <input type="email" name="email" class="form-control" value="{{ user.email or '' }}">
+    </div>
+    <hr style="margin:1.25rem 0;border:none;border-top:2px solid var(--border)">
+    <h3>Changer le mot de passe</h3>
+    <div class="form-group">
+        <label>Ancien mot de passe</label>
+        <input type="password" name="old_password" class="form-control">
+    </div>
+    <div class="form-row">
+        <div class="form-group">
+            <label>Nouveau mot de passe</label>
+            <input type="password" name="new_password" class="form-control" minlength="6">
+        </div>
+        <div class="form-group">
+            <label>Confirmation</label>
+            <input type="password" name="new_password2" class="form-control" minlength="6">
+        </div>
+    </div>
+    <button class="btn btn-primary">Enregistrer</button>
+</form>
+</div>
+{% endblock %}

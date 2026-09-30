@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Présences{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>Présences</h2>
+    <form method="GET" style="display:flex;gap:0.5rem;align-items:center">
+        <input type="date" name="date" class="form-control" value="{{ selected_date.isoformat() }}" onchange="this.form.submit()">
+    </form>
+</div>
+
+<div class="card">
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Élève</th>
+                    <th>Classe</th>
+                    <th>Statut</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in students %}
+                {% set att = atts.get(s.id) %}
+                <tr>
+                    <td><strong>{{ s.last_name }} {{ s.first_name }}</strong></td>
+                    <td>{{ s.classroom.name if s.classroom else '-' }}</td>
+                    <td>
+                        {% if att %}
+                            {% if att.status == 'Présent' %}
+                            <span class="badge badge-success">Présent</span>
+                            {% elif 'Retard' in att.status %}
+                            <span class="badge badge-warning">{{ att.status }}</span>
+                            {% else %}
+                            <span class="badge badge-danger">{{ att.status }}</span>
+                            {% endif %}
+                        {% else %}
+                        <span class="badge badge-secondary">Non marqué</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="presence-btns">
+                            {% for status, label in [('Présent','Présent'),('Retard justifié','R. just.'),('Retard injustifié','R. injust.'),('Absence justifiée','Abs. just.'),('Absence injustifiée','Abs. injust.')] %}
+                            <form method="POST" action="{{ url_for('marquer_presence') }}" style="display:inline">
+                                <input type="hidden" name="student_id" value="{{ s.id }}">
+                                <input type="hidden" name="date" value="{{ selected_date.isoformat() }}">
+                                <input type="hidden" name="status" value="{{ status }}">
+                                <button type="submit" class="btn btn-outline btn-sm
+                                    {% if att and att.status == status %}
+                                        {% if status == 'Présent' %}active-present
+                                        {% elif 'Retard' in status %}active-retard
+                                        {% else %}active-absent{% endif %}
+                                    {% endif %}">{{ label }}</button>
+                            </form>
+                            {% endfor %}
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:2rem">Aucun élève</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

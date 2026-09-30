@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}SMS prêts — U nengue{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>📲 SMS prêts à envoyer</h2>
+    <a href="{{ url_for('sms_notifications') }}" class="btn btn-outline">← Retour</a>
+</div>
+<div class="card" style="margin-bottom:1rem">
+    <strong>Message :</strong>
+    <p style="margin-top:0.4rem;padding:0.75rem;background:#fdf4ff;border-radius:10px;border:1px solid #f0abfc">{{ message }}</p>
+    <p style="margin-top:0.5rem;color:#6b7280;font-size:0.85rem">
+        {{ links|length }} destinataire(s). Sur mobile, cliquez sur <strong>Ouvrir SMS</strong> pour ouvrir l’application Messages.
+    </p>
+</div>
+<div class="card">
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>Élève</th><th>Parent</th><th>Téléphone</th><th>Action</th></tr></thead>
+            <tbody>
+            {% for l in links %}
+            <tr>
+                <td><strong>{{ l.student.full_name }}</strong></td>
+                <td>{{ l.parent }}</td>
+                <td>{{ l.phone }}</td>
+                <td><a href="{{ l.url }}" class="btn btn-primary btn-sm">Ouvrir SMS</a></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="4" style="text-align:center;padding:1.5rem">Aucun numéro disponible</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="fuchsia">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mot de passe oublié — U nengue</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<div class="login-page">
+    <div class="login-card">
+        <h1>U nengue</h1>
+        <p class="subtitle">Mot de passe oublié</p>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endwith %}
+        <form method="POST" action="{{ url_for('mot_de_passe_oublie') }}">
+            <div class="form-group">
+                <label>Identifiant</label>
+                <input type="text" name="username" class="form-control" value="{{ username or '' }}" required>
+            </div>
+            <button class="btn btn-primary" style="width:100%;justify-content:center">Obtenir un code</button>
+        </form>
+        {% if show_reset %}
+        <form method="POST" action="{{ url_for('mot_de_passe_reset') }}" style="margin-top:1.25rem">
+            <input type="hidden" name="username" value="{{ username }}">
+            <div class="form-group">
+                <label>Code à 6 chiffres</label>
+                <input type="text" name="code" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label>Nouveau mot de passe</label>
+                <input type="password" name="new_password" class="form-control" minlength="6" required>
+            </div>
+            <div class="form-group">
+                <label>Confirmation</label>
+                <input type="password" name="new_password2" class="form-control" minlength="6" required>
+            </div>
+            <button class="btn btn-success" style="width:100%;justify-content:center">Réinitialiser</button>
+        </form>
+        {% endif %}
+        <p style="text-align:center;margin-top:1rem"><a href="{{ url_for('login') }}">← Retour connexion</a></p>
+    </div>
+</div>
+</body>
+</html>

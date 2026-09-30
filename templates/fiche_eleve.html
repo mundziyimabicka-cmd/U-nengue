@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Fiche — {{ student.full_name }}{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>Fiche d'inscription / renseignement</h2>
+    <div class="btn-group">
+        <a href="{{ url_for('fiche_pdf', id=student.id) }}" class="btn btn-primary">📄 Télécharger PDF</a>
+        <button onclick="window.print()" class="btn btn-fuchsia">🖨️ Imprimer</button>
+        {% if session.get('role') == 'Directeur' %}
+        <a href="{{ url_for('modifier_eleve', id=student.id) }}" class="btn btn-outline">Modifier</a>
+        {% endif %}
+        <a href="{{ url_for('carte_eleve', id=student.id) }}" class="btn btn-purple">Carte scolaire</a>
+        <a href="{{ url_for('bulletin', student_id=student.id) }}" class="btn btn-info">Bulletin</a>
+        <a href="{{ url_for('eleves') }}" class="btn btn-outline">← Retour</a>
+    </div>
+</div>
+<div class="card" style="max-width:720px" id="fiche-print">
+    <div style="text-align:center;margin-bottom:1rem">
+        <div style="font-weight:800;font-size:1.2rem;color:#a21caf">U nengue</div>
+        <div style="font-size:0.85rem;color:#86198f;font-style:italic">Na buranghe ô dji icole di Gabu</div>
+        <div style="font-size:0.9rem;margin-top:0.4rem">FICHE D'INSCRIPTION / RENSEIGNEMENT</div>
+    </div>
+    <div style="display:flex;gap:1.5rem;align-items:start">
+        {% if student.photo_path %}
+        <img src="{{ url_for('static', filename=student.photo_path) }}" class="photo-preview">
+        {% else %}
+        <div class="photo-preview" style="display:flex;align-items:center;justify-content:center;font-size:3rem">👤</div>
+        {% endif %}
+        <div style="flex:1">
+            <h3 style="font-size:1.35rem;color:#c026d3">{{ student.full_name }}</h3>
+            <p><strong>Matricule :</strong> {{ student.matricule or '—' }}</p>
+            <p><strong>Né(e) le :</strong> {{ student.birth_date.strftime('%d/%m/%Y') if student.birth_date else '—' }} à <strong>{{ student.birth_place or '—' }}</strong></p>
+            <p><strong>Sexe :</strong> {{ 'Masculin' if student.gender == 'M' else ('Féminin' if student.gender == 'F' else '—') }}</p>
+            <p><strong>Classe :</strong> {{ student.classroom.name if student.classroom else '—' }} ({{ student.classroom.level if student.classroom else '' }})</p>
+            <p><strong>Statut :</strong> <span class="badge badge-info">{{ student.status }}</span>
+            {% if student.cep_selected %}<span class="badge badge-success">CEP</span>{% endif %}</p>
+        </div>
+    </div>
+    <hr style="margin:1.25rem 0;border:none;border-top:2px solid #f0abfc">
+    <h4 style="color:#a21caf">Parent / Tuteur</h4>
+    <p><strong>{{ student.parent_relation }} :</strong> {{ student.parent_name or '—' }} — {{ student.parent_phone or '' }}</p>
+    <p><strong>Adresse :</strong> {{ student.address or '—' }}</p>
+    {% if student.documents %}
+    <hr style="margin:1.25rem 0;border:none;border-top:2px solid #f0abfc">
+    <h4 style="color:#a21caf">Documents</h4>
+    {% for d in student.documents %}
+    <a href="{{ url_for('static', filename=d.filename) }}" target="_blank" class="tag">📎 {{ d.doc_type }} ({{ d.original_name }})</a>
+    {% endfor %}
+    {% endif %}
+</div>
+<style>
+@media print {
+    .sidebar, .page-header .btn-group, .alert { display: none !important; }
+    .main { margin-left: 0 !important; padding: 0 !important; }
+    .card { box-shadow: none; border: 1px solid #ccc; }
+}
+</style>
+{% endblock %}

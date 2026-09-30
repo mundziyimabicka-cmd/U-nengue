@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Carte — {{ student.full_name }}{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>Carte scolaire individuelle</h2>
+    <div class="btn-group">
+        <button onclick="window.print()" class="btn btn-primary">Imprimer</button>
+        <a href="{{ url_for('fiche_eleve', id=student.id) }}" class="btn btn-outline">← Retour</a>
+    </div>
+</div>
+<div style="max-width:340px;border:3px solid #e11d48;border-radius:16px;padding:1.25rem;background:linear-gradient(135deg,#fffbeb,#fce7f3);margin:0 auto">
+    <div style="text-align:center;font-size:0.75rem;color:#7c3aed;font-weight:700">🇬🇦 RÉPUBLIQUE GABONAISE</div>
+    <div style="text-align:center;font-size:0.85rem;font-weight:700;margin:0.3rem 0">{{ settings.school_name if settings else 'École Primaire' }}</div>
+    <div style="text-align:center;font-size:0.7rem;color:#64748b;margin-bottom:0.75rem">CARTE SCOLAIRE</div>
+    <div style="display:flex;gap:1rem;align-items:start">
+        {% if student.photo_path %}
+        <img src="{{ url_for('static', filename=student.photo_path) }}" style="width:90px;height:110px;object-fit:cover;border-radius:8px;border:3px solid #fbbf24">
+        {% else %}
+        <div style="width:90px;height:110px;background:#fde68a;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:2rem">👤</div>
+        {% endif %}
+        <div style="font-size:0.85rem">
+            <strong style="font-size:1rem;color:#e11d48">{{ student.full_name }}</strong><br><br>
+            <b>Matricule :</b> {{ student.matricule or '—' }}<br>
+            <b>Né(e) le :</b> {{ student.birth_date.strftime('%d/%m/%Y') if student.birth_date else '—' }}<br>
+            <b>À :</b> {{ student.birth_place or '—' }}<br>
+            <b>Sexe :</b> {{ student.gender or '—' }}<br>
+            <b>Classe :</b> {{ student.classroom.name if student.classroom else '—' }}<br>
+            <b>Niveau :</b> {{ student.classroom.level if student.classroom else '—' }}
+        </div>
+    </div>
+    <div style="text-align:center;font-size:0.7rem;margin-top:0.75rem;padding-top:0.5rem;border-top:1px solid #fbbf24;color:#64748b">
+        Année scolaire {{ settings.annee_scolaire if settings else '2025-2026' }}
+    </div>
+</div>
+{% endblock %}

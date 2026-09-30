@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Rechercher un élève{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>🔍 Rechercher un élève (réinscription)</h2>
+</div>
+<div class="card" style="max-width:500px;margin-bottom:1.25rem">
+    <form method="POST">
+        <div class="form-group">
+            <label>Matricule, nom ou prénom</label>
+            <input type="text" name="q" class="form-control" required placeholder="ex. MBINA ou EPG-MBI" autofocus>
+        </div>
+        <button type="submit" class="btn btn-primary">Rechercher dans la base</button>
+    </form>
+</div>
+
+{% if student %}
+<div class="card" style="max-width:600px">
+    <div style="display:flex;gap:1rem;align-items:start">
+        {% if student.photo_path %}
+        <img src="{{ url_for('static', filename=student.photo_path) }}" class="photo-preview">
+        {% else %}
+        <div class="photo-preview" style="display:flex;align-items:center;justify-content:center;font-size:2.5rem">👤</div>
+        {% endif %}
+        <div>
+            <h3 style="color:#e11d48">{{ student.full_name }}</h3>
+            <p>Matricule : {{ student.matricule or '—' }}</p>
+            <p>Né(e) le {{ student.birth_date.strftime('%d/%m/%Y') if student.birth_date else '—' }} à {{ student.birth_place or '—' }}</p>
+            <p>Classe : {{ student.classroom.name if student.classroom else 'Sorti / Admis CEP' }}</p>
+            <p>Statut : <span class="badge badge-info">{{ student.status }}</span>
+            {% if student.cep_admis %}<span class="badge badge-maxi">Admis CEP</span>{% endif %}</p>
+        </div>
+    </div>
+    {% if message %}
+    <div class="alert alert-success" style="margin-top:1rem;font-size:1.05rem">{{ message }}</div>
+    {% endif %}
+    <div class="btn-group" style="margin-top:1rem">
+        <a href="{{ url_for('fiche_eleve', id=student.id) }}" class="btn btn-info">Voir la fiche</a>
+        {% if student.classroom %}
+        <a href="{{ url_for('bulletin', student_id=student.id) }}" class="btn btn-outline">Voir les résultats</a>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Récap appels — U nengue{% endblock %}
+{% block content %}
+<div class="page-header"><h2>📊 Tableau récapitulatif des présences (Directeur)</h2></div>
+<form method="GET" class="card" style="margin-bottom:1rem;display:flex;gap:0.75rem;flex-wrap:wrap;align-items:end">
+    <div class="form-group" style="margin:0"><label>Du</label><input type="date" name="start" class="form-control" value="{{ start.isoformat() }}"></div>
+    <div class="form-group" style="margin:0"><label>Au</label><input type="date" name="end" class="form-control" value="{{ end.isoformat() }}"></div>
+    <button class="btn btn-primary">Actualiser</button>
+</form>
+<div class="card">
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr><th>Classe</th><th>Niveau</th><th>Effectif</th><th>Jours classe</th><th>% Présence</th><th>% Absence</th><th>PDF</th></tr>
+            </thead>
+            <tbody>
+            {% for row in recap %}
+            <tr>
+                <td><strong>{{ row.room.name }}</strong></td>
+                <td>{{ row.room.level }}</td>
+                <td>{{ row.room.students|length }}</td>
+                <td>{{ row.stats.days }}</td>
+                <td><span class="badge badge-success">{{ row.stats.pct_presence }}%</span></td>
+                <td><span class="badge badge-danger">{{ row.stats.pct_absence }}%</span></td>
+                <td><a href="{{ url_for('appels_pdf', class_id=row.room.id, start=start.isoformat(), end=end.isoformat()) }}" class="btn btn-sm btn-primary">PDF</a></td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

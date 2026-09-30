@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Cartes scolaires{% endblock %}
+{% block content %}
+<div class="page-header"><h2>🪪 Cartes scolaires</h2></div>
+<div class="card">
+    <p style="margin-bottom:1rem">Choisissez une classe pour générer les cartes scolaires collectives, ou allez sur la fiche d'un élève pour sa carte individuelle.</p>
+    <div style="display:flex;flex-wrap:wrap;gap:0.5rem">
+    {% for c in classes %}
+    <a href="{{ url_for('cartes_classe', id=c.id) }}" class="btn btn-purple">{{ c.name }} ({{ c.students|length }})</a>
+    {% endfor %}
+    </div>
+</div>
+{% endblock %}

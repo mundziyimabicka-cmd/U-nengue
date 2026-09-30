@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Classes — U nengue{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>🏫 Classes</h2>
+    <a href="{{ url_for('ajouter_classe') }}" class="btn btn-primary">+ Créer une classe</a>
+</div>
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem">
+{% for r in rooms %}
+<div class="card">
+    <div style="display:flex;justify-content:space-between">
+        <div>
+            <h3 style="font-size:1.15rem;color:#c026d3">{{ r.name }}</h3>
+            <div style="color:#a21caf;font-weight:600">{{ r.level }}</div>
+            <div style="color:#6b7280;font-size:0.85rem">{{ r.teacher or 'Pas d\'enseignant' }}</div>
+        </div>
+        <span class="badge badge-info">{{ r.students|length }} élève(s)</span>
+    </div>
+    <div class="btn-group" style="margin-top:1rem">
+        <a href="{{ url_for('liste_classe', id=r.id) }}" class="btn btn-outline btn-sm">Liste</a>
+        <a href="{{ url_for('cartes_classe', id=r.id) }}" class="btn btn-purple btn-sm">Cartes</a>
+        <a href="{{ url_for('modifier_classe', id=r.id) }}" class="btn btn-sm btn-outline">Modifier</a>
+        <a href="{{ url_for('vider_classe', id=r.id) }}" class="btn btn-warning btn-sm"
+           onclick="return confirm('Supprimer TOUS les élèves de {{ r.name }} ? Cette action est irréversible.')">Vider</a>
+        <a href="{{ url_for('supprimer_classe', id=r.id) }}" class="btn btn-danger btn-sm"
+           onclick="return confirm('Supprimer la classe {{ r.name }} et tous ses élèves ?')">Supprimer</a>
+    </div>
+</div>
+{% else %}
+<div class="card" style="grid-column:1/-1;text-align:center;padding:2rem">Aucune classe</div>
+{% endfor %}
+</div>
+{% endblock %}

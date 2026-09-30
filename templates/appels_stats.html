@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}Stats appels — U nengue{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>📊 Statistiques de présence</h2>
+    {% if room %}
+    <a href="{{ url_for('appels_pdf', class_id=room.id, start=start.isoformat(), end=end.isoformat()) }}" class="btn btn-primary">📄 PDF</a>
+    {% endif %}
+</div>
+<form method="GET" class="card" style="margin-bottom:1rem;display:flex;gap:0.75rem;flex-wrap:wrap;align-items:end">
+    <div class="form-group" style="margin:0">
+        <label>Classe</label>
+        <select name="class_id" class="form-control">
+            {% for r in rooms %}<option value="{{ r.id }}" {% if room and room.id==r.id %}selected{% endif %}>{{ r.name }}</option>{% endfor %}
+        </select>
+    </div>
+    <div class="form-group" style="margin:0"><label>Du</label><input type="date" name="start" class="form-control" value="{{ start.isoformat() }}"></div>
+    <div class="form-group" style="margin:0"><label>Au</label><input type="date" name="end" class="form-control" value="{{ end.isoformat() }}"></div>
+    <button class="btn btn-outline">Calculer</button>
+</form>
+{% if stats %}
+<div class="stats-grid">
+    <div class="card"><div class="card-title">Jours de classe</div><div class="card-value">{{ stats.days }}</div></div>
+    <div class="card"><div class="card-title">% Présence</div><div class="card-value">{{ stats.pct_presence }}%</div></div>
+    <div class="card"><div class="card-title">% Absence</div><div class="card-value">{{ stats.pct_absence }}%</div></div>
+</div>
+<div class="card">
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>Élève</th><th>Présences</th><th>Absences</th><th>Retards</th><th>% Présence</th></tr></thead>
+            <tbody>
+            {% for r in stats.students %}
+            <tr>
+                <td><strong>{{ r.student.full_name }}</strong></td>
+                <td>{{ r.present }}</td><td>{{ r.absent }}</td><td>{{ r.retard }}</td>
+                <td>{% if r.pct_presence is not none %}<strong style="color:#c026d3">{{ r.pct_presence }}%</strong>{% else %}—{% endif %}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+{% if room and freq %}
+{# ========== TABLEAU DE FRÉQUENTATION ========== #}
+<div class="card" style="margin-top:1.5rem">
+    <h3 style="text-align:center;color:var(--fuchsia-dark);margin-bottom:0.35rem">TABLEAU DE FRÉQUENTATION</h3>
+    <p style="text-align:center;font-size:0.85rem;color:#64748b;margin-bottom:1rem">
+        {{ room.name }} — Année scolaire {{ freq.year_label }} — calcul automatique jusqu’à aujourd’hui
+    </p>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Mois</th>
+                    <th>Pourcentage des Présents</th>
+                    <th>Pourcentage des Absents</th>
+                    <th>Observations</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for m in freq.months %}
+            <tr style="{% if m.future %}opacity:0.45{% endif %}">
+                <td><strong>{{ m.label }}</strong></td>
+                <td style="text-align:center;background:{% if m.pct_present is not none and m.pct_present >= 90 %}#d1fae5{% elif m.pct_present is not none and m.pct_present >= 80 %}#fef3c7{% elif m.pct_present is not none %}#ffe4e6{% endif %}">
+                    {% if m.pct_present is not none %}
+                    <strong style="color:{% if m.pct_present >= 90 %}#065f46{% elif m.pct_present >= 80 %}#92400e{% else %}#9f1239{% endif %}">{{ '%.2f'|format(m.pct_present) }} %</strong>
+                    {% else %}—{% endif %}
+                </td>
+                <td style="text-align:center">
+                    {% if m.pct_absent is not none %}<strong style="color:#9f1239">{{ '%.2f'|format(m.pct_absent) }} %</strong>{% else %}—{% endif %}
+                </td>
+                <td>{% if m.observation %}<em>{{ m.observation }}</em>{% elif m.future %}<span style="color:#94a3b8">Mois à venir</span>{% else %}<span style="color:#94a3b8">Aucune saisie</span>{% endif %}</td>
+            </tr>
+            {% endfor %}
+            <tr style="background:#fdf4ff;font-weight:700">
+                <td><strong>Annuel</strong></td>
+                <td style="text-align:center">
+                    {% if freq.annuel.pct_present is not none %}
+                    <strong style="font-size:1.15rem;color:#065f46">{{ '%.2f'|format(freq.annuel.pct_present) }} %</strong>
+                    {% else %}—{% endif %}
+                </td>
+                <td style="text-align:center">
+                    {% if freq.annuel.pct_absent is not none %}
+                    <strong style="font-size:1.15rem;color:#9f1239">{{ '%.2f'|format(freq.annuel.pct_absent) }} %</strong>
+                    {% else %}—{% endif %}
+                </td>
+                <td><em>{{ freq.annuel.observation or '' }}</em></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h3 style="text-align:center;color:var(--fuchsia-dark);margin:1.5rem 0 1rem">COURBE SYNOPTIQUE DE FRÉQUENTATION</h3>
+    <div style="display:flex;align-items:flex-end;gap:0.5rem;height:240px;padding:1rem 0.5rem;border:2px solid var(--border);border-radius:14px;background:linear-gradient(180deg,#f8fafc,#fff)">
+        {% for m in freq.months %}
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end">
+            {% if m.pct_present is not none %}
+            <div style="font-size:0.68rem;font-weight:700;margin-bottom:0.2rem;color:var(--fuchsia-dark)">{{ '%.0f'|format(m.pct_present) }}%</div>
+            <div style="width:75%;max-width:40px;height:{{ m.pct_present }}%;min-height:6px;background:linear-gradient(180deg,#22c55e,var(--fuchsia));border-radius:8px 8px 0 0"></div>
+            {% else %}
+            <div style="width:75%;max-width:40px;height:2px;background:#e2e8f0;border-radius:2px"></div>
+            {% endif %}
+            <div style="font-size:0.65rem;margin-top:0.35rem;text-align:center;font-weight:600">{{ m.label[:4] }}.</div>
+        </div>
+        {% endfor %}
+    </div>
+    <p style="text-align:center;font-size:0.78rem;color:#64748b;margin-top:0.5rem">
+        % présents calculé automatiquement à partir des appels (jours de classe uniquement, hors week-ends et fériés).
+        Les mois futurs restent vides jusqu’à la fin du mois en cours.
+    </p>
+</div>
+{% endif %}
+
+{% endblock %}

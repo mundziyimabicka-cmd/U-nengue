@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Charges{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>Charges de l'école</h2>
+    <a href="{{ url_for('ajouter_charge') }}" class="btn btn-primary">+ Ajouter une charge</a>
+</div>
+
+<div class="stats-grid" style="margin-bottom:1.25rem">
+    <div class="card">
+        <div class="card-title">Total des charges</div>
+        <div class="card-value" style="font-size:1.4rem;color:var(--danger)">{{ "{:,.0f}".format(total) }} {{ settings.currency_symbol }}</div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Libellé</th>
+                    <th>Catégorie</th>
+                    <th>Date</th>
+                    <th>Montant</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for e in expenses %}
+                <tr>
+                    <td><strong>{{ e.label }}</strong></td>
+                    <td><span class="badge badge-secondary">{{ e.category or '-' }}</span></td>
+                    <td>{{ e.date.strftime('%d/%m/%Y') }}</td>
+                    <td style="color:var(--danger)"><strong>{{ "{:,.0f}".format(e.amount) }} {{ settings.currency_symbol }}</strong></td>
+                    <td>
+                        <a href="{{ url_for('supprimer_charge', id=e.id) }}" class="btn btn-danger btn-sm"
+                           onclick="return confirm('Supprimer ?')">Retirer</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5" style="text-align:center;color:var(--text-muted)">Aucune charge</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,47 @@
+METTRE U NENGUE EN LIGNE SANS PYTHONANYWHERE
+============================================
+
+METHODE RECOMMANDEE : RENDER.COM (gratuit)
+
+1) Compte GitHub
+   - Allez sur https://github.com et creez un compte
+   - New repository, nom : u-nengue, Public, Create
+
+2) Envoyer les fichiers
+   - Dans le depot vide, cliquez "uploading an existing file"
+   - Envoyez TOUT le contenu du dossier kyaf_edu :
+     app.py, requirements.txt, Procfile, templates/, static/, init_db.py
+   - Commit
+
+3) Compte Render
+   - https://render.com  -> Sign up with GitHub
+   - New +  -> Web Service
+   - Reliez le depot u-nengue
+
+4) Reglages Render
+   Name : u-nengue
+   Runtime : Python
+   Build Command : pip install -r requirements.txt
+   Start Command : gunicorn app:app
+   Instance : Free
+
+5) Variables d'environnement
+   SECRET_KEY = une longue phrase secrete
+   FLASK_DEBUG = 0
+
+6) Create Web Service
+   Attendez 3-5 minutes.
+   Lien : https://u-nengue.onrender.com
+
+7) Premiere connexion
+   Directeur / admin / admin123
+   CHANGEZ le mot de passe tout de suite (Mon compte).
+
+NOTE : le plan gratuit s'endort apres inactivite.
+Le premier clic reveille le site (20-40 secondes).
+
+AUTRE METHODE SIMPLE : RAILWAY.APP
+   - Compte GitHub
+   - New project -> Deploy from GitHub
+   - Start : gunicorn app:app
+   - Meme principe que Render

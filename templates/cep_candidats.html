@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Candidats CEP — U nengue{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>📋 Candidats au CEP — Liste nominative &amp; relevé de notes</h2>
+    <div class="btn-group">
+        <a href="{{ url_for('cep_candidats_pdf') }}" class="btn btn-primary">📄 Télécharger PDF</a>
+        <button onclick="window.print()" class="btn btn-fuchsia">🖨️ Imprimer</button>
+        <a href="{{ url_for('cep') }}" class="btn btn-outline">← Sélection CEP</a>
+    </div>
+</div>
+
+<div class="card" style="margin-bottom:1rem;background:linear-gradient(135deg,#fdf4ff,#fce7f3)">
+    <strong>{{ settings.school_name if settings else 'École' }}</strong> —
+    Année {{ settings.annee_scolaire if settings else '' }} —
+    <strong>{{ rows|length }}</strong> candidat(s) sélectionné(s)
+    <br><small style="color:#6b7280">Éveil = EDM&amp;EAS. Moyenne = moyenne des 3 disciplines. Rang calculé automatiquement (meilleure moyenne = rang 1).</small>
+</div>
+
+<div class="card">
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Rang</th>
+                    <th>Nom et Prénom</th>
+                    <th>Date de naissance</th>
+                    <th>Lieu de naissance</th>
+                    <th>Français</th>
+                    <th>Mathématiques</th>
+                    <th>Éveil (EDM)</th>
+                    <th>Moyenne</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for r in rows %}
+            <tr>
+                <td><span class="badge {% if r.rang == 1 %}badge-maxi{% elif r.rang == 2 %}badge-mini{% elif r.rang == 3 %}badge-part{% else %}badge-secondary{% endif %}">{{ r.rang }}</span></td>
+                <td><strong>{{ r.student.full_name }}</strong></td>
+                <td>{{ r.student.birth_date.strftime('%d/%m/%Y') if r.student.birth_date else '—' }}</td>
+                <td>{{ r.student.birth_place or '—' }}</td>
+                <td>{{ r.francais if r.francais is not none else '—' }}</td>
+                <td>{{ r.maths if r.maths is not none else '—' }}</td>
+                <td>{{ r.eveil if r.eveil is not none else '—' }}</td>
+                <td><strong style="color:#c026d3">{{ r.moyenne if r.moyenne is not none else '—' }}</strong></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="8" style="text-align:center;padding:2rem;color:#6b7280">
+                Aucun candidat sélectionné.<br>
+                Allez dans <strong>Sélection CEP</strong> pour cocher les élèves de 5ème année.
+            </td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+<style>
+@media print {
+    .sidebar, .page-header .btn-group, .alert { display: none !important; }
+    .main { margin-left: 0 !important; }
+}
+</style>
+{% endblock %}

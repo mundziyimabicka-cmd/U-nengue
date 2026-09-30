@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Parents{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>Parents d'élèves</h2>
+</div>
+
+<div class="card" style="margin-bottom:1rem">
+    <div class="form-group" style="margin:0">
+        <label>Message à envoyer (modifiable avant chaque envoi)</label>
+        <textarea class="form-control" rows="2">Bonjour, de la part de l'école concernant votre enfant. N'hésitez pas à nous contacter pour toute question.</textarea>
+        <small style="color:var(--text-muted)">Ce message sera pré-rempli dans WhatsApp lors de l'envoi à un parent.</small>
+    </div>
+</div>
+
+<div class="card">
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Parent</th>
+                    <th>Téléphone</th>
+                    <th>Enfant(s)</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in parents %}
+                <tr>
+                    <td>
+                        <strong>{{ p.name }}</strong>
+                        <span class="badge badge-secondary">{{ p.relation }}</span>
+                    </td>
+                    <td>{{ p.phone or 'Sans numéro' }}</td>
+                    <td>
+                        {% for e in p.enfants %}
+                        <span class="tag">{{ e.last_name }} {{ e.first_name }} ({{ e.classroom.name if e.classroom else '?' }})</span>
+                        {% endfor %}
+                    </td>
+                    <td>
+                        {% if p.phone %}
+                        <a href="https://wa.me/{{ p.phone|replace(' ','')|replace('+','') }}?text=Bonjour%2C%20de%20la%20part%20de%20l%27%C3%A9cole%20concernant%20votre%20enfant."
+                           target="_blank" class="btn btn-success btn-sm">WhatsApp</a>
+                        {% else %}
+                        <span class="badge badge-secondary">Sans numéro</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:2rem">Aucun parent enregistré</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

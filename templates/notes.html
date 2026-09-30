@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Notes{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>Notes</h2>
+    <div style="display:flex;gap:0.75rem;align-items:center">
+        <form method="GET">
+            <select name="trimester" class="form-control" onchange="this.form.submit()">
+                {% for t in ['Trimestre 1','Trimestre 2','Trimestre 3'] %}
+                <option value="{{ t }}" {% if trimester == t %}selected{% endif %}>{{ t }}</option>
+                {% endfor %}
+            </select>
+        </form>
+        <a href="{{ url_for('saisir_note') }}" class="btn btn-primary">+ Saisir une note</a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Élève</th>
+                    <th>Matière</th>
+                    <th>Évaluation</th>
+                    <th>Trim./Coef.</th>
+                    <th>Note</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for g in grades %}
+                <tr>
+                    <td>{{ g.student.last_name }} {{ g.student.first_name }}</td>
+                    <td><span class="tag">{{ g.subject.name if g.subject else '-' }}</span></td>
+                    <td>{{ g.evaluation_type.name if g.evaluation_type else g.title or '-' }}</td>
+                    <td>{{ g.trimester }} · coef. {{ g.coefficient }}</td>
+                    <td><strong>{{ g.score }}/{{ g.max_score|int }}</strong></td>
+                    <td>
+                        <a href="{{ url_for('supprimer_note', id=g.id) }}" class="btn btn-danger btn-sm"
+                           onclick="return confirm('Supprimer cette note ?')">Retirer</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:2rem">Aucune note pour ce trimestre</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

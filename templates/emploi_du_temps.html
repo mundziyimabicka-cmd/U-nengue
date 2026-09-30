@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Emploi du temps{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>Emploi du temps</h2>
+    <form method="GET">
+        <select name="class_id" class="form-control" onchange="this.form.submit()">
+            {% for r in rooms %}
+            <option value="{{ r.id }}" {% if selected and selected.id == r.id %}selected{% endif %}>{{ r.name }}</option>
+            {% endfor %}
+        </select>
+    </form>
+</div>
+
+{% if selected %}
+<div class="card" style="margin-bottom:1.25rem">
+    <div class="card-title">Emploi du temps — {{ selected.name }}</div>
+    <div class="timetable-grid" style="margin-top:1rem">
+        <div class="tt-header"></div>
+        {% for d in days %}<div class="tt-header">{{ d }}</div>{% endfor %}
+        {% for t in times %}
+            {% set parts = t.split('-') %}
+            <div class="tt-time">{{ t }}</div>
+            {% for d in days %}
+            <div class="tt-cell">
+                {% set key = (d, t) %}
+                {% if key in grid %}
+                {% set s = grid[key] %}
+                <div class="tt-slot">
+                    <strong>{{ s.subject }}</strong><br>
+                    <small>{{ s.teacher }}</small>
+                    <a href="{{ url_for('supprimer_creneau', id=s.id) }}" style="color:#ef4444;font-size:0.7rem" onclick="return confirm('Supprimer ?')">✕</a>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        {% endfor %}
+    </div>
+</div>
+
+<div class="card" style="max-width:500px">
+    <div class="card-title">Ajouter un créneau</div>
+    <form method="POST" action="{{ url_for('ajouter_creneau') }}" style="margin-top:1rem">
+        <input type="hidden" name="class_id" value="{{ selected.id }}">
+        <div class="form-row">
+            <div class="form-group">
+                <label>Jour</label>
+                <select name="day" class="form-control">
+                    {% for d in days %}<option>{{ d }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Début</label>
+                <select name="start_time" class="form-control">
+                    {% for h in ['08h','09h','10h','11h','14h','15h','16h'] %}<option>{{ h }}</option>{% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Fin</label>
+                <select name="end_time" class="form-control">
+                    {% for h in ['09h','10h','11h','12h','15h','16h','17h'] %}<option>{{ h }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Matière</label>
+                <select name="subject" class="form-control">
+                    {% for s in subjects %}<option>{{ s.name }}</option>{% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Professeur</label>
+            <input type="text" name="teacher" class="form-control" placeholder="ex. Mme Diallo">
+        </div>
+        <button type="submit" class="btn btn-primary">Ajouter le créneau</button>
+    </form>
+</div>
+{% else %}
+<div class="card" style="text-align:center;padding:2rem;color:var(--text-muted)">
+    Aucune classe disponible. Créez d'abord une classe.
+</div>
+{% endif %}
+{% endblock %}

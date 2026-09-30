@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Cahier journal — U nengue{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>📓 Cahier journal</h2>
+    {% if room %}
+    <a href="{{ url_for('cahier_pdf', class_id=room.id) }}" class="btn btn-primary">📄 PDF</a>
+    {% endif %}
+</div>
+<form method="GET" class="card" style="margin-bottom:1rem">
+    <div class="form-group" style="margin:0;max-width:280px">
+        <label>Classe</label>
+        <select name="class_id" class="form-control" onchange="this.form.submit()">
+            {% for r in rooms %}
+            <option value="{{ r.id }}" {% if room and room.id==r.id %}selected{% endif %}>{{ r.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+</form>
+{% if room %}
+<div class="card" style="margin-bottom:1.25rem">
+    <h3 style="color:#a21caf;margin-bottom:1rem">Nouvelle entrée — {{ room.name }}</h3>
+    <form method="POST" action="{{ url_for('cahier_ajouter') }}">
+        <input type="hidden" name="class_id" value="{{ room.id }}">
+        <div class="form-row">
+            <div class="form-group">
+                <label>Date</label>
+                <input type="date" name="date" class="form-control" value="{{ today if today else '' }}">
+            </div>
+            <div class="form-group">
+                <label>Matière / thème</label>
+                <input type="text" name="subject" class="form-control" placeholder="ex. Français — Lecture">
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Contenu / activités réalisées</label>
+            <textarea name="content" class="form-control" rows="3" placeholder="Décrivez le déroulement de la séance..."></textarea>
+        </div>
+        <div class="form-group">
+            <label>Observations</label>
+            <textarea name="observation" class="form-control" rows="2" placeholder="Commentaires, difficultés, points positifs..."></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Enregistrer</button>
+    </form>
+</div>
+<div class="card">
+    <h3 style="color:#a21caf;margin-bottom:1rem">Historique</h3>
+    {% for e in entries %}
+    <div style="padding:1rem;margin-bottom:0.75rem;border:2px solid #f0abfc;border-radius:12px;background:#fdf4ff">
+        <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:0.5rem">
+            <strong style="color:#c026d3">{{ e.date.strftime('%d/%m/%Y') }} — {{ e.subject or 'Sans titre' }}</strong>
+            <a href="{{ url_for('cahier_supprimer', id=e.id) }}" class="btn btn-danger btn-sm"
+               onclick="return confirm('Supprimer cette entrée ?')">Supprimer</a>
+        </div>
+        <p style="margin:0.5rem 0"><strong>Activités :</strong> {{ e.content or '—' }}</p>
+        <p style="margin:0"><strong>Observations :</strong> {{ e.observation or '—' }}</p>
+        {% if e.author %}<small style="color:#6b7280">Par {{ e.author.full_name }}</small>{% endif %}
+    </div>
+    {% else %}
+    <p style="color:#6b7280">Aucune entrée pour cette classe.</p>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

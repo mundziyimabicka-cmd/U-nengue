@@ -1,0 +1,330 @@
+{% extends "base.html" %}
+{% block title %}Relevés de notes — U nengue{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>📊 Relevés de notes</h2>
+    {% if selected %}
+    <a href="{{ url_for('releves_pdf', class_id=selected.id, palier=palier) }}" class="btn btn-primary">📄 PDF complet</a>
+    {% endif %}
+</div>
+
+<div class="card" style="margin-bottom:1.25rem">
+    <form method="GET" style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:end">
+        <div class="form-group" style="margin:0">
+            <label>Classe</label>
+            <select name="class_id" class="form-control" onchange="this.form.submit()">
+                {% for r in rooms %}
+                <option value="{{ r.id }}" {% if selected and selected.id == r.id %}selected{% endif %}>{{ r.name }} ({{ r.level }})</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group" style="margin:0">
+            <label>Palier</label>
+            <select name="palier" class="form-control" onchange="this.form.submit()">
+                {% for p in PALIERS %}
+                <option value="{{ p }}" {% if palier == p %}selected{% endif %}>{{ p }}</option>
+                {% endfor %}
+                <option value="Profil de sortie" {% if palier == 'Profil de sortie' %}selected{% endif %}>Profil de sortie</option>
+            </select>
+        </div>
+    </form>
+</div>
+
+{% if selected and report %}
+
+{# ========== 1. RELEVÉ INDIVIDUEL ========== #}
+<div class="card" style="margin-bottom:1.5rem">
+    <h3 style="color:var(--fuchsia-dark);margin-bottom:1rem">
+        Relevé de notes — {{ selected.name }} — {{ palier }}
+        <span class="badge badge-info">{{ student_data|length }} élève(s)</span>
+    </h3>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>N°</th><th>Élève</th><th>Sexe</th>
+                    <th>EDM C1/C2/C3</th><th>Maîtrise EDM</th>
+                    <th>FR C1/C2</th><th>Maîtrise FR</th>
+                    <th>MATH C1/C2</th><th>Maîtrise MATH</th>
+                    <th>Total</th><th>Maîtrise Palier</th><th></th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for item in student_data %}
+            {% set s = item.student %}
+            {% set d = item.data %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td><strong>{{ s.full_name }}</strong></td>
+                <td>{{ item.sex }}</td>
+                <td style="font-size:0.8rem">
+                    {% for comp in ['C1','C2','C3'] %}
+                    {% set c = d.get('EDM&EAS', {}).get('comps', {}).get(comp, {}) %}
+                    {{ c.get('note') if c.get('note') is not none else '—' }}{% if not loop.last %} / {% endif %}
+                    {% endfor %}
+                </td>
+                <td>{% set m = d.get('EDM&EAS', {}).get('mastery_matiere') %}{% if m %}<span class="badge {{ mastery_class(m) }}">{{ m }}</span>{% else %}—{% endif %}</td>
+                <td style="font-size:0.8rem">
+                    {% for comp in ['C1','C2'] %}
+                    {% set c = d.get('FRANCAIS', {}).get('comps', {}).get(comp, {}) %}
+                    {{ c.get('note') if c.get('note') is not none else '—' }}{% if not loop.last %} / {% endif %}
+                    {% endfor %}
+                </td>
+                <td>{% set m = d.get('FRANCAIS', {}).get('mastery_matiere') %}{% if m %}<span class="badge {{ mastery_class(m) }}">{{ m }}</span>{% else %}—{% endif %}</td>
+                <td style="font-size:0.8rem">
+                    {% for comp in ['C1','C2'] %}
+                    {% set c = d.get('MATHS', {}).get('comps', {}).get(comp, {}) %}
+                    {{ c.get('note') if c.get('note') is not none else '—' }}{% if not loop.last %} / {% endif %}
+                    {% endfor %}
+                </td>
+                <td>{% set m = d.get('MATHS', {}).get('mastery_matiere') %}{% if m %}<span class="badge {{ mastery_class(m) }}">{{ m }}</span>{% else %}—{% endif %}</td>
+                <td><strong>{{ item.total if item.total else '—' }}</strong></td>
+                <td>{% if item.palier_mastery %}<span class="badge {{ mastery_class(item.palier_mastery) }}">{{ item.palier_mastery }}</span>{% else %}—{% endif %}</td>
+                <td>
+                    <a href="{{ url_for('bulletin', student_id=s.id, palier=palier) }}" class="btn btn-info btn-sm">Voir</a>
+                    <a href="{{ url_for('bulletin_pdf', student_id=s.id) }}" class="btn btn-primary btn-sm">PDF</a>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="12" style="text-align:center;padding:2rem;color:#64748b">Aucune note saisie pour ce palier.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{# ========== 2. RAPPORT DU PALIER ========== #}
+<div class="card" style="margin-bottom:1.5rem">
+    <h3 style="text-align:center;color:var(--fuchsia-dark);margin-bottom:1rem">RAPPORT DU {{ palier|upper }}</h3>
+
+    <div class="table-wrap" style="margin-bottom:1.25rem">
+        <table>
+            <thead>
+                <tr>
+                    <th rowspan="2">{{ palier }}</th>
+                    <th colspan="3">Effectifs de la classe</th>
+                    <th colspan="6">Situations de réussite</th>
+                    <th colspan="6">Situations d'échec</th>
+                </tr>
+                <tr>
+                    <th>G</th><th>F</th><th>T</th>
+                    <th colspan="3">Maximale</th>
+                    <th colspan="3">Minimale</th>
+                    <th colspan="3">Partielle</th>
+                    <th colspan="3">Non maîtrise</th>
+                </tr>
+                <tr>
+                    <th></th><th></th><th></th><th></th>
+                    <th>G</th><th>F</th><th>T</th>
+                    <th>G</th><th>F</th><th>T</th>
+                    <th>G</th><th>F</th><th>T</th>
+                    <th>G</th><th>F</th><th>T</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Inscrits</strong></td>
+                    <td class="num-g">{{ report.effectifs.G }}</td>
+                    <td class="num-f">{{ report.effectifs.F }}</td>
+                    <td class="num-t">{{ report.effectifs.T }}</td>
+                    <td class="num-g">{{ report.maxi.G }}</td>
+                    <td class="num-f">{{ report.maxi.F }}</td>
+                    <td class="num-t"><span class="badge badge-maxi">{{ report.maxi.T }}</span></td>
+                    <td class="num-g">{{ report.mini.G }}</td>
+                    <td class="num-f">{{ report.mini.F }}</td>
+                    <td class="num-t"><span class="badge badge-mini">{{ report.mini.T }}</span></td>
+                    <td class="num-g">{{ report.part.G }}</td>
+                    <td class="num-f">{{ report.part.F }}</td>
+                    <td class="num-t"><span class="badge badge-part">{{ report.part.T }}</span></td>
+                    <td class="num-g">{{ report.nm.G }}</td>
+                    <td class="num-f">{{ report.nm.F }}</td>
+                    <td class="num-t"><span class="badge badge-nm">{{ report.nm.T }}</span></td>
+                </tr>
+                <tr>
+                    <td><strong>Appréciation</strong></td>
+                    <td colspan="3"></td>
+                    <td colspan="3" style="text-align:center"><strong class="c-reussite">{{ report.reussite.G }}</strong> / <strong class="c-reussite">{{ report.reussite.F }}</strong> / <strong class="c-reussite">{{ report.reussite.T }}</strong><br><small>Nb élèves en réussite</small></td>
+                    <td colspan="3"></td>
+                    <td colspan="6" style="text-align:center"><strong class="c-echec">{{ report.echec.G }}</strong> / <strong class="c-echec">{{ report.echec.F }}</strong> / <strong class="c-echec">{{ report.echec.T }}</strong><br><small>Nb élèves en échec</small></td>
+                </tr>
+                <tr>
+                    <td colspan="4" style="text-align:right"><strong>% de réussite</strong></td>
+                    <td colspan="6" style="text-align:center;background:#d1fae5"><strong style="font-size:1.3rem;color:#065f46">{{ report.pct_reussite }} %</strong></td>
+                    <td colspan="3" style="text-align:right"><strong>% d'échec</strong></td>
+                    <td colspan="3" style="text-align:center;background:#ffe4e6"><strong style="font-size:1.3rem;color:#9f1239">{{ report.pct_echec }} %</strong></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h4 style="text-align:center;margin:1rem 0;color:var(--fuchsia-dark)">NIVEAU DE MAÎTRISE PAR MATIÈRE — {{ palier }}</h4>
+
+    {% for mat_key, ms in report.matiere_stats.items() %}
+    <div style="margin-bottom:1rem">
+        <strong style="color:var(--fuchsia-dark)">{{ ms.label }}</strong>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Comp.</th>
+                        <th colspan="3" style="background:#bbf7d0">Maîtrise Maximale</th>
+                        <th colspan="3" style="background:#a5f3fc">Maîtrise Minimale</th>
+                        <th colspan="3" style="background:#fde68a">Partielle</th>
+                        <th colspan="3" style="background:#fecaca">Non maîtrise</th>
+                    </tr>
+                    <tr>
+                        <th></th>
+                        <th>G</th><th>F</th><th>T</th>
+                        <th>G</th><th>F</th><th>T</th>
+                        <th>G</th><th>F</th><th>T</th>
+                        <th>G</th><th>F</th><th>T</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for comp, counts in ms.comps.items() %}
+                <tr>
+                    <td><strong>{{ comp }}</strong></td>
+                    <td>{{ counts.Maxi.G }}</td><td>{{ counts.Maxi.F }}</td><td><strong>{{ counts.Maxi.T }}</strong></td>
+                    <td>{{ counts.Mini.G }}</td><td>{{ counts.Mini.F }}</td><td><strong>{{ counts.Mini.T }}</strong></td>
+                    <td>{{ counts.Part.G }}</td><td>{{ counts.Part.F }}</td><td><strong>{{ counts.Part.T }}</strong></td>
+                    <td>{{ counts.NM.G }}</td><td>{{ counts.NM.F }}</td><td><strong>{{ counts.NM.T }}</strong></td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{# ========== 3. TABLEAU D'HONNEUR ========== #}
+<div class="card" style="margin-bottom:1.5rem">
+    <h3 style="text-align:center;color:var(--fuchsia-dark);margin-bottom:1rem">TABLEAU D'HONNEUR DU {{ palier|upper }}</h3>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Rang</th>
+                    <th>Nom(s) et prénom(s)</th>
+                    <th>Sexe</th>
+                    <th>Total des notes</th>
+                    <th>Maîtrise du palier</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for h in report.honneur %}
+            <tr style="{% if loop.index == 1 %}background:#fef9c3{% elif loop.index == 2 %}background:#f1f5f9{% elif loop.index == 3 %}background:#ffedd5{% endif %}">
+                <td><strong>{{ loop.index }}{{ 'er' if loop.index == 1 else 'e' }}</strong></td>
+                <td><strong>{{ h.student.full_name }}</strong></td>
+                <td>{{ h.sex }}</td>
+                <td><strong style="color:var(--fuchsia-dark);font-size:1.1rem">{{ h.total }}</strong></td>
+                <td>{% if h.palier_mastery %}<span class="badge {{ mastery_class(h.palier_mastery) }}">{{ h.palier_mastery }}</span>{% else %}—{% endif %}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5" style="text-align:center;padding:1rem;color:#64748b">Pas encore de notes pour le classement</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <h3 style="text-align:center;color:var(--fuchsia-dark);margin:1.5rem 0 1rem">TABLEAU DES MEILLEURS ÉLÈVES PAR DISCIPLINE</h3>
+    {% for mat_key, liste in report.meilleurs.items() %}
+    <div style="margin-bottom:1rem">
+        <strong>{{ COMPETENCES[mat_key].label if COMPETENCES.get(mat_key) else mat_key }}</strong>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr><th>Rang</th><th>Nom(s) et prénom(s)</th><th>Sexe</th><th>Note</th><th>Maîtrise matière</th></tr>
+                </thead>
+                <tbody>
+                {% for m in liste %}
+                <tr>
+                    <td>{{ loop.index }}{{ 'er' if loop.index == 1 else 'e' }}</td>
+                    <td><strong>{{ m.student.full_name }}</strong></td>
+                    <td>{{ m.sex }}</td>
+                    <td><strong>{{ m.note }}</strong></td>
+                    <td>{% if m.mastery %}<span class="badge {{ mastery_class(m.mastery) }}">{{ m.mastery }}</span>{% else %}—{% endif %}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5" style="text-align:center;color:#64748b">—</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{# ========== 4. RÉCAP % RÉUSSITE + COURBE ========== #}
+{% if recap %}
+<div class="card" style="margin-bottom:1.5rem">
+    <h3 style="text-align:center;color:var(--fuchsia-dark);margin-bottom:1rem">TABLEAU RÉCAPITULATIF DES POURCENTAGES DE RÉUSSITE</h3>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th></th>
+                    {% for r in recap %}
+                    <th>{{ r.palier }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Situation de réussite — Garçons</strong></td>
+                    {% for r in recap %}
+                    <td class="num-g">{{ r.garcons }}</td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td><strong>Situation de réussite — Filles</strong></td>
+                    {% for r in recap %}
+                    <td class="num-f">{{ r.filles }}</td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td><strong>Total</strong></td>
+                    {% for r in recap %}
+                    <td class="num-t"><strong>{{ r.total }}</strong></td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td><strong>% de réussite</strong></td>
+                    {% for r in recap %}
+                    <td style="background:{% if r.pct >= 80 %}#d1fae5{% elif r.pct >= 50 %}#fef3c7{% else %}#ffe4e6{% endif %};text-align:center">
+                        <strong style="color:{% if r.pct >= 80 %}#065f46{% elif r.pct >= 50 %}#92400e{% else %}#9f1239{% endif %}">{{ r.pct }} %</strong>
+                    </td>
+                    {% endfor %}
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h3 style="text-align:center;color:var(--fuchsia-dark);margin:1.5rem 0 1rem">COURBE DE RÉUSSITE</h3>
+    <div style="display:flex;align-items:flex-end;gap:0.75rem;height:220px;padding:1rem 0.5rem;border:2px solid var(--border);border-radius:14px;background:#fafafa">
+        {% for r in recap %}
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end">
+            <div style="font-size:0.75rem;font-weight:700;margin-bottom:0.25rem;color:var(--fuchsia-dark)">{{ r.pct }}%</div>
+            <div style="width:70%;max-width:48px;height:{{ r.pct }}%;min-height:{% if r.pct > 0 %}8px{% else %}0{% endif %};background:linear-gradient(180deg,var(--fuchsia),var(--purple));border-radius:8px 8px 0 0;transition:height 0.3s"></div>
+            <div style="font-size:0.7rem;margin-top:0.4rem;text-align:center;font-weight:600">{{ r.palier.replace('Palier ','P').replace('Profil de sortie','PS') }}</div>
+        </div>
+        {% endfor %}
+    </div>
+    <p style="text-align:center;font-size:0.8rem;color:#64748b;margin-top:0.5rem">Axe vertical : % de réussite (0 à 100) — calcul automatique Maxi + Mini / élèves évalués</p>
+</div>
+{% endif %}
+
+{% elif selected %}
+<div class="card" style="text-align:center;padding:2rem">Aucune donnée pour cette classe.</div>
+{% else %}
+<div class="card" style="text-align:center;padding:2rem">Créez d'abord des classes et inscrivez des élèves.</div>
+{% endif %}
+
+<style>
+.num-g { text-align:center; color:#1d4ed8; font-weight:600; }
+.num-f { text-align:center; color:#be185d; font-weight:600; }
+.num-t { text-align:center; font-weight:700; }
+.c-reussite { color:#065f46; }
+.c-echec { color:#9f1239; }
+</style>
+{% endblock %}

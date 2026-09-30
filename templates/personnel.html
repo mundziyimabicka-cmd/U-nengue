@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Personnel{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>Personnel</h2>
+    <a href="{{ url_for('ajouter_personnel') }}" class="btn btn-primary">+ Ajouter un membre</a>
+</div>
+
+<div class="stats-grid" style="margin-bottom:1.25rem">
+    <div class="card">
+        <div class="card-title">Masse salariale mensuelle</div>
+        <div class="card-value" style="font-size:1.4rem">{{ "{:,.0f}".format(total_salary) }} {{ settings.currency_symbol }}</div>
+    </div>
+</div>
+
+<div class="card" style="margin-bottom:1.25rem">
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Nom</th>
+                    <th>Rôle</th>
+                    <th>Salaire mensuel</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in staff_list %}
+                <tr>
+                    <td>
+                        <strong>{{ s.full_name }}</strong>
+                        {% if s.subject %}<br><small style="color:var(--text-muted)">{{ s.subject }}</small>{% endif %}
+                    </td>
+                    <td><span class="badge badge-secondary">{{ s.role }}</span></td>
+                    <td>{{ "{:,.0f}".format(s.monthly_salary) }} {{ settings.currency_symbol }}</td>
+                    <td>
+                        <div class="btn-group">
+                            <form method="POST" action="{{ url_for('verser_salaire', id=s.id) }}" style="display:inline">
+                                <input type="hidden" name="amount" value="{{ s.monthly_salary }}">
+                                <button type="submit" class="btn btn-success btn-sm"
+                                        onclick="return confirm('Verser {{ "{:,.0f}".format(s.monthly_salary) }} FCFA à {{ s.full_name }} ?')">Verser</button>
+                            </form>
+                            <a href="{{ url_for('supprimer_personnel', id=s.id) }}" class="btn btn-danger btn-sm"
+                               onclick="return confirm('Supprimer ?')">Retirer</a>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4" style="text-align:center;color:var(--text-muted)">Aucun personnel</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-title">Historique des versements de salaire</div>
+    <div class="table-wrap" style="margin-top:0.75rem">
+        <table>
+            <thead>
+                <tr>
+                    <th>Personnel</th>
+                    <th>Date</th>
+                    <th>Mode</th>
+                    <th>Montant</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in payments %}
+                <tr>
+                    <td>{{ p.staff.full_name }}</td>
+                    <td>{{ p.date.strftime('%d/%m/%Y') }} — {{ p.method }}</td>
+                    <td>{{ p.method }}</td>
+                    <td><strong>{{ "{:,.0f}".format(p.amount) }} {{ settings.currency_symbol }}</strong></td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4" style="text-align:center;color:var(--text-muted)">Aucun versement</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

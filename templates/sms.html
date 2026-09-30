@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block title %}Notifications SMS — U nengue{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>📲 Notifications SMS</h2>
+    {% if session.get('role') == 'Directeur' %}
+    <a href="{{ url_for('parametres') }}" class="btn btn-outline">⚙️ Configurer l'API SMS</a>
+    {% endif %}
+</div>
+
+<div class="card" style="margin-bottom:1rem">
+    {% if settings and settings.sms_enabled and settings.sms_provider == 'twilio' %}
+    <div class="alert alert-success" style="margin:0">
+        <strong>Mode API activé (Twilio)</strong> — les SMS seront envoyés automatiquement.
+    </div>
+    {% else %}
+    <div class="alert alert-info" style="margin:0">
+        <strong>Mode manuel</strong> — l’application prépare les SMS (liens <code>sms:</code>).
+        Pour l’envoi automatique, le directeur configure Twilio dans <strong>Paramètres</strong>.
+    </div>
+    {% endif %}
+</div>
+
+<div class="dashboard-grid">
+    <div class="card">
+        <h3 style="color:#a21caf;margin-bottom:1rem">👤 SMS individuel</h3>
+        <form method="POST" action="{{ url_for('sms_envoyer') }}">
+            <input type="hidden" name="mode" value="individual">
+            <div class="form-group">
+                <label>Élève</label>
+                <select name="student_id" class="form-control" required>
+                    <option value="">Choisir...</option>
+                    {% for s in students %}
+                    <option value="{{ s.id }}">{{ s.full_name }} — {{ s.parent_phone or 'pas de n°' }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Message SMS</label>
+                <textarea name="message" class="form-control" rows="3" required maxlength="320"
+                          placeholder="Bonjour, message de l'école concernant..."></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Envoyer / Préparer SMS</button>
+        </form>
+    </div>
+
+    <div class="card">
+        <h3 style="color:#a21caf;margin-bottom:1rem">🏫 SMS à une classe</h3>
+        <form method="POST" action="{{ url_for('sms_envoyer') }}">
+            <input type="hidden" name="mode" value="class">
+            <div class="form-group">
+                <label>Classe</label>
+                <select name="class_id" class="form-control" required>
+                    <option value="">Choisir...</option>
+                    {% for c in classes %}
+                    <option value="{{ c.id }}">{{ c.name }} ({{ c.students|length }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Message SMS</label>
+                <textarea name="message" class="form-control" rows="3" required maxlength="320"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Envoyer / Préparer SMS</button>
+        </form>
+    </div>
+
+    {% if session.get('role') == 'Directeur' %}
+    <div class="card">
+        <h3 style="color:#a21caf;margin-bottom:1rem">🌍 Toute l'école</h3>
+        <form method="POST" action="{{ url_for('sms_envoyer') }}">
+            <input type="hidden" name="mode" value="school">
+            <div class="form-group">
+                <label>Message à tous les parents</label>
+                <textarea name="message" class="form-control" rows="3" required maxlength="320"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Envoyer / Préparer SMS</button>
+        </form>
+    </div>
+    {% endif %}
+</div>
+
+<div class="card" style="margin-top:1.25rem">
+    <h3 style="color:#a21caf;margin-bottom:1rem">📋 Historique des SMS (50 derniers)</h3>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th><th>Destinataire</th><th>Téléphone</th>
+                    <th>Message</th><th>Statut</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for log in logs %}
+            <tr>
+                <td>{{ log.created_at.strftime('%d/%m/%Y %H:%M') if log.created_at else '—' }}</td>
+                <td>{{ log.recipient_name or '—' }}</td>
+                <td>{{ log.phone or '—' }}</td>
+                <td style="max-width:280px;font-size:0.85rem">{{ log.body[:80] }}{% if log.body and log.body|length > 80 %}…{% endif %}</td>
+                <td>
+                    {% if log.status == 'sent' %}
+                    <span class="badge badge-success">Envoyé</span>
+                    {% elif log.status == 'failed' %}
+                    <span class="badge badge-danger" title="{{ log.error_message }}">Échec</span>
+                    {% elif log.status == 'manual' %}
+                    <span class="badge badge-info">Manuel</span>
+                    {% else %}
+                    <span class="badge badge-secondary">{{ log.status }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5" style="text-align:center;padding:1.5rem;color:#6b7280">Aucun SMS pour le moment</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

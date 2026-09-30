@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Enregistrer un versement{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>Enregistrer un versement</h2>
+    <a href="{{ url_for('scolarite') }}" class="btn btn-outline">← Retour</a>
+</div>
+
+<div class="card" style="max-width:450px">
+    <form method="POST">
+        <div class="form-group">
+            <label>Élève *</label>
+            <select name="student_id" class="form-control" required>
+                <option value="">Choisir...</option>
+                {% for s in students %}
+                <option value="{{ s.id }}">{{ s.last_name }} {{ s.first_name }} ({{ s.classroom.name if s.classroom else '?' }})</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Montant (FCFA) *</label>
+            <input type="number" name="amount" class="form-control" required min="1" step="100">
+        </div>
+        <div class="form-group">
+            <label>Mode de paiement</label>
+            <select name="method" class="form-control">
+                <option>Espèces</option>
+                <option>Mobile Money</option>
+                <option>Chèque</option>
+                <option>Virement</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Enregistrer le versement</button>
+    </form>
+</div>
+{% endblock %}

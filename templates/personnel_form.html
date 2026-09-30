@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Ajouter un membre{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>Ajouter un membre du personnel</h2>
+    <a href="{{ url_for('personnel') }}" class="btn btn-outline">← Retour</a>
+</div>
+
+<div class="card" style="max-width:500px">
+    <form method="POST">
+        <div class="form-group">
+            <label>Nom complet *</label>
+            <input type="text" name="full_name" class="form-control" required>
+        </div>
+        <div class="form-group">
+            <label>Rôle</label>
+            <select name="role" class="form-control">
+                <option>Enseignant(e)</option>
+                <option>Direction</option>
+                <option>Administratif</option>
+                <option>Surveillant</option>
+                <option>Autre</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Matière (si enseignant)</label>
+            <input type="text" name="subject" class="form-control" placeholder="ex. Mathématiques">
+        </div>
+        <div class="form-group">
+            <label>Salaire mensuel (FCFA)</label>
+            <input type="number" name="monthly_salary" class="form-control" value="100000" step="1000">
+        </div>
+        <div class="form-group">
+            <label>Téléphone</label>
+            <input type="text" name="phone" class="form-control">
+        </div>
+        <button type="submit" class="btn btn-primary">Enregistrer</button>
+    </form>
+</div>
+{% endblock %}

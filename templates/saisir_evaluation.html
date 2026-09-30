@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Saisie évaluation — {{ student.full_name }}{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>Saisie — {{ student.full_name }} — {{ palier }}</h2>
+    <a href="{{ url_for('evaluations', class_id=student.class_id, palier=palier) }}" class="btn btn-outline">← Retour</a>
+</div>
+
+<div class="card" style="margin-bottom:1rem;background:linear-gradient(135deg,#fdf4ff,#fce7f3)">
+    <strong>Rappel du bulletin officiel :</strong>
+    <ul style="margin:0.4rem 0 0 1.2rem;font-size:0.9rem">
+        <li>Chaque <b>note de critère</b> est entre <b>0 et 4</b></li>
+        <li>La <b>note de la compétence</b> = somme des critères (C1 + C2 + C3), donc entre 0 et 12</li>
+        <li>Maîtrise de la compétence : <b>Maxi</b> 8–12 · <b>Mini</b> 5–7 · <b>Part</b> 3–4 · <b>NM</b> 0–2</li>
+        <li>Maîtrise de la matière selon le nombre de compétences réussies (Maxi/Mini)</li>
+    </ul>
+</div>
+
+<div class="card">
+<form method="POST" id="eval-form">
+<input type="hidden" name="palier" value="{{ palier }}">
+{% for matiere, minfo in COMPETENCES.items() %}
+<div style="margin-bottom:1.5rem;padding:1rem;border:2px solid #f0abfc;border-radius:14px;background:#fdf4ff">
+    <h3 style="color:#c026d3;margin-bottom:0.75rem">{{ minfo.label }}</h3>
+    {% for comp, label in minfo.comps.items() %}
+    <div style="margin-bottom:0.75rem;padding:0.85rem;background:#fff;border-radius:10px;border:1px solid #f0abfc"
+         data-comp="{{ matiere }}_{{ comp }}">
+        <strong style="color:#a21caf">{{ comp }} — {{ label }}</strong>
+        <div class="form-row" style="margin-top:0.5rem;grid-template-columns:1fr 1fr 1fr 1fr 1fr">
+            {% for crit in ['c1','c2','c3'] %}
+            <div class="form-group" style="margin:0">
+                <label>Critère {{ crit|upper }} (0–4)</label>
+                <input type="number" name="{{ matiere }}_{{ comp }}_{{ crit }}" class="form-control crit-input"
+                       data-group="{{ matiere }}_{{ comp }}"
+                       min="0" max="4" step="1"
+                       value="{{ existing.get(matiere ~ '_' ~ comp ~ '_' ~ crit, '') }}"
+                       oninput="updateSum(this)">
+            </div>
+            {% endfor %}
+            <div class="form-group" style="margin:0">
+                <label>Note compétence</label>
+                <input type="text" class="form-control sum-display" id="sum_{{ matiere }}_{{ comp }}"
+                       readonly style="background:#fce7f3;font-weight:700;color:#a21caf">
+            </div>
+            <div class="form-group" style="margin:0">
+                <label>Maîtrise</label>
+                <input type="text" class="form-control mastery-display" id="mast_{{ matiere }}_{{ comp }}"
+                       readonly style="font-weight:700">
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endfor %}
+<button type="submit" class="btn btn-primary" style="padding:0.7rem 2rem">Enregistrer l'évaluation</button>
+</form>
+</div>
+<script>
+function masteryFromSum(s) {
+    if (s === null || s === '' || isNaN(s)) return '';
+    s = Number(s);
+    if (s >= 8) return 'Maxi';
+    if (s >= 5) return 'Mini';
+    if (s >= 3) return 'Part';
+    return 'NM';
+}
+function updateSum(el) {
+    const group = el.getAttribute('data-group');
+    const inputs = document.querySelectorAll('input[data-group="'+group+'"]');
+    let sum = 0, has = false;
+    inputs.forEach(i => {
+        if (i.value !== '') { sum += Number(i.value); has = true; }
+    });
+    const sumEl = document.getElementById('sum_' + group);
+    const mastEl = document.getElementById('mast_' + group);
+    if (sumEl) sumEl.value = has ? sum : '';
+    if (mastEl) mastEl.value = has ? masteryFromSum(sum) : '';
+}
+document.querySelectorAll('.crit-input').forEach(i => updateSum(i));
+</script>
+{% endblock %}

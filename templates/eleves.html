@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Élèves — U nengue{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>👨‍🎓 Élèves</h2>
+    <div class="btn-group">
+        {% if session.get('role') == 'Directeur' %}
+        <a href="{{ url_for('ajouter_eleve') }}" class="btn btn-primary">+ Inscrire un élève</a>
+        {% endif %}
+    </div>
+</div>
+<div class="card" style="margin-bottom:1.25rem">
+    <form method="GET" style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:end">
+        <div class="form-group" style="margin:0;flex:1;min-width:160px">
+            <label>Rechercher</label>
+            <input type="text" name="q" class="form-control" value="{{ q }}" placeholder="Nom, prénom, matricule...">
+        </div>
+        {% if session.get('role') == 'Directeur' %}
+        <div class="form-group" style="margin:0;min-width:140px">
+            <label>Niveau</label>
+            <select name="level" class="form-control">
+                <option value="">Tous</option>
+                {% for n in NIVEAUX %}<option value="{{ n }}" {% if level_filter == n %}selected{% endif %}>{{ n }}</option>{% endfor %}
+            </select>
+        </div>
+        <div class="form-group" style="margin:0;min-width:140px">
+            <label>Classe</label>
+            <select name="class_id" class="form-control">
+                <option value="">Toutes</option>
+                {% for c in classes %}<option value="{{ c.id }}" {% if class_filter == c.id|string %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
+            </select>
+        </div>
+        {% endif %}
+        <button type="submit" class="btn btn-outline">Filtrer</button>
+    </form>
+</div>
+<div class="card">
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Photo</th><th>Élève</th><th>Matricule</th><th>Né(e) le / à</th>
+                    <th>Classe</th><th>Statut</th><th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in students %}
+                <tr>
+                    <td>
+                        {% if s.photo_path %}
+                        <img src="{{ url_for('static', filename=s.photo_path) }}" style="width:40px;height:48px;object-fit:cover;border-radius:6px;border:2px solid #e879f9">
+                        {% else %}👤{% endif %}
+                    </td>
+                    <td><strong>{{ s.last_name }} {{ s.first_name }}</strong></td>
+                    <td>{{ s.matricule or '—' }}</td>
+                    <td>{{ s.birth_date.strftime('%d/%m/%Y') if s.birth_date else '—' }}<br><small>{{ s.birth_place or '' }}</small></td>
+                    <td>{{ s.classroom.name if s.classroom else '—' }}</td>
+                    <td><span class="badge badge-{{ 'info' if s.status == 'Nouveau' else 'warning' }}">{{ s.status }}</span></td>
+                    <td>
+                        <div class="btn-group">
+                            <a href="{{ url_for('fiche_eleve', id=s.id) }}" class="btn btn-info btn-sm">Fiche</a>
+                            {% if session.get('role') == 'Directeur' %}
+                            <a href="{{ url_for('modifier_eleve', id=s.id) }}" class="btn btn-outline btn-sm">Modifier</a>
+                            <a href="{{ url_for('supprimer_eleve', id=s.id) }}" class="btn btn-danger btn-sm"
+                               onclick="return confirm('Supprimer définitivement {{ s.full_name }} ?')">Supprimer</a>
+                            {% endif %}
+                            <a href="{{ url_for('carte_eleve', id=s.id) }}" class="btn btn-purple btn-sm">Carte</a>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="7" style="text-align:center;padding:2rem;color:#6b7280">Aucun élève</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

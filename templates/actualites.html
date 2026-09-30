@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Actualités — U nengue{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>📰 Actualités & documents</h2>
+    {% if session.get('role') == 'Directeur' %}
+    <a href="{{ url_for('actualite_ajouter') }}" class="btn btn-primary">+ Publier</a>
+    {% endif %}
+</div>
+{% for n in items %}
+<div class="card" style="margin-bottom:1rem">
+    <div style="display:flex;justify-content:space-between;gap:0.75rem;flex-wrap:wrap">
+        <div>
+            <span class="badge badge-info">{{ n.kind }}</span>
+            <h3 style="margin:0.35rem 0">{{ n.title }}</h3>
+            <small>{{ n.created_at.strftime('%d/%m/%Y %H:%M') if n.created_at else '' }}
+            {% if n.author %} — {{ n.author.full_name }}{% endif %}</small>
+        </div>
+        {% if session.get('role') == 'Directeur' %}
+        <a href="{{ url_for('actualite_supprimer', id=n.id) }}" class="btn btn-danger btn-sm"
+           onclick="return confirm('Supprimer ?')">Supprimer</a>
+        {% endif %}
+    </div>
+    {% if n.body %}<p style="margin-top:0.75rem">{{ n.body }}</p>{% endif %}
+    {% if n.filename %}
+        {% if n.kind == 'photo' %}
+        <img src="{{ url_for('static', filename=n.filename) }}" style="max-width:420px;width:100%;border-radius:12px;margin-top:0.75rem">
+        {% elif n.kind == 'video' %}
+        <video controls style="max-width:480px;width:100%;border-radius:12px;margin-top:0.75rem">
+            <source src="{{ url_for('static', filename=n.filename) }}">
+        </video>
+        {% endif %}
+        <div style="margin-top:0.6rem">
+            <a href="{{ url_for('static', filename=n.filename) }}" class="btn btn-primary btn-sm" download>Télécharger le fichier</a>
+        </div>
+    {% endif %}
+</div>
+{% else %}
+<div class="card" style="text-align:center;padding:2rem">Aucune publication</div>
+{% endfor %}
+{% endblock %}
