@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Fiches pédagogiques{% endblock %}
+{% block content %}
+<div class="page-header" style="display:flex;flex-wrap:wrap;gap:1rem;align-items:center;justify-content:space-between">
+    <div>
+        <h2 style="margin:0">📝 Fiches pédagogiques</h2>
+        <p class="subtitle" style="margin:0.25rem 0 0">Fiches de préparation par classe et par matière</p>
+    </div>
+    <a href="{{ url_for('fiche_pedagogique_form') }}" class="btn btn-primary">➕ Nouvelle fiche</a>
+</div>
+
+<div class="card" style="margin-bottom:1.25rem">
+    <form method="GET" style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:end">
+        <div class="form-group" style="margin:0">
+            <label>Classe</label>
+            <select name="class_id" class="form-control" onchange="this.form.submit()">
+                {% for r in rooms %}
+                <option value="{{ r.id }}" {% if selected and selected.id == r.id %}selected{% endif %}>
+                    {{ r.name }} — {{ r.level }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group" style="margin:0">
+            <label>Matière</label>
+            <select name="subject" class="form-control" onchange="this.form.submit()">
+                <option value="">Toutes</option>
+                {% for s in subjects %}
+                <option value="{{ s }}" {% if subject == s %}selected{% endif %}>{{ s }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </form>
+</div>
+
+{% if sheets %}
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem">
+    {% for sh in sheets %}
+    <div class="card" style="border-top:4px solid {% if sh.subject == 'Français' %}#3b82f6{% elif sh.subject == 'Mathématiques' %}#ef4444{% else %}#10b981{% endif %}">
+        <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;
+            color:{% if sh.subject == 'Français' %}#2563eb{% elif sh.subject == 'Mathématiques' %}#dc2626{% else %}#059669{% endif %}">
+            {{ sh.subject }}{% if sh.sub_discipline %} · {{ sh.sub_discipline }}{% endif %}
+        </div>
+        <h3 style="margin:0.4rem 0;font-size:1.05rem">{{ sh.title or sh.notion or 'Sans titre' }}</h3>
+        <p style="margin:0;font-size:0.85rem;color:var(--text-muted)">
+            {{ sh.classroom.name if sh.classroom else '—' }} · {{ sh.duration or '—' }}
+            {% if sh.teacher %}<br>{{ sh.teacher }}{% endif %}
+        </p>
+        <div style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-top:0.85rem">
+            <a class="btn btn-primary" style="font-size:0.8rem;padding:0.35rem 0.7rem" href="{{ url_for('fiche_pedagogique_detail', id=sh.id) }}">Voir</a>
+            <a class="btn btn-secondary" style="font-size:0.8rem;padding:0.35rem 0.7rem" href="{{ url_for('fiche_pedagogique_form', id=sh.id) }}">Modifier</a>
+            <a class="btn btn-secondary" style="font-size:0.8rem;padding:0.35rem 0.7rem" href="{{ url_for('fiche_pedagogique_pdf', id=sh.id) }}">PDF</a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card" style="text-align:center;padding:2.5rem;color:var(--text-muted)">
+    Aucune fiche pour ce filtre.
+    <div style="margin-top:1rem">
+        <a href="{{ url_for('fiche_pedagogique_form') }}" class="btn btn-primary">Créer la première fiche</a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

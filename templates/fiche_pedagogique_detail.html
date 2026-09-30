@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}{{ sheet.title or 'Fiche pédagogique' }}{% endblock %}
+{% block content %}
+<div class="page-header" style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:center;justify-content:space-between">
+    <div>
+        <h2 style="margin:0">📝 Fiche pédagogique</h2>
+        <p class="subtitle" style="margin:0.25rem 0 0">{{ sheet.classroom.name if sheet.classroom else '' }} · {{ sheet.subject }}</p>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:0.5rem">
+        <a href="{{ url_for('fiche_pedagogique_form', id=sheet.id) }}" class="btn btn-secondary">Modifier</a>
+        <a href="{{ url_for('fiche_pedagogique_pdf', id=sheet.id) }}" class="btn btn-primary">📄 PDF</a>
+        <a href="{{ url_for('fiches_pedagogiques', class_id=sheet.class_id) }}" class="btn btn-secondary">← Liste</a>
+    </div>
+</div>
+
+<div class="card fiche-view" style="max-width:900px;border-top:5px solid #c026d3">
+    <h1 style="text-align:center;color:#a21caf;font-size:1.35rem;margin:0 0 0.25rem">
+        {{ sheet.title or ('FICHE PÉDAGOGIQUE — ' ~ (sheet.sub_discipline or sheet.subject)) }}
+    </h1>
+    {% if sheet.sub_discipline and sheet.title %}
+    <p style="text-align:center;color:#86198f;margin:0 0 1rem;font-weight:600">{{ sheet.sub_discipline }}</p>
+    {% endif %}
+
+    <table class="fiche-meta">
+        <tr>
+            <td><strong>Classe :</strong> {{ sheet.classroom.name if sheet.classroom else '—' }}</td>
+            <td><strong>Durée :</strong> {{ sheet.duration or '—' }}</td>
+            <td><strong>Domaine :</strong> {{ sheet.domain or sheet.subject }}</td>
+        </tr>
+        <tr>
+            <td><strong>Démarche :</strong> {{ sheet.approach or '—' }}</td>
+            <td><strong>Notion :</strong> {{ sheet.notion or '—' }}</td>
+            <td><strong>Matériel :</strong> {{ sheet.material or '—' }}</td>
+        </tr>
+    </table>
+
+    <div class="fiche-obj">
+        <p><strong>Objectif :</strong> {{ sheet.objective or '—' }}</p>
+        <p><strong>Compétence :</strong> {{ sheet.competence or '—' }}</p>
+    </div>
+
+    {% set phases = sheet.phases() %}
+    {% if phases %}
+    <div class="tt-wrap" style="margin-top:1rem">
+        <table class="tt-table fiche-phases">
+            <thead>
+                <tr>
+                    <th style="width:18%">Phases</th>
+                    <th>Actions de l'enseignant</th>
+                    <th>Actions des élèves</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in phases %}
+                <tr>
+                    <td class="tt-time" style="text-align:left;padding:0.65rem">
+                        <strong>{{ p.name }}</strong>
+                        {% if p.duration %}<br><span style="font-weight:500">{{ p.duration }}</span>{% endif %}
+                    </td>
+                    <td style="padding:0.65rem;font-size:0.88rem;vertical-align:top">{{ p.teacher or '—' }}</td>
+                    <td style="padding:0.65rem;font-size:0.88rem;vertical-align:top">{{ p.student or '—' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    {% if sheet.written_trace %}
+    <div class="fiche-trace">
+        <h3>Trace écrite</h3>
+        <p>{{ sheet.written_trace }}</p>
+    </div>
+    {% endif %}
+
+    {% if sheet.teacher %}
+    <p style="text-align:right;margin-top:1rem;color:var(--text-muted);font-size:0.85rem">
+        {{ sheet.teacher }}
+    </p>
+    {% endif %}
+</div>
+
+<form method="POST" action="{{ url_for('fiche_pedagogique_delete', id=sheet.id) }}"
+      onsubmit="return confirm('Supprimer cette fiche ?')" style="margin-top:1rem">
+    <button type="submit" class="btn btn-secondary" style="background:#fee2e2;color:#b91c1c">🗑️ Supprimer</button>
+</form>
+
+<style>
+.fiche-meta { width:100%; border-collapse:collapse; margin-bottom:1rem; }
+.fiche-meta td {
+    border:1px solid #e879f9; padding:0.55rem 0.65rem; width:33.33%;
+    background:#fdf4ff; font-size:0.88rem; vertical-align:top;
+}
+.fiche-obj {
+    background:linear-gradient(135deg,#fdf4ff,#fce7f3); border-radius:12px;
+    padding:0.85rem 1rem; border-left:4px solid #c026d3; margin-bottom:0.5rem;
+}
+.fiche-obj p { margin:0.35rem 0; font-size:0.9rem; line-height:1.45; }
+.fiche-phases th { background:linear-gradient(135deg,#c026d3,#a21caf)!important; }
+.fiche-trace {
+    margin-top:1.25rem; border:2px solid #c026d3; border-radius:12px;
+    padding:0.85rem 1rem; background:#fff;
+}
+.fiche-trace h3 {
+    margin:0 0 0.5rem; color:#a21caf; font-size:0.95rem;
+    text-transform:uppercase; letter-spacing:0.04em;
+}
+.fiche-trace p { margin:0; font-size:0.9rem; line-height:1.5; white-space:pre-wrap; }
+</style>
+{% endblock %}

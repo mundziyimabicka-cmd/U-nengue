@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Modifier' if sheet else 'Nouvelle' }} fiche pédagogique{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>{{ '✏️ Modifier' if sheet else '➕ Nouvelle' }} fiche pédagogique</h2>
+    <a href="{{ url_for('fiches_pedagogiques') }}" class="btn btn-secondary">← Retour</a>
+</div>
+
+<form method="POST" class="card" style="max-width:960px">
+    <div class="form-row">
+        <div class="form-group">
+            <label>Classe *</label>
+            <select name="class_id" class="form-control" required>
+                {% for r in rooms %}
+                <option value="{{ r.id }}" {% if sheet and sheet.class_id == r.id %}selected{% elif not sheet and loop.first %}selected{% endif %}>
+                    {{ r.name }} — {{ r.level }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Matière *</label>
+            <select name="subject" class="form-control" required>
+                {% for s in subjects %}
+                <option value="{{ s }}" {% if sheet and sheet.subject == s %}selected{% endif %}>{{ s }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Sous-discipline (libre)</label>
+            <input type="text" name="sub_discipline" class="form-control"
+                   value="{{ sheet.sub_discipline if sheet else '' }}"
+                   placeholder="ex. Production d'écrits, Calcul mental…">
+        </div>
+    </div>
+
+    <div class="form-row">
+        <div class="form-group" style="flex:2">
+            <label>Titre de la fiche</label>
+            <input type="text" name="title" class="form-control"
+                   value="{{ sheet.title if sheet else '' }}"
+                   placeholder="ex. FICHE PÉDAGOGIQUE - PRODUCTION D'ÉCRITS">
+        </div>
+        <div class="form-group">
+            <label>Durée</label>
+            <input type="text" name="duration" class="form-control"
+                   value="{{ sheet.duration if sheet else '30 min' }}" placeholder="30 min">
+        </div>
+    </div>
+
+    <div class="form-row">
+        <div class="form-group">
+            <label>Domaine</label>
+            <input type="text" name="domain" class="form-control"
+                   value="{{ sheet.domain if sheet else '' }}" placeholder="ex. Français - Écriture">
+        </div>
+        <div class="form-group">
+            <label>Démarche</label>
+            <input type="text" name="approach" class="form-control"
+                   value="{{ sheet.approach if sheet else '' }}" placeholder="ex. Enseignement explicite">
+        </div>
+        <div class="form-group">
+            <label>Notion</label>
+            <input type="text" name="notion" class="form-control"
+                   value="{{ sheet.notion if sheet else '' }}" placeholder="ex. Écrire une phrase">
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label>Matériel</label>
+        <input type="text" name="material" class="form-control"
+               value="{{ sheet.material if sheet else '' }}"
+               placeholder="Images, tableau, ardoises, cahier…">
+    </div>
+
+    <div class="form-group">
+        <label>Objectif</label>
+        <textarea name="objective" class="form-control" rows="2"
+                  placeholder="Écrire une phrase simple et correcte…">{{ sheet.objective if sheet else '' }}</textarea>
+    </div>
+    <div class="form-group">
+        <label>Compétence</label>
+        <textarea name="competence" class="form-control" rows="2"
+                  placeholder="Produire une phrase cohérente…">{{ sheet.competence if sheet else '' }}</textarea>
+    </div>
+    <div class="form-group">
+        <label>Enseignant(e)</label>
+        <input type="text" name="teacher" class="form-control"
+               value="{{ sheet.teacher if sheet else '' }}">
+    </div>
+
+    <hr style="margin:1.5rem 0;border:none;border-top:2px solid #f0abfc">
+    <h3 style="color:#a21caf;margin:0 0 0.75rem">Phases de la séance</h3>
+    <p style="font-size:0.85rem;color:var(--text-muted);margin:0 0 1rem">
+        Ajoutez ou retirez des lignes selon votre déroulement (ouverture, modélisation, pratique guidée…).
+    </p>
+
+    <div id="phases-box">
+        {% for p in phases %}
+        <div class="phase-row card" style="padding:0.85rem;margin-bottom:0.75rem;background:#fdf4ff;border:1px solid #f0abfc">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Phase</label>
+                    <input type="text" name="phase_name[]" class="form-control" value="{{ p.name }}" required>
+                </div>
+                <div class="form-group" style="max-width:120px">
+                    <label>Durée</label>
+                    <input type="text" name="phase_duration[]" class="form-control" value="{{ p.duration }}">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Actions de l'enseignant</label>
+                    <textarea name="phase_teacher[]" class="form-control" rows="3">{{ p.teacher }}</textarea>
+                </div>
+                <div class="form-group">
+                    <label>Actions des élèves</label>
+                    <textarea name="phase_student[]" class="form-control" rows="3">{{ p.student }}</textarea>
+                </div>
+            </div>
+            <button type="button" class="btn btn-secondary" style="font-size:0.75rem;background:#fee2e2;color:#b91c1c"
+                    onclick="this.closest('.phase-row').remove()">Retirer cette phase</button>
+        </div>
+        {% endfor %}
+    </div>
+    <button type="button" class="btn btn-secondary" onclick="addPhase()" style="margin-bottom:1.25rem">+ Ajouter une phase</button>
+
+    <div class="form-group">
+        <label>Trace écrite</label>
+        <textarea name="written_trace" class="form-control" rows="3"
+                  placeholder="Pour écrire une phrase : 1. …">{{ sheet.written_trace if sheet else '' }}</textarea>
+    </div>
+
+    <button type="submit" class="btn btn-primary">💾 Enregistrer la fiche</button>
+</form>
+
+<template id="phase-template">
+    <div class="phase-row card" style="padding:0.85rem;margin-bottom:0.75rem;background:#fdf4ff;border:1px solid #f0abfc">
+        <div class="form-row">
+            <div class="form-group">
+                <label>Phase</label>
+                <input type="text" name="phase_name[]" class="form-control" value="" required>
+            </div>
+            <div class="form-group" style="max-width:120px">
+                <label>Durée</label>
+                <input type="text" name="phase_duration[]" class="form-control" value="">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Actions de l'enseignant</label>
+                <textarea name="phase_teacher[]" class="form-control" rows="3"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Actions des élèves</label>
+                <textarea name="phase_student[]" class="form-control" rows="3"></textarea>
+            </div>
+        </div>
+        <button type="button" class="btn btn-secondary" style="font-size:0.75rem;background:#fee2e2;color:#b91c1c"
+                onclick="this.closest('.phase-row').remove()">Retirer cette phase</button>
+    </div>
+</template>
+<script>
+function addPhase() {
+    var t = document.getElementById('phase-template');
+    document.getElementById('phases-box').appendChild(t.content.cloneNode(true));
+}
+</script>
+{% endblock %}

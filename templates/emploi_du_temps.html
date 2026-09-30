@@ -1,85 +1,214 @@
 {% extends "base.html" %}
 {% block title %}Emploi du temps{% endblock %}
 {% block content %}
-<div class="page-header">
-    <h2>Emploi du temps</h2>
-    <form method="GET">
-        <select name="class_id" class="form-control" onchange="this.form.submit()">
+<div class="page-header" style="display:flex;flex-wrap:wrap;gap:1rem;align-items:center;justify-content:space-between">
+    <div>
+        <h2 style="margin:0">📅 Emploi du temps</h2>
+        <p class="subtitle" style="margin:0.25rem 0 0">Créez, modifiez et téléchargez l'emploi du temps de chaque classe</p>
+    </div>
+    <form method="GET" style="display:flex;gap:0.5rem;align-items:center">
+        <select name="class_id" class="form-control" onchange="this.form.submit()" style="min-width:220px">
             {% for r in rooms %}
-            <option value="{{ r.id }}" {% if selected and selected.id == r.id %}selected{% endif %}>{{ r.name }}</option>
+            <option value="{{ r.id }}" {% if selected and selected.id == r.id %}selected{% endif %}>
+                {{ r.name }} — {{ r.level }}
+            </option>
             {% endfor %}
         </select>
     </form>
 </div>
 
 {% if selected %}
-<div class="card" style="margin-bottom:1.25rem">
-    <div class="card-title">Emploi du temps — {{ selected.name }}</div>
-    <div class="timetable-grid" style="margin-top:1rem">
-        <div class="tt-header"></div>
-        {% for d in days %}<div class="tt-header">{{ d }}</div>{% endfor %}
-        {% for t in times %}
-            {% set parts = t.split('-') %}
-            <div class="tt-time">{{ t }}</div>
-            {% for d in days %}
-            <div class="tt-cell">
-                {% set key = (d, t) %}
-                {% if key in grid %}
-                {% set s = grid[key] %}
-                <div class="tt-slot">
-                    <strong>{{ s.subject }}</strong><br>
-                    <small>{{ s.teacher }}</small>
-                    <a href="{{ url_for('supprimer_creneau', id=s.id) }}" style="color:#ef4444;font-size:0.7rem" onclick="return confirm('Supprimer ?')">✕</a>
-                </div>
-                {% endif %}
-            </div>
-            {% endfor %}
-        {% endfor %}
+<div class="card" style="margin-bottom:1.25rem;overflow-x:auto">
+    <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:0.75rem;margin-bottom:1rem">
+        <div class="card-title" style="margin:0">
+            {{ selected.name }}
+            <span style="font-weight:400;color:var(--text-muted);font-size:0.9rem">
+                ({{ selected.level }}){% if selected.teacher %} — {{ selected.teacher }}{% endif %}
+            </span>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:0.5rem">
+            <a class="btn btn-primary" href="{{ url_for('emploi_pdf', class_id=selected.id) }}">📄 Télécharger PDF</a>
+            <form method="POST" action="{{ url_for('vider_emploi', class_id=selected.id) }}"
+                  onsubmit="return confirm('Vider tout l\\'emploi du temps de cette classe ?')">
+                <button type="submit" class="btn btn-secondary" style="background:#fee2e2;color:#b91c1c">🗑️ Vider</button>
+            </form>
+        </div>
     </div>
+
+    {% if time_rows %}
+    <div class="tt-wrap">
+        <table class="tt-table">
+            <thead>
+                <tr>
+                    <th class="tt-corner">Horaires</th>
+                    {% for d in days %}
+                    <th>{{ d }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in time_rows %}
+                <tr>
+                    <td class="tt-time">{{ t.replace('-', ' – ') }}</td>
+                    {% for d in days %}
+                    {% set key = (d, t) %}
+                    {% set s = grid.get(key) %}
+                    <td class="tt-cell">
+                        {% if s %}
+                        <div class="tt-slot" style="background:{{ s.color or subject_color(s.subject) }}">
+                            <strong>{{ s.subject }}</strong>
+                            {% if s.teacher %}<small>{{ s.teacher }}</small>{% endif %}
+                            {% if s.room %}<small class="tt-room">📍 {{ s.room }}</small>{% endif %}
+                            <div class="tt-actions">
+                                <button type="button" class="tt-edit" onclick="editSlot({{ s.id }}, '{{ s.day }}', '{{ s.start_time }}', '{{ s.end_time }}', '{{ s.subject|e }}', '{{ s.teacher|e }}', '{{ s.color }}', '{{ s.room|e }}', '{{ s.notes|e }}')">✎</button>
+                                <a href="{{ url_for('supprimer_creneau', id=s.id) }}" onclick="return confirm('Supprimer ce créneau ?')" title="Supprimer">✕</a>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div style="text-align:center;padding:2rem;color:var(--text-muted)">
+        Aucun créneau pour cette classe. Ajoutez-en ci-dessous.
+    </div>
+    {% endif %}
 </div>
 
-<div class="card" style="max-width:500px">
-    <div class="card-title">Ajouter un créneau</div>
-    <form method="POST" action="{{ url_for('ajouter_creneau') }}" style="margin-top:1rem">
+<div class="card" style="max-width:720px">
+    <div class="card-title" id="form-title">➕ Ajouter un créneau</div>
+    <form method="POST" action="{{ url_for('ajouter_creneau') }}" id="slot-form" style="margin-top:1rem">
         <input type="hidden" name="class_id" value="{{ selected.id }}">
         <div class="form-row">
             <div class="form-group">
-                <label>Jour</label>
-                <select name="day" class="form-control">
-                    {% for d in days %}<option>{{ d }}</option>{% endfor %}
+                <label>Jour *</label>
+                <select name="day" id="f-day" class="form-control" required>
+                    {% for d in days %}<option value="{{ d }}">{{ d }}</option>{% endfor %}
                 </select>
             </div>
             <div class="form-group">
-                <label>Début</label>
-                <select name="start_time" class="form-control">
-                    {% for h in ['08h','09h','10h','11h','14h','15h','16h'] %}<option>{{ h }}</option>{% endfor %}
-                </select>
+                <label>Début *</label>
+                <input type="text" name="start_time" id="f-start" class="form-control" list="times-list"
+                       placeholder="07h30" required>
+            </div>
+            <div class="form-group">
+                <label>Fin *</label>
+                <input type="text" name="end_time" id="f-end" class="form-control" list="times-list"
+                       placeholder="08h00" required>
+            </div>
+        </div>
+        <datalist id="times-list">
+            {% for h in ['07h15','07h30','07h45','08h00','08h15','08h30','08h45','09h00','09h15','09h30','09h45','10h00','10h15','10h30','10h45','11h00','11h15','11h30','11h45','12h00','12h15','12h30','13h00','14h00','14h30','15h00','15h30','16h00','16h30','17h00'] %}
+            <option value="{{ h }}">
+            {% endfor %}
+        </datalist>
+        <div class="form-row">
+            <div class="form-group" style="flex:2">
+                <label>Matière / Activité *</label>
+                <input type="text" name="subject" id="f-subject" class="form-control" list="subjects-list"
+                       placeholder="ex. Mathématiques, Graphisme, Récréation…" required>
+                <datalist id="subjects-list">
+                    {% for s in subjects %}<option value="{{ s }}">{% endfor %}
+                </datalist>
+            </div>
+            <div class="form-group">
+                <label>Couleur</label>
+                <input type="color" name="color" id="f-color" class="form-control" value="#c026d3"
+                       style="height:42px;padding:4px">
             </div>
         </div>
         <div class="form-row">
             <div class="form-group">
-                <label>Fin</label>
-                <select name="end_time" class="form-control">
-                    {% for h in ['09h','10h','11h','12h','15h','16h','17h'] %}<option>{{ h }}</option>{% endfor %}
-                </select>
+                <label>Enseignant(e)</label>
+                <input type="text" name="teacher" id="f-teacher" class="form-control"
+                       value="{{ selected.teacher or '' }}" placeholder="Mme / M.">
             </div>
             <div class="form-group">
-                <label>Matière</label>
-                <select name="subject" class="form-control">
-                    {% for s in subjects %}<option>{{ s.name }}</option>{% endfor %}
-                </select>
+                <label>Salle / Lieu</label>
+                <input type="text" name="room" id="f-room" class="form-control" placeholder="ex. Salle A, Cour">
             </div>
         </div>
         <div class="form-group">
-            <label>Professeur</label>
-            <input type="text" name="teacher" class="form-control" placeholder="ex. Mme Diallo">
+            <label>Notes (optionnel)</label>
+            <input type="text" name="notes" id="f-notes" class="form-control" placeholder="Groupe, matériel…">
         </div>
-        <button type="submit" class="btn btn-primary">Ajouter le créneau</button>
+        <div style="display:flex;gap:0.75rem;flex-wrap:wrap">
+            <button type="submit" class="btn btn-primary" id="btn-submit">Ajouter le créneau</button>
+            <button type="button" class="btn btn-secondary" id="btn-cancel" style="display:none" onclick="resetForm()">Annuler la modification</button>
+        </div>
     </form>
 </div>
+
+<script>
+function editSlot(id, day, start, end, subject, teacher, color, room, notes) {
+    var form = document.getElementById('slot-form');
+    form.action = '/emploi-du-temps/' + id + '/modifier';
+    document.getElementById('form-title').textContent = '✏️ Modifier le créneau';
+    document.getElementById('f-day').value = day;
+    document.getElementById('f-start').value = start;
+    document.getElementById('f-end').value = end;
+    document.getElementById('f-subject').value = subject;
+    document.getElementById('f-teacher').value = teacher || '';
+    document.getElementById('f-color').value = color || '#c026d3';
+    document.getElementById('f-room').value = room || '';
+    document.getElementById('f-notes').value = notes || '';
+    document.getElementById('btn-submit').textContent = 'Enregistrer les modifications';
+    document.getElementById('btn-cancel').style.display = 'inline-flex';
+    form.scrollIntoView({behavior:'smooth', block:'center'});
+}
+function resetForm() {
+    var form = document.getElementById('slot-form');
+    form.action = '{{ url_for("ajouter_creneau") }}';
+    form.reset();
+    document.getElementById('form-title').textContent = '➕ Ajouter un créneau';
+    document.getElementById('btn-submit').textContent = 'Ajouter le créneau';
+    document.getElementById('btn-cancel').style.display = 'none';
+    document.getElementById('f-color').value = '#c026d3';
+}
+</script>
+
+<style>
+.tt-wrap { overflow-x: auto; border-radius: 14px; border: 2px solid #f0abfc; }
+.tt-table { width: 100%; border-collapse: collapse; min-width: 720px; background: #fff; }
+.tt-table th {
+    background: linear-gradient(135deg, #c026d3, #a21caf);
+    color: #fff; padding: 0.75rem 0.5rem; font-size: 0.9rem;
+    text-align: center; position: sticky; top: 0;
+}
+.tt-table th.tt-corner { background: #86198f; min-width: 100px; }
+.tt-table td { border: 1px solid #f5d0fe; padding: 4px; vertical-align: top; min-width: 110px; height: 64px; }
+.tt-table td.tt-time {
+    background: #fdf4ff; font-weight: 700; font-size: 0.8rem;
+    text-align: center; color: #a21caf; white-space: nowrap; vertical-align: middle;
+}
+.tt-slot {
+    border-radius: 10px; padding: 0.4rem 0.45rem; color: #fff;
+    font-size: 0.78rem; line-height: 1.25; min-height: 52px;
+    display: flex; flex-direction: column; gap: 2px; position: relative;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+}
+.tt-slot strong { font-size: 0.82rem; }
+.tt-slot small { opacity: 0.95; font-size: 0.7rem; }
+.tt-room { opacity: 0.9 !important; }
+.tt-actions {
+    position: absolute; top: 2px; right: 4px;
+    display: flex; gap: 4px; opacity: 0.85;
+}
+.tt-actions a, .tt-edit {
+    background: rgba(0,0,0,0.25); border: none; color: #fff;
+    width: 20px; height: 20px; border-radius: 6px; cursor: pointer;
+    font-size: 0.7rem; line-height: 20px; text-align: center; text-decoration: none;
+}
+.tt-actions a:hover, .tt-edit:hover { background: rgba(0,0,0,0.45); }
+</style>
+
 {% else %}
-<div class="card" style="text-align:center;padding:2rem;color:var(--text-muted)">
-    Aucune classe disponible. Créez d'abord une classe.
+<div class="card" style="text-align:center;padding:2.5rem;color:var(--text-muted)">
+    Aucune classe disponible. Créez d'abord une classe dans le menu Classes.
 </div>
 {% endif %}
 {% endblock %}

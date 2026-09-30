@@ -76,7 +76,65 @@
         obtenez un numéro et collez SID + Token ici. Sans configuration, le mode manuel reste disponible.
     </p>
 
+
+    <hr style="margin:1.5rem 0;border:none;border-top:2px solid #f0abfc">
+    <h3 style="color:#a21caf;margin-bottom:1rem">📧 Serveur de messagerie (SMTP)</h3>
+    <p style="font-size:0.85rem;color:#6b7280;margin-bottom:1rem">
+        Permet d'envoyer les codes de mot de passe oublié et des notifications par e-mail.
+        <strong>Gmail recommandé</strong> : activez la validation en 2 étapes, puis créez un
+        <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener">mot de passe d'application</a>.
+    </p>
+    <div class="form-group">
+        <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer">
+            <input type="checkbox" name="smtp_enabled" {% if settings.smtp_enabled %}checked{% endif %}>
+            Activer l'envoi d'e-mails (SMTP)
+        </label>
+    </div>
+    <div class="form-row">
+        <div class="form-group">
+            <label>Serveur SMTP</label>
+            <input type="text" name="smtp_host" class="form-control" value="{{ settings.smtp_host or 'smtp.gmail.com' }}" placeholder="smtp.gmail.com">
+        </div>
+        <div class="form-group">
+            <label>Port</label>
+            <input type="number" name="smtp_port" class="form-control" value="{{ settings.smtp_port or 587 }}">
+        </div>
+    </div>
+    <div class="form-row">
+        <div class="form-group">
+            <label>Adresse e-mail (utilisateur SMTP)</label>
+            <input type="email" name="smtp_user" class="form-control" value="{{ settings.smtp_user or '' }}" placeholder="ecole@gmail.com">
+        </div>
+        <div class="form-group">
+            <label>Mot de passe (ou mot de passe d'application)</label>
+            <input type="password" name="smtp_password" class="form-control" value="" placeholder="Laisser vide pour ne pas changer">
+        </div>
+    </div>
+    <div class="form-row">
+        <div class="form-group">
+            <label>E-mail expéditeur (From)</label>
+            <input type="email" name="smtp_from" class="form-control" value="{{ settings.smtp_from or '' }}" placeholder="identique à l'utilisateur si vide">
+        </div>
+        <div class="form-group">
+            <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;margin-top:1.5rem">
+                <input type="checkbox" name="smtp_use_tls" {% if settings.smtp_use_tls is not defined or settings.smtp_use_tls %}checked{% endif %}>
+                Utiliser TLS (recommandé, port 587)
+            </label>
+        </div>
+    </div>
     <button type="submit" class="btn btn-primary">Enregistrer</button>
+</form>
+
+<form method="POST" action="{{ url_for('test_smtp') }}" style="margin-top:1rem;padding:1rem;background:#fdf4ff;border-radius:12px">
+    <h4 style="margin:0 0 0.5rem;color:#a21caf">Tester l'envoi</h4>
+    <div class="form-row">
+        <div class="form-group" style="flex:1">
+            <input type="email" name="test_email" class="form-control" placeholder="email@exemple.com" value="{{ settings.email or '' }}">
+        </div>
+        <div class="form-group">
+            <button type="submit" class="btn btn-secondary">Envoyer un e-mail de test</button>
+        </div>
+    </div>
 </form>
 </div>
 {% endblock %}

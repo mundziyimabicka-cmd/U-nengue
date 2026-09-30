@@ -2,13 +2,27 @@
 <html lang="fr" data-theme="{{ theme|default("fuchsia") }}">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>{% block title %}U nengue{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <aside class="sidebar">
+    <!-- Barre mobile -->
+    <header class="mobile-topbar">
+        <button type="button" class="menu-toggle" id="menuToggle" aria-label="Ouvrir le menu">
+            <span></span><span></span><span></span>
+        </button>
+        <div class="mobile-brand">
+            <strong>U nengue</strong>
+            <span class="mm-badge">MM</span>
+        </div>
+        <a href="{{ url_for('logout') }}" class="mobile-logout" title="Déconnexion">⏻</a>
+    </header>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
+            <button type="button" class="menu-close" id="menuClose" aria-label="Fermer">✕</button>
             <h1>U nengue <span class="mm-badge">MM</span></h1>
             <div class="subtitle">Na buranghe ô dji icole di Gabu</div>
             <div class="mm-credit" style="opacity:0.85;margin-top:0.25rem">Mundziyi MABICKA</div>
@@ -25,6 +39,8 @@
             <a href="{{ url_for('listes') }}" class="nav-item {% if 'liste' in (request.endpoint or '') %}active{% endif %}">📋 Listes nominatives</a>
             <a href="{{ url_for('appels') }}" class="nav-item {% if request.endpoint and 'appel' in request.endpoint %}active{% endif %}">📋 Appels</a>
             <a href="{{ url_for('cahier_journal') }}" class="nav-item {% if request.endpoint and 'cahier' in request.endpoint %}active{% endif %}">📓 Cahier journal</a>
+            <a href="{{ url_for('emploi_du_temps') }}" class="nav-item {% if request.endpoint and 'emploi' in (request.endpoint or '') %}active{% endif %}">🗓️ Emploi du temps</a>
+            <a href="{{ url_for('fiches_pedagogiques') }}" class="nav-item {% if request.endpoint and 'fiche_pedago' in (request.endpoint or '') or request.endpoint == 'fiches_pedagogiques' %}active{% endif %}">📋 Fiches pédagogiques</a>
             <a href="{{ url_for('evaluations') }}" class="nav-item {% if 'evaluation' in (request.endpoint or '') or request.endpoint == 'saisir_evaluation' %}active{% endif %}">📝 Évaluations</a>
             <a href="{{ url_for('bulletins') }}" class="nav-item {% if request.endpoint in ('bulletins', 'bulletin', 'bulletin_pdf') %}active{% endif %}">📄 Bulletins</a>
             <a href="{{ url_for('releves') }}" class="nav-item {% if request.endpoint == 'releves' %}active{% endif %}">📊 Relevés de notes</a>
@@ -42,27 +58,14 @@
             <a href="{{ url_for('rechercher_eleve') }}" class="nav-item {% if request.endpoint == 'rechercher_eleve' %}active{% endif %}">🔍 Rechercher élève</a>
             <a href="{{ url_for('mon_compte') }}" class="nav-item {% if request.endpoint == 'mon_compte' %}active{% endif %}">👤 Mon compte</a>
         </nav>
-        
-        <div class="theme-picker" style="padding:0.85rem 1.1rem;border-top:1px solid rgba(255,255,255,0.18);background:rgba(0,0,0,0.15)">
-            <div style="font-size:0.78rem;margin-bottom:0.45rem;font-weight:700;letter-spacing:0.03em">🎨 Changer le thème</div>
-            <div style="display:flex;flex-wrap:wrap;gap:0.45rem">
-                <a href="{{ url_for('set_theme', name='fuchsia') }}" title="Fuchsia" class="theme-dot" style="background:#d946ef"></a>
-                <a href="{{ url_for('set_theme', name='mauve-spatial') }}" title="Mauve spatial" class="theme-dot" style="background:#7c3aed"></a>
-                <a href="{{ url_for('set_theme', name='emeraude-mer') }}" title="Émeraude mer" class="theme-dot" style="background:#0d9488"></a>
-                <a href="{{ url_for('set_theme', name='cristal-miranda') }}" title="Cristal Miranda" class="theme-dot" style="background:#e2e8f0;border:1px solid #94a3b8"></a>
-                <a href="{{ url_for('set_theme', name='orange-vert') }}" title="Orangé vert" class="theme-dot" style="background:#f97316"></a>
-                <a href="{{ url_for('set_theme', name='soleil-or') }}" title="Soleil or" class="theme-dot" style="background:#eab308"></a>
-                <a href="{{ url_for('set_theme', name='nuit-indigo') }}" title="Nuit indigo" class="theme-dot" style="background:#312e81"></a>
-                <a href="{{ url_for('set_theme', name='foret-okoume') }}" title="Forêt okoumé" class="theme-dot" style="background:#166534"></a>
-            </div>
-        </div>
         <div class="sidebar-footer">
             <div class="mm-credit">Conception MM — Mundziyi MABICKA</div>
             <div><strong>{{ session.get('full_name', '') }}</strong></div>
             <div>{{ session.get('role', '') }}</div>
-            <a href="{{ url_for('logout') }}" style="color:#f9a8d4;font-size:0.8rem;margin-top:0.5rem;display:inline-block">Déconnexion</a>
+            <a href="{{ url_for('logout') }}" class="sidebar-logout">Déconnexion</a>
         </div>
     </aside>
+
     <main class="main">
         <div class="theme-bar-top">
             <span>🎨 Thème :</span>
@@ -82,5 +85,37 @@
         {% endwith %}
         {% block content %}{% endblock %}
     </main>
+
+<script>
+(function(){
+    var sidebar = document.getElementById('sidebar');
+    var overlay = document.getElementById('sidebarOverlay');
+    var toggle = document.getElementById('menuToggle');
+    var closeBtn = document.getElementById('menuClose');
+    function openMenu(){
+        sidebar.classList.add('open');
+        overlay.classList.add('show');
+        document.body.classList.add('menu-open');
+        toggle.classList.add('is-open');
+    }
+    function closeMenu(){
+        sidebar.classList.remove('open');
+        overlay.classList.remove('show');
+        document.body.classList.remove('menu-open');
+        toggle.classList.remove('is-open');
+    }
+    if(toggle) toggle.addEventListener('click', function(){
+        if(sidebar.classList.contains('open')) closeMenu(); else openMenu();
+    });
+    if(closeBtn) closeBtn.addEventListener('click', closeMenu);
+    if(overlay) overlay.addEventListener('click', closeMenu);
+    // Fermer après clic sur un lien (mobile)
+    sidebar.querySelectorAll('.nav-item').forEach(function(a){
+        a.addEventListener('click', function(){
+            if(window.innerWidth <= 900) closeMenu();
+        });
+    });
+})();
+</script>
 </body>
 </html>

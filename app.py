@@ -63,6 +63,47 @@ COMPETENCES = {
 }
 
 NIVEAUX = ['1ère année', '2ème année', '3ème année', '4ème année', '5ème année']
+
+
+SCHEDULE_DAYS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi']
+SCHEDULE_SUBJECT_COLORS = {
+    'Français': '#3b82f6',
+    'Lecture': '#2563eb',
+    'Production écrite': '#1d4ed8',
+    'Mathématiques': '#ef4444',
+    'Calcul': '#dc2626',
+    'Géométrie': '#b91c1c',
+    'Éveil scientifique': '#10b981',
+    'Étude du milieu': '#059669',
+    'Histoire': '#d97706',
+    'Géographie': '#ca8a04',
+    'Éducation civique': '#f59e0b',
+    'Arts plastiques': '#ec4899',
+    'Graphisme': '#db2777',
+    'Musique': '#a855f7',
+    'EPS': '#14b8a6',
+    'Motricité': '#0d9488',
+    'Anglais': '#6366f1',
+    'Phonologie': '#8b5cf6',
+    'Récréation': '#94a3b8',
+    'Accueil': '#64748b',
+    'Rituels': '#78716c',
+    'Ateliers': '#f97316',
+    'Religion': '#7c3aed',
+    'Informatique': '#06b6d4',
+}
+DEFAULT_SCHEDULE_SUBJECTS = list(SCHEDULE_SUBJECT_COLORS.keys())
+
+def subject_color(name):
+    if not name:
+        return '#c026d3'
+    for k, v in SCHEDULE_SUBJECT_COLORS.items():
+        if k.lower() in name.lower() or name.lower() in k.lower():
+            return v
+    # hash stable color
+    colors = ['#c026d3','#3b82f6','#ef4444','#10b981','#f59e0b','#ec4899','#6366f1','#14b8a6','#f97316']
+    return colors[sum(ord(c) for c in name) % len(colors)]
+
 PALIERS = ['Palier 1', 'Palier 2', 'Palier 3', 'Palier 4', 'Palier 5']
 
 def mastery_from_score(score):
@@ -120,6 +161,14 @@ class SchoolSettings(db.Model):
     sms_account_sid = db.Column(db.String(120), default='')
     sms_auth_token = db.Column(db.String(120), default='')
     sms_from_number = db.Column(db.String(30), default='')
+    # SMTP / e-mail
+    smtp_enabled = db.Column(db.Boolean, default=False)
+    smtp_host = db.Column(db.String(120), default='smtp.gmail.com')
+    smtp_port = db.Column(db.Integer, default=587)
+    smtp_user = db.Column(db.String(120), default='')
+    smtp_password = db.Column(db.String(200), default='')
+    smtp_from = db.Column(db.String(120), default='')
+    smtp_use_tls = db.Column(db.Boolean, default=True)
 
 class ClassRoom(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -250,6 +299,53 @@ class ClassJournal(db.Model):
 
 # ==================== HELPERS ====================
 
+
+class ScheduleSlot(db.Model):
+    """Créneau d'emploi du temps par classe."""
+    id = db.Column(db.Integer, primary_key=True)
+    class_id = db.Column(db.Integer, db.ForeignKey('class_room.id'), nullable=False)
+    day = db.Column(db.String(20), nullable=False)  # Lundi ... Vendredi
+    start_time = db.Column(db.String(10), nullable=False)  # 08h00
+    end_time = db.Column(db.String(10), nullable=False)    # 08h30
+    subject = db.Column(db.String(120), nullable=False)
+    teacher = db.Column(db.String(120), default='')
+    color = db.Column(db.String(20), default='#c026d3')  # hex
+    room = db.Column(db.String(80), default='')  # salle
+    notes = db.Column(db.String(200), default='')
+    classroom = db.relationship('ClassRoom', backref=db.backref('schedule_slots', lazy=True, cascade='all, delete-orphan'))
+
+
+
+class PedagogicalSheet(db.Model):
+    """Fiche pédagogique / fiche de préparation."""
+    id = db.Column(db.Integer, primary_key=True)
+    class_id = db.Column(db.Integer, db.ForeignKey('class_room.id'), nullable=False)
+    title = db.Column(db.String(200), default='')  # ex. Production d'écrits
+    subject = db.Column(db.String(50), nullable=False)  # Français / Mathématiques / Éveil
+    sub_discipline = db.Column(db.String(120), default='')  # libre
+    duration = db.Column(db.String(30), default='30 min')
+    domain = db.Column(db.String(120), default='')
+    approach = db.Column(db.String(120), default='')  # Démarche
+    notion = db.Column(db.String(200), default='')
+    material = db.Column(db.String(300), default='')
+    objective = db.Column(db.Text, default='')
+    competence = db.Column(db.Text, default='')
+    phases_json = db.Column(db.Text, default='[]')  # liste de phases
+    written_trace = db.Column(db.Text, default='')
+    teacher = db.Column(db.String(120), default='')
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    classroom = db.relationship('ClassRoom', backref=db.backref('pedagogical_sheets', lazy=True))
+
+    def phases(self):
+        import json
+        try:
+            return json.loads(self.phases_json or '[]')
+        except Exception:
+            return []
+
+
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXT
 
@@ -266,6 +362,43 @@ def normalize_phone_wa(phone):
     if digits.startswith('0'):
         digits = digits[1:]
     return '241' + digits
+
+
+def send_email(to_addr, subject, body_text, settings=None):
+    """Envoie un e-mail via SMTP (Gmail, Outlook, etc.). Retourne (ok, message)."""
+    import smtplib
+    from email.mime.text import MIMEText
+    from email.mime.multipart import MIMEMultipart
+    if settings is None:
+        settings = SchoolSettings.query.first()
+    if not settings or not getattr(settings, 'smtp_enabled', False):
+        return False, 'SMTP non activé dans Paramètres'
+    host = (settings.smtp_host or '').strip()
+    port = int(settings.smtp_port or 587)
+    user = (settings.smtp_user or '').strip()
+    password = (settings.smtp_password or '').strip()
+    from_addr = (settings.smtp_from or user or '').strip()
+    if not host or not user or not password or not to_addr:
+        return False, 'Configuration SMTP incomplète'
+    try:
+        msg = MIMEMultipart()
+        msg['From'] = from_addr
+        msg['To'] = to_addr
+        msg['Subject'] = subject
+        msg.attach(MIMEText(body_text, 'plain', 'utf-8'))
+        if getattr(settings, 'smtp_use_tls', True):
+            server = smtplib.SMTP(host, port, timeout=30)
+            server.ehlo()
+            server.starttls()
+            server.ehlo()
+        else:
+            server = smtplib.SMTP_SSL(host, port, timeout=30)
+        server.login(user, password)
+        server.sendmail(from_addr, [to_addr], msg.as_string())
+        server.quit()
+        return True, 'E-mail envoyé'
+    except Exception as e:
+        return False, str(e)
 
 def whatsapp_link(phone, message=''):
     num = normalize_phone_wa(phone)
@@ -634,6 +767,28 @@ def migrate_schema():
                         conn.execute(sa_text(sql))
                     except Exception:
                         pass
+
+        # SMTP columns on school_settings
+        try:
+            cols = {c['name'] for c in insp.get_columns('school_settings')}
+            for col, typ in [
+                ('smtp_enabled', 'BOOLEAN DEFAULT 0'),
+                ('smtp_host', "VARCHAR(120) DEFAULT 'smtp.gmail.com'"),
+                ('smtp_port', 'INTEGER DEFAULT 587'),
+                ('smtp_user', "VARCHAR(120) DEFAULT ''"),
+                ('smtp_password', "VARCHAR(200) DEFAULT ''"),
+                ('smtp_from', "VARCHAR(120) DEFAULT ''"),
+                ('smtp_use_tls', 'BOOLEAN DEFAULT 1'),
+            ]:
+                if col not in cols:
+                    try:
+                        with db.engine.begin() as conn:
+                            conn.execute(sa_text(f"ALTER TABLE school_settings ADD COLUMN {col} {typ}"))
+                    except Exception:
+                        pass
+        except Exception:
+            pass
+
         # user email / reset_code
         if 'user' in insp.get_table_names():
             cols = {c['name'] for c in insp.get_columns('user')}
@@ -1996,6 +2151,19 @@ def parametres():
         settings.sms_account_sid = request.form.get('sms_account_sid', '')
         settings.sms_auth_token = request.form.get('sms_auth_token', '')
         settings.sms_from_number = request.form.get('sms_from_number', '')
+        settings.smtp_enabled = request.form.get('smtp_enabled') == 'on'
+        settings.smtp_host = request.form.get('smtp_host', 'smtp.gmail.com')
+        try:
+            settings.smtp_port = int(request.form.get('smtp_port') or 587)
+        except ValueError:
+            settings.smtp_port = 587
+        settings.smtp_user = request.form.get('smtp_user', '')
+        pwd = request.form.get('smtp_password', '')
+        if pwd:  # ne pas écraser si champ vide
+            settings.smtp_password = pwd
+        settings.smtp_from = request.form.get('smtp_from', '')
+        settings.smtp_use_tls = request.form.get('smtp_use_tls') == 'on'
+
         db.session.commit()
         flash('Paramètres mis à jour.', 'success')
         return redirect(url_for('parametres'))
@@ -2730,6 +2898,472 @@ def classe_pdf():
                      download_name=f"liste_{room.name.replace(' ', '_')}.pdf")
 
 
+
+@app.route('/parametres/test-email', methods=['POST'])
+@login_required
+def test_smtp():
+    if session.get('role') != 'Directeur':
+        flash('Accès réservé au directeur.', 'danger')
+        return redirect(url_for('dashboard'))
+    settings = SchoolSettings.query.first()
+    to = request.form.get('test_email') or (settings.email if settings else '') or session.get('username', '')
+    user = User.query.get(session.get('user_id'))
+    if user and user.email:
+        to = to or user.email
+    if not to:
+        flash('Indiquez une adresse e-mail de test.', 'danger')
+        return redirect(url_for('parametres'))
+    ok, msg = send_email(to, 'U nengue — Test SMTP',
+                         'Ceci est un message de test. Votre serveur de messagerie fonctionne.', settings)
+    flash('E-mail de test envoyé.' if ok else f'Échec : {msg}', 'success' if ok else 'danger')
+    return redirect(url_for('parametres'))
+
+
+
+# ==================== FICHES PÉDAGOGIQUES ====================
+
+PEDAGO_SUBJECTS = ['Français', 'Mathématiques', 'Éveil']
+
+@app.route('/fiches-pedagogiques')
+@login_required
+def fiches_pedagogiques():
+    rooms = ClassRoom.query.order_by(ClassRoom.level, ClassRoom.name).all()
+    if session.get('role') == 'Enseignant':
+        u = User.query.get(session.get('user_id'))
+        if u and u.class_id:
+            rooms = [r for r in rooms if r.id == u.class_id]
+    class_id = request.args.get('class_id', type=int)
+    subject = request.args.get('subject', '')
+    selected = ClassRoom.query.get(class_id) if class_id else (rooms[0] if rooms else None)
+    q = PedagogicalSheet.query
+    if selected:
+        q = q.filter_by(class_id=selected.id)
+    if subject:
+        q = q.filter_by(subject=subject)
+    sheets = q.order_by(PedagogicalSheet.updated_at.desc()).all()
+    return render_template('fiches_pedagogiques.html', rooms=rooms, selected=selected,
+                           sheets=sheets, subjects=PEDAGO_SUBJECTS, subject=subject)
+
+@app.route('/fiches-pedagogiques/nouvelle', methods=['GET', 'POST'])
+@app.route('/fiches-pedagogiques/<int:id>/edit', methods=['GET', 'POST'])
+@login_required
+def fiche_pedagogique_form(id=None):
+    import json
+    sheet = PedagogicalSheet.query.get(id) if id else None
+    rooms = ClassRoom.query.order_by(ClassRoom.level, ClassRoom.name).all()
+    if session.get('role') == 'Enseignant':
+        u = User.query.get(session.get('user_id'))
+        if u and u.class_id:
+            rooms = [r for r in rooms if r.id == u.class_id]
+            if sheet and sheet.class_id != u.class_id:
+                flash('Accès refusé.', 'danger')
+                return redirect(url_for('fiches_pedagogiques'))
+    if request.method == 'POST':
+        class_id = request.form.get('class_id', type=int)
+        if session.get('role') == 'Enseignant':
+            u = User.query.get(session.get('user_id'))
+            if not u or u.class_id != class_id:
+                flash('Accès réservé à votre classe.', 'danger')
+                return redirect(url_for('fiches_pedagogiques'))
+        if not sheet:
+            sheet = PedagogicalSheet(created_by=session.get('user_id'))
+            db.session.add(sheet)
+        sheet.class_id = class_id
+        sheet.title = request.form.get('title', '').strip()
+        sheet.subject = request.form.get('subject', 'Français')
+        sheet.sub_discipline = request.form.get('sub_discipline', '').strip()
+        sheet.duration = request.form.get('duration', '30 min').strip()
+        sheet.domain = request.form.get('domain', '').strip()
+        sheet.approach = request.form.get('approach', '').strip()
+        sheet.notion = request.form.get('notion', '').strip()
+        sheet.material = request.form.get('material', '').strip()
+        sheet.objective = request.form.get('objective', '').strip()
+        sheet.competence = request.form.get('competence', '').strip()
+        sheet.written_trace = request.form.get('written_trace', '').strip()
+        sheet.teacher = request.form.get('teacher', '').strip()
+        # phases
+        phases = []
+        names = request.form.getlist('phase_name[]')
+        durs = request.form.getlist('phase_duration[]')
+        teachers = request.form.getlist('phase_teacher[]')
+        students = request.form.getlist('phase_student[]')
+        for i in range(len(names)):
+            n = (names[i] or '').strip()
+            if not n:
+                continue
+            phases.append({
+                'name': n,
+                'duration': (durs[i] if i < len(durs) else '').strip(),
+                'teacher': (teachers[i] if i < len(teachers) else '').strip(),
+                'student': (students[i] if i < len(students) else '').strip(),
+            })
+        sheet.phases_json = json.dumps(phases, ensure_ascii=False)
+        db.session.commit()
+        flash('Fiche pédagogique enregistrée.', 'success')
+        return redirect(url_for('fiche_pedagogique_detail', id=sheet.id))
+    phases = sheet.phases() if sheet else [
+        {'name': '1. Ouverture', 'duration': '4 min', 'teacher': '', 'student': ''},
+        {'name': '2. Modélisation', 'duration': '7 min', 'teacher': '', 'student': ''},
+        {'name': '3. Pratique guidée', 'duration': '7 min', 'teacher': '', 'student': ''},
+        {'name': '4. Pratique autonome', 'duration': '9 min', 'teacher': '', 'student': ''},
+        {'name': '5. Clôture', 'duration': '3 min', 'teacher': '', 'student': ''},
+    ]
+    return render_template('fiche_pedagogique_form.html', sheet=sheet, rooms=rooms,
+                           subjects=PEDAGO_SUBJECTS, phases=phases)
+
+@app.route('/fiches-pedagogiques/<int:id>')
+@login_required
+def fiche_pedagogique_detail(id):
+    sheet = PedagogicalSheet.query.get_or_404(id)
+    if session.get('role') == 'Enseignant':
+        u = User.query.get(session.get('user_id'))
+        if not u or u.class_id != sheet.class_id:
+            flash('Accès refusé.', 'danger')
+            return redirect(url_for('fiches_pedagogiques'))
+    return render_template('fiche_pedagogique_detail.html', sheet=sheet)
+
+@app.route('/fiches-pedagogiques/<int:id>/supprimer', methods=['POST'])
+@login_required
+def fiche_pedagogique_delete(id):
+    sheet = PedagogicalSheet.query.get_or_404(id)
+    if session.get('role') == 'Enseignant':
+        u = User.query.get(session.get('user_id'))
+        if not u or u.class_id != sheet.class_id:
+            flash('Accès refusé.', 'danger')
+            return redirect(url_for('fiches_pedagogiques'))
+    cid = sheet.class_id
+    db.session.delete(sheet)
+    db.session.commit()
+    flash('Fiche supprimée.', 'success')
+    return redirect(url_for('fiches_pedagogiques', class_id=cid))
+
+@app.route('/fiches-pedagogiques/<int:id>/pdf')
+@login_required
+def fiche_pedagogique_pdf(id):
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib import colors
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, HRFlowable
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import cm, mm
+    from reportlab.lib.enums import TA_CENTER, TA_LEFT
+
+    sheet = PedagogicalSheet.query.get_or_404(id)
+    if session.get('role') == 'Enseignant':
+        u = User.query.get(session.get('user_id'))
+        if not u or u.class_id != sheet.class_id:
+            flash('Accès refusé.', 'danger')
+            return redirect(url_for('fiches_pedagogiques'))
+    settings = SchoolSettings.query.first()
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4,
+                            leftMargin=1.5*cm, rightMargin=1.5*cm,
+                            topMargin=1.2*cm, bottomMargin=1.2*cm)
+    styles = getSampleStyleSheet()
+    title_s = ParagraphStyle('t', parent=styles['Normal'], fontSize=14, alignment=TA_CENTER,
+                             fontName='Helvetica-Bold', textColor=colors.HexColor('#a21caf'), spaceAfter=8)
+    h_s = ParagraphStyle('h', parent=styles['Normal'], fontSize=9, fontName='Helvetica-Bold',
+                         textColor=colors.HexColor('#86198f'), spaceBefore=6, spaceAfter=3)
+    body = ParagraphStyle('b', parent=styles['Normal'], fontSize=8, leading=11)
+    cell = ParagraphStyle('c', parent=styles['Normal'], fontSize=7.5, leading=10)
+
+    elements = []
+    school = settings.school_name if settings else 'École Primaire'
+    elements.append(Paragraph('FICHE PÉDAGOGIQUE', title_s))
+    sub = sheet.title or sheet.sub_discipline or sheet.subject
+    elements.append(Paragraph(f'{sub.upper()} — {school}', ParagraphStyle(
+        's', parent=styles['Normal'], fontSize=10, alignment=TA_CENTER, spaceAfter=8)))
+
+    cls_name = sheet.classroom.name if sheet.classroom else '—'
+    header = [
+        [Paragraph(f'<b>Classe :</b> {cls_name}', cell),
+         Paragraph(f'<b>Durée :</b> {sheet.duration or "—"}', cell),
+         Paragraph(f'<b>Domaine :</b> {sheet.domain or sheet.subject}', cell)],
+        [Paragraph(f'<b>Démarche :</b> {sheet.approach or "—"}', cell),
+         Paragraph(f'<b>Notion :</b> {sheet.notion or "—"}', cell),
+         Paragraph(f'<b>Matériel :</b> {sheet.material or "—"}', cell)],
+    ]
+    ht = Table(header, colWidths=[5.5*cm, 5.5*cm, 5.5*cm])
+    ht.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#fdf4ff')),
+        ('BOX', (0, 0), (-1, -1), 1, colors.HexColor('#c026d3')),
+        ('INNERGRID', (0, 0), (-1, -1), 0.4, colors.HexColor('#e879f9')),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('TOPPADDING', (0, 0), (-1, -1), 5),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+        ('LEFTPADDING', (0, 0), (-1, -1), 4),
+    ]))
+    elements.append(ht)
+    elements.append(Spacer(1, 4*mm))
+    elements.append(Paragraph(f'<b>Objectif :</b> {sheet.objective or "—"}', body))
+    elements.append(Paragraph(f'<b>Compétence :</b> {sheet.competence or "—"}', body))
+    elements.append(Spacer(1, 3*mm))
+
+    phases = sheet.phases()
+    if phases:
+        rows = [[Paragraph('<b>Phases</b>', cell),
+                 Paragraph('<b>Actions de l\'enseignant</b>', cell),
+                 Paragraph('<b>Actions des élèves</b>', cell)]]
+        for p in phases:
+            phase_label = p.get('name', '')
+            if p.get('duration'):
+                phase_label += f'<br/><font size="6">{p.get("duration")}</font>'
+            rows.append([
+                Paragraph(phase_label, cell),
+                Paragraph(p.get('teacher') or '—', cell),
+                Paragraph(p.get('student') or '—', cell),
+            ])
+        pt = Table(rows, colWidths=[3.2*cm, 7*cm, 6.3*cm])
+        pt.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#c026d3')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('BACKGROUND', (0, 1), (0, -1), colors.HexColor('#f5d0fe')),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#a21caf')),
+            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+            ('TOPPADDING', (0, 0), (-1, -1), 4),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+            ('LEFTPADDING', (0, 0), (-1, -1), 3),
+        ]))
+        elements.append(pt)
+
+    if sheet.written_trace:
+        elements.append(Spacer(1, 4*mm))
+        elements.append(Paragraph('TRACE ÉCRITE', h_s))
+        elements.append(Paragraph(sheet.written_trace, body))
+
+    elements.append(Spacer(1, 6*mm))
+    elements.append(Paragraph(
+        f'U nengue — {sheet.teacher or ""} — Document généré automatiquement',
+        ParagraphStyle('f', parent=styles['Normal'], fontSize=7, alignment=TA_CENTER,
+                       textColor=colors.grey)))
+    doc.build(elements)
+    buffer.seek(0)
+    fname = f"fiche_pedago_{sheet.id}.pdf"
+    return send_file(buffer, mimetype='application/pdf', as_attachment=True, download_name=fname)
+
+
+# ==================== EMPLOI DU TEMPS ====================
+
+@app.route('/emploi-du-temps')
+@login_required
+def emploi_du_temps():
+    rooms = ClassRoom.query.order_by(ClassRoom.level, ClassRoom.name).all()
+    if session.get('role') == 'Enseignant':
+        u = User.query.get(session.get('user_id'))
+        if u and u.class_id:
+            rooms = [r for r in rooms if r.id == u.class_id]
+    class_id = request.args.get('class_id', type=int)
+    selected = None
+    slots = []
+    grid = {}
+    time_rows = []
+    if class_id:
+        selected = ClassRoom.query.get(class_id)
+    elif rooms:
+        selected = rooms[0]
+        class_id = selected.id
+    if selected:
+        if session.get('role') == 'Enseignant':
+            u = User.query.get(session.get('user_id'))
+            if u and u.class_id and selected.id != u.class_id:
+                flash('Accès réservé à votre classe.', 'danger')
+                return redirect(url_for('emploi_du_temps'))
+        slots = ScheduleSlot.query.filter_by(class_id=selected.id).order_by(
+            ScheduleSlot.start_time, ScheduleSlot.day).all()
+        # Build unique time bands sorted
+        bands = sorted(set((s.start_time, s.end_time) for s in slots),
+                       key=lambda x: x[0].replace('h', ':'))
+        time_rows = [f'{a}-{b}' for a, b in bands]
+        for s in slots:
+            key = (s.day, f'{s.start_time}-{s.end_time}')
+            grid[key] = s
+    return render_template(
+        'emploi_du_temps.html',
+        rooms=rooms, selected=selected, slots=slots, grid=grid,
+        days=SCHEDULE_DAYS, time_rows=time_rows,
+        subjects=DEFAULT_SCHEDULE_SUBJECTS,
+        subject_color=subject_color,
+    )
+
+@app.route('/emploi-du-temps/ajouter', methods=['POST'])
+@login_required
+def ajouter_creneau():
+    class_id = request.form.get('class_id', type=int)
+    day = request.form.get('day', '').strip()
+    start = request.form.get('start_time', '').strip().replace(':', 'h')
+    end = request.form.get('end_time', '').strip().replace(':', 'h')
+    subject = request.form.get('subject', '').strip()
+    teacher = request.form.get('teacher', '').strip()
+    color = request.form.get('color', '').strip() or subject_color(subject)
+    room = request.form.get('room', '').strip()
+    notes = request.form.get('notes', '').strip()
+    if not all([class_id, day, start, end, subject]):
+        flash('Jour, horaires et matière sont obligatoires.', 'danger')
+        return redirect(url_for('emploi_du_temps', class_id=class_id))
+    if session.get('role') == 'Enseignant':
+        u = User.query.get(session.get('user_id'))
+        if not u or u.class_id != class_id:
+            flash('Accès réservé à votre classe.', 'danger')
+            return redirect(url_for('emploi_du_temps'))
+    slot = ScheduleSlot(
+        class_id=class_id, day=day, start_time=start, end_time=end,
+        subject=subject, teacher=teacher, color=color, room=room, notes=notes
+    )
+    db.session.add(slot)
+    db.session.commit()
+    flash('Créneau ajouté.', 'success')
+    return redirect(url_for('emploi_du_temps', class_id=class_id))
+
+@app.route('/emploi-du-temps/<int:id>/modifier', methods=['POST'])
+@login_required
+def modifier_creneau(id):
+    slot = ScheduleSlot.query.get_or_404(id)
+    if session.get('role') == 'Enseignant':
+        u = User.query.get(session.get('user_id'))
+        if not u or u.class_id != slot.class_id:
+            flash('Accès refusé.', 'danger')
+            return redirect(url_for('emploi_du_temps'))
+    slot.day = request.form.get('day', slot.day)
+    slot.start_time = request.form.get('start_time', slot.start_time).replace(':', 'h')
+    slot.end_time = request.form.get('end_time', slot.end_time).replace(':', 'h')
+    slot.subject = request.form.get('subject', slot.subject).strip()
+    slot.teacher = request.form.get('teacher', '').strip()
+    slot.color = request.form.get('color', '').strip() or subject_color(slot.subject)
+    slot.room = request.form.get('room', '').strip()
+    slot.notes = request.form.get('notes', '').strip()
+    db.session.commit()
+    flash('Créneau modifié.', 'success')
+    return redirect(url_for('emploi_du_temps', class_id=slot.class_id))
+
+@app.route('/emploi-du-temps/<int:id>/supprimer', methods=['POST', 'GET'])
+@login_required
+def supprimer_creneau(id):
+    slot = ScheduleSlot.query.get_or_404(id)
+    cid = slot.class_id
+    if session.get('role') == 'Enseignant':
+        u = User.query.get(session.get('user_id'))
+        if not u or u.class_id != cid:
+            flash('Accès refusé.', 'danger')
+            return redirect(url_for('emploi_du_temps'))
+    db.session.delete(slot)
+    db.session.commit()
+    flash('Créneau supprimé.', 'success')
+    return redirect(url_for('emploi_du_temps', class_id=cid))
+
+@app.route('/emploi-du-temps/<int:class_id>/vider', methods=['POST'])
+@login_required
+def vider_emploi(class_id):
+    if session.get('role') == 'Enseignant':
+        u = User.query.get(session.get('user_id'))
+        if not u or u.class_id != class_id:
+            flash('Accès refusé.', 'danger')
+            return redirect(url_for('emploi_du_temps'))
+    ScheduleSlot.query.filter_by(class_id=class_id).delete()
+    db.session.commit()
+    flash('Emploi du temps vidé.', 'success')
+    return redirect(url_for('emploi_du_temps', class_id=class_id))
+
+@app.route('/emploi-du-temps/<int:class_id>/pdf')
+@login_required
+def emploi_pdf(class_id):
+    from reportlab.lib.pagesizes import A4, landscape
+    from reportlab.lib import colors
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import cm, mm
+    from reportlab.lib.enums import TA_CENTER
+
+    room = ClassRoom.query.get_or_404(class_id)
+    if session.get('role') == 'Enseignant':
+        u = User.query.get(session.get('user_id'))
+        if not u or u.class_id != class_id:
+            flash('Accès refusé.', 'danger')
+            return redirect(url_for('emploi_du_temps'))
+    settings = SchoolSettings.query.first()
+    slots = ScheduleSlot.query.filter_by(class_id=class_id).all()
+    bands = sorted(set((s.start_time, s.end_time) for s in slots),
+                   key=lambda x: x[0].replace('h', ':'))
+    grid = {}
+    for s in slots:
+        grid[(s.day, s.start_time, s.end_time)] = s
+
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=landscape(A4),
+                            leftMargin=1*cm, rightMargin=1*cm,
+                            topMargin=1*cm, bottomMargin=1*cm)
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle('t', parent=styles['Normal'], fontSize=14,
+                                 alignment=TA_CENTER, fontName='Helvetica-Bold',
+                                 textColor=colors.HexColor('#a21caf'), spaceAfter=4)
+    sub_style = ParagraphStyle('s', parent=styles['Normal'], fontSize=9,
+                               alignment=TA_CENTER, spaceAfter=8)
+    cell_style = ParagraphStyle('c', parent=styles['Normal'], fontSize=7,
+                                alignment=TA_CENTER, leading=9)
+
+    elements = []
+    school = settings.school_name if settings else 'École Primaire'
+    annee = settings.annee_scolaire if settings else ''
+    elements.append(Paragraph(f'U nengue — Emploi du temps', title_style))
+    elements.append(Paragraph(
+        f'{school} — {room.name} ({room.level}) — {annee} — Enseignant(e) : {room.teacher or "—"}',
+        sub_style))
+
+    header = ['Horaires'] + SCHEDULE_DAYS
+    data = [header]
+    for start, end in bands:
+        row = [Paragraph(f'<b>{start}<br/>{end}</b>', cell_style)]
+        for day in SCHEDULE_DAYS:
+            s = grid.get((day, start, end))
+            if s:
+                txt = f'<b>{s.subject}</b>'
+                if s.teacher:
+                    txt += f'<br/><font size="6">{s.teacher}</font>'
+                if s.room:
+                    txt += f'<br/><font size="5.5">{s.room}</font>'
+                row.append(Paragraph(txt, cell_style))
+            else:
+                row.append('')
+        data.append(row)
+
+    col_w = [2.8*cm] + [4.4*cm] * 5
+    t = Table(data, colWidths=col_w, repeatRows=1)
+    style_cmds = [
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 8),
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#c026d3')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('BACKGROUND', (0, 1), (0, -1), colors.HexColor('#f5d0fe')),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#a21caf')),
+        ('TOPPADDING', (0, 0), (-1, -1), 6),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+    ]
+    for ri, (start, end) in enumerate(bands, start=1):
+        for ci, day in enumerate(SCHEDULE_DAYS, start=1):
+            s = grid.get((day, start, end))
+            if s and s.color:
+                try:
+                    style_cmds.append(
+                        ('BACKGROUND', (ci, ri), (ci, ri), colors.HexColor(s.color))
+                    )
+                    # lighten text readability - use white for dark colors is complex; keep dark text
+                    style_cmds.append(('TEXTCOLOR', (ci, ri), (ci, ri), colors.white))
+                except Exception:
+                    pass
+    t.setStyle(TableStyle(style_cmds))
+    elements.append(t)
+    elements.append(Spacer(1, 8*mm))
+    elements.append(Paragraph(
+        'Document généré par U nengue — Na buranghe ô dji icole di Gabu — MM',
+        ParagraphStyle('f', parent=styles['Normal'], fontSize=7, alignment=TA_CENTER,
+                       textColor=colors.grey)))
+    doc.build(elements)
+    buffer.seek(0)
+    fname = f"emploi_{room.name.replace(' ', '_')}.pdf"
+    return send_file(buffer, mimetype='application/pdf', as_attachment=True,
+                     download_name=fname)
+
+
 # ==================== THEMES ====================
 
 THEMES = [
@@ -2790,8 +3424,25 @@ def mot_de_passe_oublie():
         code = ''.join(random.choices(string.digits, k=6))
         user.reset_code = code
         db.session.commit()
-        flash(f'Code de réinitialisation pour {user.full_name} : {code}. '
-              f'Sur un compte local, donnez ce code à l\'utilisateur (ou le directeur le communique).', 'info')
+        settings = SchoolSettings.query.first()
+        if user.email and settings and getattr(settings, 'smtp_enabled', False):
+            ok, msg = send_email(
+                user.email,
+                'U nengue — Code de réinitialisation',
+                f'Bonjour {user.full_name},\n\n'
+                f'Votre code de réinitialisation est : {code}\n\n'
+                f'Utilisez ce code une seule fois sur la page Mot de passe oublié.\n'
+                f'Si vous n\'êtes pas à l\'origine de cette demande, ignorez ce message.\n\n'
+                f'— U nengue',
+                settings
+            )
+            if ok:
+                flash(f'Un code a été envoyé à {user.email}.', 'success')
+            else:
+                flash(f'E-mail non envoyé ({msg}). Code à communiquer : {code}', 'warning')
+        else:
+            flash(f'Code de réinitialisation pour {user.full_name} : {code}. '
+                  f'(Pour envoi auto : activez SMTP dans Paramètres et renseignez l\'e-mail du compte.)', 'info')
         return render_template('mot_de_passe_oublie.html', username=username, show_reset=True)
     return render_template('mot_de_passe_oublie.html')
 
