@@ -4,7 +4,7 @@
 <div class="page-header" style="display:flex;flex-wrap:wrap;gap:1rem;align-items:center;justify-content:space-between">
     <div>
         <h2 style="margin:0">📅 Emploi du temps</h2>
-        <p class="subtitle" style="margin:0.25rem 0 0">Créez, modifiez et téléchargez l'emploi du temps de chaque classe</p>
+        <p class="subtitle" style="margin:0.25rem 0 0">Multi-jours, groupes, logos et PDF professionnel</p>
     </div>
     <form method="GET" style="display:flex;gap:0.5rem;align-items:center">
         <select name="class_id" class="form-control" onchange="this.form.submit()" style="min-width:220px">
@@ -18,6 +18,22 @@
 </div>
 
 {% if selected %}
+{# Logos en-tête #}
+{% if settings and (settings.logo_path or settings.logo2_path or settings.logo3_path or settings.logo4_path) %}
+<div class="card" style="margin-bottom:1rem;padding:0.75rem">
+    <div style="display:flex;flex-wrap:wrap;gap:1rem;justify-content:center;align-items:center">
+        {% for attr in ['logo_path','logo2_path','logo3_path','logo4_path'] %}
+            {% set lp = settings[attr] if settings[attr] is defined else getattr(settings, attr, None) %}
+            {% if lp %}
+            <img src="{{ url_for('static', filename=lp.replace('static/','')) if 'static' in lp else lp }}"
+                 alt="Logo" style="max-height:64px;max-width:120px;object-fit:contain"
+                 onerror="this.style.display='none'">
+            {% endif %}
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
 <div class="card" style="margin-bottom:1.25rem;overflow-x:auto">
     <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:0.75rem;margin-bottom:1rem">
         <div class="card-title" style="margin:0">
@@ -41,9 +57,7 @@
             <thead>
                 <tr>
                     <th class="tt-corner">Horaires</th>
-                    {% for d in days %}
-                    <th>{{ d }}</th>
-                    {% endfor %}
+                    {% for d in days %}<th>{{ d }}</th>{% endfor %}
                 </tr>
             </thead>
             <tbody>
@@ -52,19 +66,20 @@
                     <td class="tt-time">{{ t.replace('-', ' – ') }}</td>
                     {% for d in days %}
                     {% set key = (d, t) %}
-                    {% set s = grid.get(key) %}
+                    {% set cell_slots = grid.get(key, []) %}
                     <td class="tt-cell">
-                        {% if s %}
-                        <div class="tt-slot" style="background:{{ s.color or subject_color(s.subject) }}">
+                        {% for s in cell_slots %}
+                        <div class="tt-slot" style="background:{{ s.color or subject_color(s.subject) }};margin-bottom:3px">
+                            {% if s.group_label %}<span class="tt-group">{{ s.group_label }}</span>{% endif %}
                             <strong>{{ s.subject }}</strong>
                             {% if s.teacher %}<small>{{ s.teacher }}</small>{% endif %}
                             {% if s.room %}<small class="tt-room">📍 {{ s.room }}</small>{% endif %}
                             <div class="tt-actions">
-                                <button type="button" class="tt-edit" onclick="editSlot({{ s.id }}, '{{ s.day }}', '{{ s.start_time }}', '{{ s.end_time }}', '{{ s.subject|e }}', '{{ s.teacher|e }}', '{{ s.color }}', '{{ s.room|e }}', '{{ s.notes|e }}')">✎</button>
-                                <a href="{{ url_for('supprimer_creneau', id=s.id) }}" onclick="return confirm('Supprimer ce créneau ?')" title="Supprimer">✕</a>
+                                <button type="button" class="tt-edit" onclick="editSlot({{ s.id }}, '{{ s.day }}', '{{ s.start_time }}', '{{ s.end_time }}', {{ s.subject|tojson }}, {{ (s.teacher or '')|tojson }}, '{{ s.color or '#c026d3' }}', {{ (s.room or '')|tojson }}, {{ (s.group_label or '')|tojson }}, {{ (s.notes or '')|tojson }})">✎</button>
+                                <a href="{{ url_for('supprimer_creneau', id=s.id) }}" onclick="return confirm('Supprimer ?')" title="Supprimer">✕</a>
                             </div>
                         </div>
-                        {% endif %}
+                        {% endfor %}
                     </td>
                     {% endfor %}
                 </tr>
@@ -74,31 +89,48 @@
     </div>
     {% else %}
     <div style="text-align:center;padding:2rem;color:var(--text-muted)">
-        Aucun créneau pour cette classe. Ajoutez-en ci-dessous.
+        Aucun créneau. Utilisez le formulaire ci-dessous (cochez plusieurs jours pour les rituels, récréations, etc.).
     </div>
     {% endif %}
 </div>
 
-<div class="card" style="max-width:720px">
+<div class="card" style="max-width:780px">
     <div class="card-title" id="form-title">➕ Ajouter un créneau</div>
     <form method="POST" action="{{ url_for('ajouter_creneau') }}" id="slot-form" style="margin-top:1rem">
         <input type="hidden" name="class_id" value="{{ selected.id }}">
+        <input type="hidden" name="day" id="f-day-single" value="">
+
+        <div class="form-group" id="days-box">
+            <label>Jour(s) * — cochez plusieurs jours pour la même activité (ex. rituels, récréation)</label>
+            <div style="display:flex;flex-wrap:wrap;gap:0.5rem 1rem;margin-top:0.35rem">
+                <label style="display:flex;align-items:center;gap:0.3rem;cursor:pointer;font-weight:600">
+                    <input type="checkbox" id="check-all-days" onchange="toggleAllDays(this)"> Tous les jours
+                </label>
+                {% for d in days %}
+                <label style="display:flex;align-items:center;gap:0.3rem;cursor:pointer">
+                    <input type="checkbox" name="days" value="{{ d }}" class="day-check"> {{ d }}
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+
         <div class="form-row">
             <div class="form-group">
-                <label>Jour *</label>
-                <select name="day" id="f-day" class="form-control" required>
-                    {% for d in days %}<option value="{{ d }}">{{ d }}</option>{% endfor %}
-                </select>
-            </div>
-            <div class="form-group">
                 <label>Début *</label>
-                <input type="text" name="start_time" id="f-start" class="form-control" list="times-list"
-                       placeholder="07h30" required>
+                <input type="text" name="start_time" id="f-start" class="form-control" list="times-list" placeholder="07h30" required>
             </div>
             <div class="form-group">
                 <label>Fin *</label>
-                <input type="text" name="end_time" id="f-end" class="form-control" list="times-list"
-                       placeholder="08h00" required>
+                <input type="text" name="end_time" id="f-end" class="form-control" list="times-list" placeholder="08h00" required>
+            </div>
+            <div class="form-group">
+                <label>Groupe (optionnel)</label>
+                <input type="text" name="group_label" id="f-group" class="form-control" list="groups-list"
+                       placeholder="ex. G1, G2, Classe entière">
+                <datalist id="groups-list">
+                    <option value="G1"><option value="G2"><option value="G3">
+                    <option value="Classe entière"><option value="ATSEM">
+                </datalist>
             </div>
         </div>
         <datalist id="times-list">
@@ -110,53 +142,62 @@
             <div class="form-group" style="flex:2">
                 <label>Matière / Activité *</label>
                 <input type="text" name="subject" id="f-subject" class="form-control" list="subjects-list"
-                       placeholder="ex. Mathématiques, Graphisme, Récréation…" required>
+                       placeholder="ex. Rituels, Récréation, Mathématiques…" required>
                 <datalist id="subjects-list">
                     {% for s in subjects %}<option value="{{ s }}">{% endfor %}
+                    <option value="Récréation"><option value="Rituels"><option value="Accueil">
+                    <option value="Toilettes / Goûter">
                 </datalist>
             </div>
             <div class="form-group">
                 <label>Couleur</label>
-                <input type="color" name="color" id="f-color" class="form-control" value="#c026d3"
-                       style="height:42px;padding:4px">
+                <input type="color" name="color" id="f-color" class="form-control" value="#c026d3" style="height:42px;padding:4px">
             </div>
         </div>
         <div class="form-row">
             <div class="form-group">
                 <label>Enseignant(e)</label>
-                <input type="text" name="teacher" id="f-teacher" class="form-control"
-                       value="{{ selected.teacher or '' }}" placeholder="Mme / M.">
+                <input type="text" name="teacher" id="f-teacher" class="form-control" value="{{ selected.teacher or '' }}">
             </div>
             <div class="form-group">
                 <label>Salle / Lieu</label>
-                <input type="text" name="room" id="f-room" class="form-control" placeholder="ex. Salle A, Cour">
+                <input type="text" name="room" id="f-room" class="form-control" placeholder="Salle A, Cour…">
             </div>
         </div>
         <div class="form-group">
-            <label>Notes (optionnel)</label>
-            <input type="text" name="notes" id="f-notes" class="form-control" placeholder="Groupe, matériel…">
+            <label>Notes</label>
+            <input type="text" name="notes" id="f-notes" class="form-control" placeholder="Optionnel">
         </div>
+        <p style="font-size:0.8rem;color:var(--text-muted);margin:0 0 0.75rem">
+            💡 Pour 2 groupes à la même heure : ajoutez 2 créneaux (même jour, mêmes horaires) avec G1 et G2.
+        </p>
         <div style="display:flex;gap:0.75rem;flex-wrap:wrap">
-            <button type="submit" class="btn btn-primary" id="btn-submit">Ajouter le créneau</button>
-            <button type="button" class="btn btn-secondary" id="btn-cancel" style="display:none" onclick="resetForm()">Annuler la modification</button>
+            <button type="submit" class="btn btn-primary" id="btn-submit">Ajouter le(s) créneau(x)</button>
+            <button type="button" class="btn btn-secondary" id="btn-cancel" style="display:none" onclick="resetForm()">Annuler</button>
         </div>
     </form>
 </div>
 
 <script>
-function editSlot(id, day, start, end, subject, teacher, color, room, notes) {
+function toggleAllDays(el) {
+    document.querySelectorAll('.day-check').forEach(function(c){ c.checked = el.checked; });
+}
+function editSlot(id, day, start, end, subject, teacher, color, room, group, notes) {
     var form = document.getElementById('slot-form');
     form.action = '/emploi-du-temps/' + id + '/modifier';
     document.getElementById('form-title').textContent = '✏️ Modifier le créneau';
-    document.getElementById('f-day').value = day;
+    document.getElementById('days-box').style.display = 'none';
+    document.getElementById('f-day-single').name = 'day';
+    document.getElementById('f-day-single').value = day;
     document.getElementById('f-start').value = start;
     document.getElementById('f-end').value = end;
     document.getElementById('f-subject').value = subject;
     document.getElementById('f-teacher').value = teacher || '';
     document.getElementById('f-color').value = color || '#c026d3';
     document.getElementById('f-room').value = room || '';
+    document.getElementById('f-group').value = group || '';
     document.getElementById('f-notes').value = notes || '';
-    document.getElementById('btn-submit').textContent = 'Enregistrer les modifications';
+    document.getElementById('btn-submit').textContent = 'Enregistrer';
     document.getElementById('btn-cancel').style.display = 'inline-flex';
     form.scrollIntoView({behavior:'smooth', block:'center'});
 }
@@ -164,20 +205,21 @@ function resetForm() {
     var form = document.getElementById('slot-form');
     form.action = '{{ url_for("ajouter_creneau") }}';
     form.reset();
+    document.getElementById('days-box').style.display = 'block';
+    document.getElementById('f-day-single').name = '';
+    document.getElementById('f-day-single').value = '';
     document.getElementById('form-title').textContent = '➕ Ajouter un créneau';
-    document.getElementById('btn-submit').textContent = 'Ajouter le créneau';
+    document.getElementById('btn-submit').textContent = 'Ajouter le(s) créneau(x)';
     document.getElementById('btn-cancel').style.display = 'none';
     document.getElementById('f-color').value = '#c026d3';
 }
 </script>
-
 <style>
 .tt-wrap { overflow-x: auto; border-radius: 14px; border: 2px solid #f0abfc; }
 .tt-table { width: 100%; border-collapse: collapse; min-width: 720px; background: #fff; }
 .tt-table th {
     background: linear-gradient(135deg, #c026d3, #a21caf);
-    color: #fff; padding: 0.75rem 0.5rem; font-size: 0.9rem;
-    text-align: center; position: sticky; top: 0;
+    color: #fff; padding: 0.75rem 0.5rem; font-size: 0.9rem; text-align: center;
 }
 .tt-table th.tt-corner { background: #86198f; min-width: 100px; }
 .tt-table td { border: 1px solid #f5d0fe; padding: 4px; vertical-align: top; min-width: 110px; height: 64px; }
@@ -187,13 +229,17 @@ function resetForm() {
 }
 .tt-slot {
     border-radius: 10px; padding: 0.4rem 0.45rem; color: #fff;
-    font-size: 0.78rem; line-height: 1.25; min-height: 52px;
+    font-size: 0.78rem; line-height: 1.25; min-height: 48px;
     display: flex; flex-direction: column; gap: 2px; position: relative;
     box-shadow: 0 2px 6px rgba(0,0,0,0.12);
 }
 .tt-slot strong { font-size: 0.82rem; }
 .tt-slot small { opacity: 0.95; font-size: 0.7rem; }
-.tt-room { opacity: 0.9 !important; }
+.tt-group {
+    display: inline-block; background: rgba(0,0,0,0.25);
+    padding: 1px 6px; border-radius: 6px; font-size: 0.68rem; font-weight: 700;
+    margin-bottom: 2px; width: fit-content;
+}
 .tt-actions {
     position: absolute; top: 2px; right: 4px;
     display: flex; gap: 4px; opacity: 0.85;
@@ -203,12 +249,10 @@ function resetForm() {
     width: 20px; height: 20px; border-radius: 6px; cursor: pointer;
     font-size: 0.7rem; line-height: 20px; text-align: center; text-decoration: none;
 }
-.tt-actions a:hover, .tt-edit:hover { background: rgba(0,0,0,0.45); }
 </style>
-
 {% else %}
 <div class="card" style="text-align:center;padding:2.5rem;color:var(--text-muted)">
-    Aucune classe disponible. Créez d'abord une classe dans le menu Classes.
+    Aucune classe disponible. Créez d'abord une classe.
 </div>
 {% endif %}
 {% endblock %}

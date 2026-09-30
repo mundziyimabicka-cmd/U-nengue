@@ -77,6 +77,33 @@
     </p>
 
 
+
+    <hr style="margin:1.5rem 0;border:none;border-top:2px solid #f0abfc">
+    <h3 style="color:#a21caf;margin-bottom:0.75rem">🏫 Logos (en-tête emploi du temps / documents)</h3>
+    <p style="font-size:0.85rem;color:#6b7280;margin-bottom:1rem">
+        Téléversez jusqu’à 4 logos (école, ministère, AEFE, etc.). Ils apparaîtront en haut des PDF d’emploi du temps.
+        Placez aussi des fichiers dans <code>static/logos/</code> si besoin.
+    </p>
+    <div class="form-row">
+        <div class="form-group">
+            <label>Logo 1 (chemin relatif)</label>
+            <input type="text" name="logo_path" class="form-control" value="{{ settings.logo_path or '' }}" placeholder="static/uploads/logos/ecole.png">
+        </div>
+        <div class="form-group">
+            <label>Logo 2</label>
+            <input type="text" name="logo_path2" class="form-control" value="{{ settings.logo2_path or '' }}" placeholder="static/uploads/logos/ministere.png">
+        </div>
+    </div>
+    <div class="form-row">
+        <div class="form-group">
+            <label>Logo 3</label>
+            <input type="text" name="logo_path3" class="form-control" value="{{ settings.logo3_path or '' }}">
+        </div>
+        <div class="form-group">
+            <label>Logo 4</label>
+            <input type="text" name="logo_path4" class="form-control" value="{{ settings.logo4_path or '' }}">
+        </div>
+    </div>
     <hr style="margin:1.5rem 0;border:none;border-top:2px solid #f0abfc">
     <h3 style="color:#a21caf;margin-bottom:1rem">📧 Serveur de messagerie (SMTP)</h3>
     <p style="font-size:0.85rem;color:#6b7280;margin-bottom:1rem">
