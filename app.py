@@ -6,7 +6,7 @@ Système APC (Approche Par Compétences)
 """
 
 from flask import (Flask, render_template, request, redirect, url_for,
-                   flash, session, send_file, send_from_directory)
+                   flash, session, send_file, send_from_directory, jsonify)
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
@@ -3775,51 +3775,89 @@ def emploi_pdf(class_id):
 
 # ==================== RESSOURCES PÉDAGOGIQUES ====================
 
-DICTIONARY_WORDS = [
-    ('école', 'school'), ('élève', 'pupil / student'), ('enseignant', 'teacher'),
-    ('classe', 'classroom'), ('livre', 'book'), ('cahier', 'notebook'),
-    ('crayon', 'pencil'), ('stylo', 'pen'), ('tableau', 'blackboard'),
-    ('ardoise', 'slate'), ('gomme', 'eraser'), ('règle', 'ruler'),
-    ('calculer', 'to calculate'), ('lire', 'to read'), ('écrire', 'to write'),
-    ('compter', 'to count'), ('nombre', 'number'), ('chiffre', 'digit'),
-    ('addition', 'addition'), ('soustraction', 'subtraction'),
-    ('multiplication', 'multiplication'), ('division', 'division'),
-    ('matin', 'morning'), ('après-midi', 'afternoon'), ('soir', 'evening'),
-    ('lundi', 'Monday'), ('mardi', 'Tuesday'), ('mercredi', 'Wednesday'),
-    ('jeudi', 'Thursday'), ('vendredi', 'Friday'), ('samedi', 'Saturday'),
-    ('dimanche', 'Sunday'), ('bonjour', 'hello / good morning'),
-    ('au revoir', 'goodbye'), ('merci', 'thank you'), ('s\'il vous plaît', 'please'),
-    ('oui', 'yes'), ('non', 'no'), ('famille', 'family'), ('père', 'father'),
-    ('mère', 'mother'), ('frère', 'brother'), ('sœur', 'sister'),
-    ('ami', 'friend'), ('maison', 'house'), ('eau', 'water'), ('pain', 'bread'),
-    ('lait', 'milk'), ('fruit', 'fruit'), ('légume', 'vegetable'),
-    ('corps', 'body'), ('tête', 'head'), ('main', 'hand'), ('pied', 'foot'),
-    ('œil', 'eye'), ('oreille', 'ear'), ('nez', 'nose'), ('bouche', 'mouth'),
-    ('rouge', 'red'), ('bleu', 'blue'), ('vert', 'green'), ('jaune', 'yellow'),
-    ('noir', 'black'), ('blanc', 'white'), ('grand', 'big / tall'),
-    ('petit', 'small'), ('rond', 'round'), ('carré', 'square'),
-    ('cercle', 'circle'), ('triangle', 'triangle'), ('ligne', 'line'),
-    ('point', 'dot / full stop'), ('phrase', 'sentence'), ('mot', 'word'),
-    ('lettre', 'letter'), ('alphabet', 'alphabet'), ('voyelle', 'vowel'),
-    ('consonne', 'consonant'), ('histoire', 'story / history'),
-    ('géographie', 'geography'), ('science', 'science'), ('sport', 'sport'),
-    ('musique', 'music'), ('dessin', 'drawing'), ('chant', 'song'),
-    ('jeu', 'game'), ('jouet', 'toy'), ('récréation', 'break / recess'),
-    ('devoirs', 'homework'), ('examen', 'exam'), ('note', 'grade / mark'),
-    ('bulletin', 'report card'), ('directeur', 'headteacher / principal'),
-    ('bibliothèque', 'library'), ('ordinateur', 'computer'),
-    ('Gabon', 'Gabon'), ('Libreville', 'Libreville'), ('Afrique', 'Africa'),
-    ('français', 'French'), ('anglais', 'English'), ('mathématiques', 'mathematics'),
-    ('un', 'one'), ('deux', 'two'), ('trois', 'three'), ('quatre', 'four'),
-    ('cinq', 'five'), ('six', 'six'), ('sept', 'seven'), ('huit', 'eight'),
-    ('neuf', 'nine'), ('dix', 'ten'), ('vingt', 'twenty'), ('cent', 'hundred'),
-    ('mille', 'thousand'), ('aujourd\'hui', 'today'), ('demain', 'tomorrow'),
-    ('hier', 'yesterday'), ('semaine', 'week'), ('mois', 'month'), ('année', 'year'),
-]
+def _load_dictionary():
+    """Charge la banque FR↔EN (~2000 mots) depuis data/dictionnaire_fr_en.json."""
+    import json
+    path = os.path.join(_BASE_DIR, 'data', 'dictionnaire_fr_en.json')
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        out = []
+        for item in data:
+            if isinstance(item, (list, tuple)) and len(item) >= 2:
+                out.append((str(item[0]), str(item[1])))
+        if out:
+            return out
+    except Exception:
+        pass
+    return [
+        ('école', 'school'), ('élève', 'pupil'), ('livre', 'book'),
+        ('bonjour', 'hello'), ('merci', 'thank you'),
+    ]
+
+DICTIONARY_WORDS = _load_dictionary()
 
 
 # Programmes officiels structurés (Cycle 1-3 / mapping Gabon PS→5ème)
 # Sources : programmes FR cycle 1, 2, 3 (français, maths, EMC, etc.) adaptés aux niveaux U nengue
+
+# PDF officiels (vos documents) servis depuis static/programmes/
+PROGRAMME_PDFS = {
+    'PS': [
+        {'titre': 'Programme maternelle (cycle 1)', 'fichier': 'cycle1-maternelle.pdf'},
+        {'titre': 'Annexe programme maternelle', 'fichier': 'cycle1-annexe-maternelle.pdf'},
+        {'titre': 'Français cycle 1', 'fichier': 'cycle1-francais.pdf'},
+        {'titre': 'Mathématiques cycle 1', 'fichier': 'cycle1-maths.pdf'},
+    ],
+    'MS': [
+        {'titre': 'Programme maternelle (cycle 1)', 'fichier': 'cycle1-maternelle.pdf'},
+        {'titre': 'Annexe programme maternelle', 'fichier': 'cycle1-annexe-maternelle.pdf'},
+        {'titre': 'Français cycle 1', 'fichier': 'cycle1-francais.pdf'},
+        {'titre': 'Mathématiques cycle 1', 'fichier': 'cycle1-maths.pdf'},
+    ],
+    'GS': [
+        {'titre': 'Programme maternelle (cycle 1)', 'fichier': 'cycle1-maternelle.pdf'},
+        {'titre': 'Annexe programme maternelle', 'fichier': 'cycle1-annexe-maternelle.pdf'},
+        {'titre': 'Français cycle 1', 'fichier': 'cycle1-francais.pdf'},
+        {'titre': 'Mathématiques cycle 1', 'fichier': 'cycle1-maths.pdf'},
+    ],
+    '1ère année': [
+        {'titre': 'Français cycle 2 (programme)', 'fichier': 'cycle2-francais.pdf'},
+        {'titre': 'Français cycle 2 (tableau)', 'fichier': 'cycle2-francais-tableau.pdf'},
+        {'titre': 'Mathématiques cycle 2 (tableau)', 'fichier': 'cycle2-maths-tableau.pdf'},
+        {'titre': 'Histoire-géographie cycle 2', 'fichier': 'cycle2-histoire-geo.pdf'},
+        {'titre': 'EMC (CP → Terminale)', 'fichier': 'emc-cp-terminale.pdf'},
+    ],
+    '2ème année': [
+        {'titre': 'Français cycle 2 (programme)', 'fichier': 'cycle2-francais.pdf'},
+        {'titre': 'Français cycle 2 (tableau)', 'fichier': 'cycle2-francais-tableau.pdf'},
+        {'titre': 'Mathématiques cycle 2 (tableau)', 'fichier': 'cycle2-maths-tableau.pdf'},
+        {'titre': 'Histoire-géographie cycle 2', 'fichier': 'cycle2-histoire-geo.pdf'},
+        {'titre': 'EMC (CP → Terminale)', 'fichier': 'emc-cp-terminale.pdf'},
+    ],
+    '3ème année': [
+        {'titre': 'Français cycle 2 (programme)', 'fichier': 'cycle2-francais.pdf'},
+        {'titre': 'Français cycle 2 (tableau)', 'fichier': 'cycle2-francais-tableau.pdf'},
+        {'titre': 'Mathématiques cycle 2 (tableau)', 'fichier': 'cycle2-maths-tableau.pdf'},
+        {'titre': 'Histoire-géographie cycle 2', 'fichier': 'cycle2-histoire-geo.pdf'},
+        {'titre': 'EMC (CP → Terminale)', 'fichier': 'emc-cp-terminale.pdf'},
+    ],
+    '4ème année': [
+        {'titre': 'Programme cycle 3 (complet)', 'fichier': 'cycle3-complet.pdf'},
+        {'titre': 'Français cycle 3 (tableau)', 'fichier': 'cycle3-francais-tableau.pdf'},
+        {'titre': 'Mathématiques cycle 3 (tableau)', 'fichier': 'cycle3-maths-tableau.pdf'},
+        {'titre': 'Histoire-géographie cycle 3', 'fichier': 'cycle3-histoire-geo.pdf'},
+        {'titre': 'EMC (CP → Terminale)', 'fichier': 'emc-cp-terminale.pdf'},
+    ],
+    '5ème année': [
+        {'titre': 'Programme cycle 3 (complet)', 'fichier': 'cycle3-complet.pdf'},
+        {'titre': 'Français cycle 3 (tableau)', 'fichier': 'cycle3-francais-tableau.pdf'},
+        {'titre': 'Mathématiques cycle 3 (tableau)', 'fichier': 'cycle3-maths-tableau.pdf'},
+        {'titre': 'Histoire-géographie cycle 3', 'fichier': 'cycle3-histoire-geo.pdf'},
+        {'titre': 'EMC (CP → Terminale)', 'fichier': 'emc-cp-terminale.pdf'},
+    ],
+}
+
 PROGRAMMES_OFFICIELS = {
     'PS': {
         'label': 'Petite section (PS)',
@@ -4480,32 +4518,75 @@ CALENDRIER_SCOLAIRE_GABON = [
 @login_required
 def dictionnaire():
     q = (request.args.get('q') or '').strip().lower()
+    letter = (request.args.get('lettre') or '').strip().lower()
     results = []
+    source = DICTIONARY_WORDS
+    if letter and len(letter) == 1:
+        source = [(fr, en) for fr, en in DICTIONARY_WORDS if fr.lower().startswith(letter)]
     if q:
-        for fr, en in DICTIONARY_WORDS:
+        for fr, en in source:
             if q in fr.lower() or q in en.lower():
                 results.append((fr, en))
     else:
-        results = DICTIONARY_WORDS
-    return render_template('dictionnaire.html', results=results, q=q, total=len(DICTIONARY_WORDS))
+        results = list(source)
+    # pagination simple
+    page = request.args.get('page', 1, type=int) or 1
+    per = 50
+    total_r = len(results)
+    pages = max(1, (total_r + per - 1) // per)
+    page = max(1, min(page, pages))
+    chunk = results[(page-1)*per:page*per]
+    letters = sorted({fr[0].lower() for fr, _ in DICTIONARY_WORDS if fr})
+    return render_template(
+        'dictionnaire.html', results=chunk, q=q, total=len(DICTIONARY_WORDS),
+        total_r=total_r, page=page, pages=pages, letter=letter, letters=letters,
+    )
 
 @app.route('/programmes-maths')
 @login_required
 def programmes_maths():
     return redirect(url_for('programmes', matiere='Mathématiques'))
 
+
+@app.route('/programmes/pdf/<path:filename>')
+@login_required
+def programme_pdf(filename):
+    """Téléchargement / consultation des PDF officiels."""
+    safe = secure_filename(filename.replace('..', ''))
+    folder = os.path.join(app.root_path, 'static', 'programmes')
+    path = os.path.join(folder, safe)
+    if not os.path.isfile(path):
+        flash('Document introuvable.', 'danger')
+        return redirect(url_for('programmes'))
+    return send_from_directory(folder, safe, as_attachment=False)
+
+
 @app.route('/programmes')
 @login_required
 def programmes():
-    niveau = request.args.get('niveau', 'GS')
+    niveau = request.args.get('niveau', '')
     matiere = request.args.get('matiere', '')
-    if niveau not in PROGRAMMES_OFFICIELS:
-        niveau = 'GS'
+    # Vue d'accueil : toutes les classes si aucun niveau
+    if not niveau or niveau not in PROGRAMMES_OFFICIELS:
+        return render_template(
+            'programmes.html',
+            programmes=PROGRAMMES_OFFICIELS,
+            niveau='',
+            matiere='',
+            matieres=[],
+            content={},
+            niveaux=list(PROGRAMMES_OFFICIELS.keys()),
+            data=None,
+            vue='accueil',
+            pdfs=[],
+            all_pdfs=PROGRAMME_PDFS,
+        )
     data = PROGRAMMES_OFFICIELS[niveau]
     matieres = list(data['matieres'].keys())
-    if matiere not in data['matieres']:
-        matiere = matieres[0] if matieres else ''
-    content = data['matieres'].get(matiere, {})
+    if matiere and matiere not in data['matieres']:
+        matiere = ''
+    content = data['matieres'].get(matiere, {}) if matiere else {}
+    pdfs = PROGRAMME_PDFS.get(niveau, [])
     return render_template(
         'programmes.html',
         programmes=PROGRAMMES_OFFICIELS,
@@ -4515,57 +4596,110 @@ def programmes():
         content=content,
         niveaux=list(PROGRAMMES_OFFICIELS.keys()),
         data=data,
+        vue='classe' if not matiere else 'matiere',
+        pdfs=pdfs,
+        all_pdfs=PROGRAMME_PDFS,
     )
 
-@app.route('/api/programme-suggestions')
+@app.route('/api/programme-suggestions', methods=['GET', 'POST'])
 @login_required
 def api_programme_suggestions():
     """JSON pour préremplir fiches pédagogiques / préparations."""
-    niveau = request.args.get('niveau', '')
-    matiere = request.args.get('matiere', '')
-    data = PROGRAMMES_OFFICIELS.get(niveau)
-    if not data:
-        return jsonify({'ok': False, 'error': 'niveau inconnu'})
-    # recherche souple de matière
-    mdata = None
-    for k, v in data['matieres'].items():
-        if matiere.lower() in k.lower() or k.lower() in matiere.lower():
-            mdata = v
-            break
-    if not mdata and data['matieres']:
-        mdata = list(data['matieres'].values())[0]
-    if not mdata:
-        return jsonify({'ok': False})
-    return jsonify({
-        'ok': True,
-        'niveau': niveau,
-        'cycle': data.get('cycle', ''),
-        'objectifs': mdata.get('objectifs', []),
-        'competences': mdata.get('competences', []),
-        'activites': mdata.get('activites', []),
-    })
+    try:
+        niveau = (request.args.get('niveau') or request.form.get('niveau') or '').strip()
+        matiere = (request.args.get('matiere') or request.form.get('matiere') or '').strip()
+        # normaliser apostrophes / espaces
+        niveau_key = niveau.replace("'", "'").replace("'", "'")
+        data = PROGRAMMES_OFFICIELS.get(niveau_key) or PROGRAMMES_OFFICIELS.get(niveau)
+        if not data:
+            # essai approximatif
+            for k in PROGRAMMES_OFFICIELS:
+                if niveau.lower() in k.lower() or k.lower() in niveau.lower():
+                    data = PROGRAMMES_OFFICIELS[k]
+                    niveau_key = k
+                    break
+        if not data:
+            return jsonify({'ok': False, 'error': 'niveau inconnu: ' + niveau})
+        mdata = None
+        mat_l = matiere.lower()
+        for k, v in data['matieres'].items():
+            kl = k.lower()
+            if mat_l in kl or kl in mat_l or (mat_l[:4] and mat_l[:4] in kl):
+                mdata = v
+                break
+        if not mdata and data['matieres']:
+            # Français / Mathématiques prioritaires
+            for pref in ['Français', 'Mathématiques', 'Langage oral et écrit', 'Mathématiques (premiers outils)']:
+                if pref in data['matieres']:
+                    mdata = data['matieres'][pref]
+                    break
+            if not mdata:
+                mdata = list(data['matieres'].values())[0]
+        if not mdata:
+            return jsonify({'ok': False, 'error': 'matière introuvable'})
+        return jsonify({
+            'ok': True,
+            'niveau': niveau_key or niveau,
+            'cycle': data.get('cycle', ''),
+            'objectifs': mdata.get('objectifs', []),
+            'competences': mdata.get('competences', []),
+            'activites': mdata.get('activites', []),
+        })
+    except Exception as e:
+        return jsonify({'ok': False, 'error': str(e)})
 
 
-@app.route('/comptines')
+@app.route('/comptines', methods=['GET', 'POST'])
 @login_required
 def comptines():
-    seed_song_bank()
+    if request.method == 'POST':
+        if session.get('role') != 'Directeur':
+            flash('Réservé au directeur.', 'danger')
+            return redirect(url_for('comptines'))
+        titre = request.form.get('titre', '').strip()
+        if titre:
+            try:
+                db.session.add(SongBank(
+                    titre=titre,
+                    niveau=request.form.get('niveau', '').strip(),
+                    type=request.form.get('type', 'comptine').strip() or 'comptine',
+                    texte=request.form.get('texte', '').strip(),
+                    source=request.form.get('source', 'ecole').strip() or 'ecole',
+                ))
+                db.session.commit()
+                flash('Ajouté à la banque.', 'success')
+            except Exception as e:
+                db.session.rollback()
+                flash('Erreur ajout: ' + str(e), 'danger')
+        return redirect(url_for('comptines'))
+    try:
+        seed_song_bank()
+    except Exception:
+        pass
     niveau = request.args.get('niveau', '')
     type_f = request.args.get('type', '')
     q = (request.args.get('q') or '').strip().lower()
-    query = SongBank.query
-    if niveau:
-        query = query.filter_by(niveau=niveau)
-    if type_f:
-        query = query.filter_by(type=type_f)
-    items = query.order_by(SongBank.niveau, SongBank.titre).all()
-    if q:
-        items = [c for c in items if q in (c.titre or '').lower() or q in (c.texte or '').lower()]
-    # Fallback si table vide / seed échec
-    if not items and not niveau and not type_f and not q:
+    items = []
+    try:
+        query = SongBank.query
+        if niveau:
+            query = query.filter_by(niveau=niveau)
+        if type_f:
+            query = query.filter_by(type=type_f)
+        items = query.order_by(SongBank.niveau, SongBank.titre).all()
+        if q:
+            items = [c for c in items if q in (c.titre or '').lower() or q in (c.texte or '').lower()]
+    except Exception:
         items = []
+    if not items:
         for c in COMPTINES:
-            items.append(type('O', (), c)())
+            if niveau and c.get('niveau') != niveau:
+                continue
+            if type_f and c.get('type') != type_f:
+                continue
+            if q and q not in (c.get('titre') or '').lower() and q not in (c.get('texte') or '').lower():
+                continue
+            items.append(type('O', (), dict(c, id=None, source='programme'))())
     niveaux = ['PS','MS','GS','1ère année','2ème année','3ème année','4ème année','5ème année']
     return render_template('comptines.html', items=items, niveau=niveau, type_f=type_f, q=q, niveaux=niveaux)
 

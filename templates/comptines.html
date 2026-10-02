@@ -43,7 +43,7 @@
 {% if session.get('role') == 'Directeur' %}
 <div class="card" style="margin-bottom:1.25rem;border-top:4px solid #7c3aed;background:linear-gradient(135deg,#fdf4ff,#faf5ff)">
     <div class="card-title" style="color:#6d28d9">➕ Ajouter à la banque</div>
-    <form method="POST" action="{{ url_for('comptines_ajouter') }}">
+    <form method="POST" action="{{ url_for('comptines') }}" method="POST">
         <div class="form-row">
             <div class="form-group" style="flex:2">
                 <label>Titre *</label>

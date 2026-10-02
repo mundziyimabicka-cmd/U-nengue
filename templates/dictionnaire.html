@@ -1,32 +1,59 @@
 {% extends "base.html" %}
-{% block title %}Dictionnaire FR–EN{% endblock %}
+{% block title %}Dictionnaire FR ↔ EN{% endblock %}
 {% block content %}
 <div class="page-header">
-    <div>
-        <h2>📖 Dictionnaire scolaire français ↔ anglais</h2>
-        <p class="subtitle">{{ total }} mots utiles pour l'école</p>
-    </div>
+    <h2>📖 Dictionnaire français ↔ anglais</h2>
+    <p class="subtitle">Banque de {{ total }} mots — recherche, filtre par lettre, pagination</p>
 </div>
-<div class="card" style="margin-bottom:1rem">
+
+<div class="card" style="margin-bottom:1rem;border-top:5px solid #0891b2">
     <form method="GET" style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:end">
-        <div class="form-group" style="flex:1;min-width:200px;margin:0">
-            <label>Rechercher</label>
-            <input type="text" name="q" class="form-control" value="{{ q }}" placeholder="ex. école, school, calculer…">
+        <div class="form-group" style="margin:0;flex:1;min-width:200px">
+            <label>Rechercher (français ou anglais)</label>
+            <input type="text" name="q" class="form-control" value="{{ q }}" placeholder="ex. école, school, calculer…" autofocus>
         </div>
-        <button class="btn btn-primary" type="submit">Chercher</button>
-        <a class="btn btn-secondary" href="{{ url_for('dictionnaire') }}">Tout voir</a>
+        <button type="submit" class="btn btn-primary">🔍 Chercher</button>
+        <a class="btn btn-secondary" href="{{ url_for('dictionnaire') }}">Tout</a>
     </form>
-</div>
-<div class="card table-wrap">
-    <table>
-        <thead><tr><th>Français</th><th>English</th></tr></thead>
-        <tbody>
-        {% for fr, en in results %}
-            <tr><td><strong>{{ fr }}</strong></td><td>{{ en }}</td></tr>
-        {% else %}
-            <tr><td colspan="2">Aucun résultat pour « {{ q }} »</td></tr>
+    <div style="margin-top:0.85rem;display:flex;flex-wrap:wrap;gap:0.3rem">
+        {% for L in letters %}
+        <a href="{{ url_for('dictionnaire', lettre=L) }}"
+           class="btn btn-sm {% if letter==L %}btn-primary{% else %}btn-secondary{% endif %}"
+           style="min-width:2rem;border-radius:8px">{{ L|upper }}</a>
         {% endfor %}
-        </tbody>
-    </table>
+    </div>
+    <p style="margin:0.75rem 0 0;font-size:0.85rem;color:var(--text-muted)">
+        {{ total_r }} résultat(s) affiché(s) · {{ total }} mots dans la banque
+        {% if pages > 1 %} · page {{ page }}/{{ pages }}{% endif %}
+    </p>
+</div>
+
+<div class="card">
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th style="width:45%">Français</th><th>English</th></tr></thead>
+            <tbody>
+            {% for fr, en in results %}
+                <tr>
+                    <td><strong style="color:#a21caf">{{ fr }}</strong></td>
+                    <td style="color:#0e7490">{{ en }}</td>
+                </tr>
+            {% else %}
+                <tr><td colspan="2" style="text-align:center;padding:1.5rem">Aucun résultat</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% if pages > 1 %}
+    <div style="display:flex;gap:0.4rem;flex-wrap:wrap;margin-top:1rem;justify-content:center">
+        {% if page > 1 %}
+        <a class="btn btn-secondary btn-sm" href="{{ url_for('dictionnaire', q=q, lettre=letter, page=page-1) }}">← Précédent</a>
+        {% endif %}
+        <span style="padding:0.4rem 0.8rem;color:#6b7280">Page {{ page }} / {{ pages }}</span>
+        {% if page < pages %}
+        <a class="btn btn-secondary btn-sm" href="{{ url_for('dictionnaire', q=q, lettre=letter, page=page+1) }}">Suivant →</a>
+        {% endif %}
+    </div>
+    {% endif %}
 </div>
 {% endblock %}
