@@ -1,11 +1,15 @@
 {% extends "base.html" %}
-{% block title %}Fiche rituel{% endblock %}
+{% block title %}Fiche rituels — journée{% endblock %}
 {% block content %}
-<div class="page-header">
-    <h2>{{ 'Modifier' if sheet else 'Nouveau' }} commentaire de rituel</h2>
+<div class="page-header" style="display:flex;flex-wrap:wrap;gap:1rem;justify-content:space-between;align-items:center">
+    <div>
+        <h2 style="margin:0">{{ 'Modifier' if sheet else 'Nouvelle' }} fiche rituels (journée)</h2>
+        <p class="subtitle" style="margin:0.25rem 0 0">Plusieurs rituels le même jour — chacun avec temps, titre, objectif et rôles</p>
+    </div>
     <a class="btn btn-secondary" href="{{ url_for('fiches_rituels') }}">← Retour</a>
 </div>
-<form method="POST" class="card" style="max-width:800px;border-top:5px solid #c026d3">
+
+<form method="POST" class="card" style="max-width:920px;border-top:5px solid #c026d3">
     <div class="form-row">
         <div class="form-group">
             <label>Classe</label>
@@ -16,38 +20,106 @@
             </select>
         </div>
         <div class="form-group">
-            <label>Date</label>
-            <input type="date" name="date" class="form-control" value="{{ sheet.date.isoformat() if sheet and sheet.date else '' }}">
-        </div>
-        <div class="form-group">
-            <label>Temps / Durée *</label>
-            <input type="text" name="duration" class="form-control" required
-                   value="{{ sheet.duration if sheet else '' }}" placeholder="ex. 07h45 – 08h05 (20 min)">
+            <label>Date de la journée *</label>
+            <input type="date" name="date" class="form-control" required
+                   value="{{ sheet.date.isoformat() if sheet and sheet.date else '' }}">
         </div>
     </div>
+
+    <hr style="border:none;border-top:2px solid #f0abfc;margin:1rem 0">
+    <h3 style="color:#a21caf;margin:0 0 0.75rem">Rituels de la journée</h3>
+    <p style="font-size:0.85rem;color:var(--text-muted);margin:0 0 1rem">
+        Ajoutez autant de rituels que nécessaire (accueil, date, présences, comptine…).
+    </p>
+
+    <div id="rituals-box">
+        {% for it in items %}
+        <div class="card ritual-block" style="padding:1rem;margin-bottom:0.85rem;background:#fdf4ff;border:2px solid #f0abfc">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem">
+                <strong style="color:#a21caf">Rituel</strong>
+                <button type="button" class="btn btn-secondary" style="font-size:0.75rem;background:#fee2e2;color:#b91c1c"
+                        onclick="this.closest('.ritual-block').remove()">Retirer</button>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Temps / durée *</label>
+                    <input type="text" name="r_duration[]" class="form-control" value="{{ it.duration }}"
+                           placeholder="ex. 07h15 – 07h20">
+                </div>
+                <div class="form-group" style="flex:2">
+                    <label>Titre du rituel *</label>
+                    <input type="text" name="r_title[]" class="form-control" value="{{ it.title }}"
+                           placeholder="ex. Vérification des présences">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Objectif</label>
+                <textarea name="r_objective[]" class="form-control" rows="2" placeholder="ex. Dénombrement">{{ it.objective }}</textarea>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Rôle de l'enseignant</label>
+                    <textarea name="r_teacher[]" class="form-control" rows="3">{{ it.teacher_role }}</textarea>
+                </div>
+                <div class="form-group">
+                    <label>Rôle de l'élève</label>
+                    <textarea name="r_student[]" class="form-control" rows="3">{{ it.student_role }}</textarea>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <button type="button" class="btn btn-secondary" onclick="addRitual()" style="margin-bottom:1rem">
+        + Ajouter un autre rituel
+    </button>
+
     <div class="form-group">
-        <label>Titre du rituel *</label>
-        <input type="text" name="title" class="form-control" required value="{{ sheet.title if sheet else '' }}"
-               placeholder="ex. Rituel de date / Comptage du jour">
-    </div>
-    <div class="form-group">
-        <label>Objectif *</label>
-        <textarea name="objective" class="form-control" rows="2" required placeholder="Ce que les élèves doivent réussir">{{ sheet.objective if sheet else '' }}</textarea>
-    </div>
-    <div class="form-row">
-        <div class="form-group">
-            <label>Rôle de l'enseignant *</label>
-            <textarea name="teacher_role" class="form-control" rows="5" required placeholder="Ce que fait / dit l'enseignant">{{ sheet.teacher_role if sheet else '' }}</textarea>
-        </div>
-        <div class="form-group">
-            <label>Rôle de l'élève *</label>
-            <textarea name="student_role" class="form-control" rows="5" required placeholder="Ce que font les élèves">{{ sheet.student_role if sheet else '' }}</textarea>
-        </div>
-    </div>
-    <div class="form-group">
-        <label>Notes / observations</label>
+        <label>Notes / observations de la journée</label>
         <textarea name="notes" class="form-control" rows="2">{{ sheet.notes if sheet else '' }}</textarea>
     </div>
+
     <button type="submit" class="btn btn-primary">💾 Enregistrer et télécharger le PDF</button>
 </form>
+
+<template id="ritual-tpl">
+    <div class="card ritual-block" style="padding:1rem;margin-bottom:0.85rem;background:#fdf4ff;border:2px solid #f0abfc">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem">
+            <strong style="color:#a21caf">Rituel</strong>
+            <button type="button" class="btn btn-secondary" style="font-size:0.75rem;background:#fee2e2;color:#b91c1c"
+                    onclick="this.closest('.ritual-block').remove()">Retirer</button>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Temps / durée *</label>
+                <input type="text" name="r_duration[]" class="form-control" placeholder="ex. 07h20 – 07h30">
+            </div>
+            <div class="form-group" style="flex:2">
+                <label>Titre du rituel *</label>
+                <input type="text" name="r_title[]" class="form-control" placeholder="Titre">
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Objectif</label>
+            <textarea name="r_objective[]" class="form-control" rows="2"></textarea>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Rôle de l'enseignant</label>
+                <textarea name="r_teacher[]" class="form-control" rows="3"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Rôle de l'élève</label>
+                <textarea name="r_student[]" class="form-control" rows="3"></textarea>
+            </div>
+        </div>
+    </div>
+</template>
+<script>
+function addRitual(){
+    document.getElementById('rituals-box').appendChild(
+        document.getElementById('ritual-tpl').content.cloneNode(true)
+    );
+}
+</script>
 {% endblock %}

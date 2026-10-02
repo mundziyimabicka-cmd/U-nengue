@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}Programmes officiels — U nengue{% endblock %}
+{% block content %}
+<div class="page-header" style="display:flex;flex-wrap:wrap;gap:1rem;justify-content:space-between;align-items:flex-start">
+    <div>
+        <h2 style="margin:0">📚 Programmes officiels</h2>
+        <p class="subtitle" style="margin:0.35rem 0 0">
+            Cycle 1 → 3 · Objectifs · Compétences · Activités suggérées · Liés aux fiches pédagogiques
+        </p>
+    </div>
+    <a class="btn btn-primary" href="{{ url_for('fiche_preparation_form') }}">📝 Créer une préparation</a>
+</div>
+
+<div class="card" style="margin-bottom:1.25rem;border-top:5px solid #7c3aed">
+    <form method="GET" style="display:flex;flex-wrap:wrap;gap:0.85rem;align-items:end">
+        <div class="form-group" style="margin:0;min-width:180px">
+            <label>Niveau</label>
+            <select name="niveau" class="form-control" onchange="this.form.submit()">
+                {% for n in niveaux %}
+                <option value="{{ n }}" {% if n==niveau %}selected{% endif %}>{{ programmes[n].label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group" style="margin:0;min-width:220px">
+            <label>Matière / domaine</label>
+            <select name="matiere" class="form-control" onchange="this.form.submit()">
+                {% for m in matieres %}
+                <option value="{{ m }}" {% if m==matiere %}selected{% endif %}>{{ m }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </form>
+</div>
+
+<div class="card" style="margin-bottom:1.25rem;background:linear-gradient(135deg,#fdf4ff,#ede9fe,#ecfeff);border-top:5px solid #c026d3">
+    <div style="display:flex;flex-wrap:wrap;gap:1rem;justify-content:space-between;align-items:center">
+        <div>
+            <div style="font-size:0.8rem;font-weight:700;color:#a21caf;text-transform:uppercase;letter-spacing:0.04em">{{ data.cycle }}</div>
+            <h3 style="margin:0.25rem 0;font-size:1.35rem;color:#5b21b6">{{ data.label }}</h3>
+            <p style="margin:0;font-weight:600;color:#7c3aed">{{ matiere }}</p>
+        </div>
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+            <a class="btn btn-primary" href="{{ url_for('fiche_preparation_form') }}?niveau={{ niveau }}&matiere={{ matiere|urlencode }}">
+                ✨ Préparer une séance
+            </a>
+            <a class="btn btn-secondary" href="{{ url_for('fiches_pedagogiques') }}">Fiches pédagogiques</a>
+        </div>
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.1rem">
+    <div class="card" style="border-top:4px solid #c026d3">
+        <div class="card-title" style="color:#a21caf">🎯 Objectifs</div>
+        <ul style="margin:0.5rem 0 0;padding-left:1.2rem;line-height:1.55">
+            {% for o in content.get('objectifs', []) %}
+            <li style="margin-bottom:0.4rem">{{ o }}</li>
+            {% else %}
+            <li>Aucun objectif renseigné</li>
+            {% endfor %}
+        </ul>
+    </div>
+    <div class="card" style="border-top:4px solid #7c3aed">
+        <div class="card-title" style="color:#6d28d9">✅ Compétences</div>
+        <ul style="margin:0.5rem 0 0;padding-left:1.2rem;line-height:1.55">
+            {% for c in content.get('competences', []) %}
+            <li style="margin-bottom:0.4rem">{{ c }}</li>
+            {% else %}
+            <li>Aucune compétence listée</li>
+            {% endfor %}
+        </ul>
+    </div>
+    <div class="card" style="border-top:4px solid #0891b2">
+        <div class="card-title" style="color:#0e7490">💡 Activités suggérées</div>
+        <ul style="margin:0.5rem 0 0;padding-left:1.2rem;line-height:1.55">
+            {% for a in content.get('activites', []) %}
+            <li style="margin-bottom:0.4rem">{{ a }}</li>
+            {% else %}
+            <li>Aucune activité listée</li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+
+<div class="card" style="margin-top:1.25rem">
+    <div class="card-title">🔗 Utiliser dans une fiche</div>
+    <p style="font-size:0.95rem;color:var(--text-muted);margin:0.35rem 0 0.75rem">
+        Les objectifs et compétences de ce programme peuvent préremplir votre fiche de préparation ou fiche pédagogique.
+    </p>
+    <div style="display:flex;flex-wrap:wrap;gap:0.5rem">
+        <a class="btn btn-primary" href="{{ url_for('fiche_preparation_form') }}?niveau={{ niveau }}&matiere={{ matiere|urlencode }}">
+            Nouvelle fiche de préparation
+        </a>
+        <a class="btn btn-secondary" href="{{ url_for('fiches_pedagogiques') }}">Voir les fiches pédagogiques</a>
+    </div>
+</div>
+
+<div style="margin-top:1.5rem;display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:0.65rem">
+    {% for n in niveaux %}
+    <a href="{{ url_for('programmes', niveau=n) }}"
+       class="card" style="text-align:center;padding:0.85rem;text-decoration:none;
+       border-top:4px solid {% if n==niveau %}#c026d3{% else %}#ddd6fe{% endif %};
+       background:{% if n==niveau %}linear-gradient(180deg,#fdf4ff,#faf5ff){% else %}#fff{% endif %}">
+        <div style="font-weight:800;color:#5b21b6;font-size:0.95rem">{{ n }}</div>
+        <div style="font-size:0.72rem;color:#7c3aed;margin-top:0.2rem">{{ programmes[n].cycle }}</div>
+    </a>
+    {% endfor %}
+</div>
+{% endblock %}

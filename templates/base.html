@@ -40,7 +40,7 @@
             <a href="{{ url_for('fiches_pedagogiques') }}" class="nav-item {% if request.endpoint and 'fiche_pedago' in (request.endpoint or '') or request.endpoint == 'fiches_pedagogiques' %}active{% endif %}">📋 Fiches pédagogiques</a>
 
             <a href="{{ url_for('dictionnaire') }}" class="nav-item {% if request.endpoint == 'dictionnaire' %}active{% endif %}">📖 Dictionnaire FR–EN</a>
-            <a href="{{ url_for('programmes_maths') }}" class="nav-item {% if request.endpoint == 'programmes_maths' %}active{% endif %}">🔢 Programmes maths</a>
+            <a href="{{ url_for('programmes') }}" class="nav-item {% if request.endpoint == 'programmes_maths' %}active{% endif %}">🔢 📚 Programmes</a>
             <a href="{{ url_for('comptines') }}" class="nav-item {% if request.endpoint == 'comptines' %}active{% endif %}">🎵 Comptines</a>
             <a href="{{ url_for('calendrier_scolaire') }}" class="nav-item {% if request.endpoint == 'calendrier_scolaire' %}active{% endif %}">📅 Calendrier scolaire</a>
             <a href="{{ url_for('evaluations') }}" class="nav-item {% if 'evaluation' in (request.endpoint or '') or request.endpoint == 'saisir_evaluation' %}active{% endif %}">📝 Évaluations</a>

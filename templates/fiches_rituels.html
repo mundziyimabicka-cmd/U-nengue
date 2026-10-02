@@ -3,13 +3,13 @@
 {% block content %}
 <div class="page-header" style="display:flex;flex-wrap:wrap;gap:1rem;justify-content:space-between;align-items:center">
     <div>
-        <h2 style="margin:0">🔁 Fiches rituels</h2>
-        <p class="subtitle" style="margin:0.25rem 0 0">Commenter un rituel puis télécharger le PDF coloré</p>
+        <h2 style="margin:0">🔁 Fiches rituels (par journée)</h2>
+        <p class="subtitle" style="margin:0.25rem 0 0">Plusieurs rituels par jour — PDF coloré</p>
     </div>
-    <a class="btn btn-primary" href="{{ url_for('fiche_rituel_form') }}">➕ Nouveau rituel</a>
+    <a class="btn btn-primary" href="{{ url_for('fiche_rituel_form') }}">➕ Nouvelle journée de rituels</a>
 </div>
 <div class="card" style="margin-bottom:1rem">
-    <form method="GET" style="display:flex;gap:0.5rem;flex-wrap:wrap">
+    <form method="GET">
         <select name="class_id" class="form-control" onchange="this.form.submit()" style="max-width:260px">
             <option value="">Toutes les classes</option>
             {% for r in rooms %}
@@ -20,9 +20,16 @@
 </div>
 <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1rem">
 {% for s in sheets %}
+{% set n = s.items()|length %}
 <div class="card" style="border-top:4px solid #c026d3">
-    <div style="font-size:0.75rem;color:#a21caf;font-weight:700">{{ s.date.strftime('%d/%m/%Y') if s.date else '—' }} · {{ s.duration or '' }}</div>
-    <h3 style="margin:0.4rem 0">{{ s.title or 'Sans titre' }}</h3>
+    <div style="font-size:0.75rem;color:#a21caf;font-weight:700">
+        {{ s.date.strftime('%d/%m/%Y') if s.date else '—' }} · {{ n }} rituel{{ 's' if n != 1 else '' }}
+    </div>
+    <h3 style="margin:0.4rem 0;font-size:1rem">
+        {% if n %}
+            {{ s.items()[0].title or 'Rituels' }}{% if n > 1 %} <span style="color:#9ca3af;font-weight:500">+{{ n-1 }}</span>{% endif %}
+        {% else %}Sans titre{% endif %}
+    </h3>
     <p style="font-size:0.85rem;color:var(--text-muted);margin:0">{{ s.classroom.name if s.classroom else '—' }}</p>
     <div style="margin-top:0.75rem;display:flex;gap:0.4rem;flex-wrap:wrap">
         <a class="btn btn-secondary" style="font-size:0.8rem" href="{{ url_for('fiche_rituel_form', id=s.id) }}">Modifier</a>
@@ -30,7 +37,7 @@
     </div>
 </div>
 {% else %}
-<div class="card">Aucune fiche rituel. Créez-en une.</div>
+<div class="card">Aucune fiche. Créez une journée de rituels.</div>
 {% endfor %}
 </div>
 {% endblock %}

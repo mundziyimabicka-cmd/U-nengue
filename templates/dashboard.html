@@ -2,6 +2,17 @@
 {% block title %}Accueil — U nengue{% endblock %}
 {% block content %}
 
+<div class="card hero-welcome" style="margin-bottom:1.25rem;background:linear-gradient(135deg,#fdf4ff 0%,#ede9fe 40%,#ecfeff 100%);border-top:5px solid #c026d3;position:relative;overflow:hidden">
+    <div style="position:absolute;right:-20px;top:-20px;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,rgba(232,121,249,0.35),transparent);pointer-events:none"></div>
+    <div class="card-title" style="color:#a21caf">✨ Bienvenue sur U nengue</div>
+    <p style="margin:0.35rem 0 0;font-size:1.05rem;font-weight:600;color:#5b21b6">
+        {{ session.get('full_name', 'Utilisateur') }}
+        <span style="font-weight:500;color:#7c3aed">— {{ session.get('role', '') }}</span>
+    </p>
+    <p style="margin:0.4rem 0 0;font-size:0.9rem;color:#6b7280">Na buranghe ô dji icole di Gabu · Conception MM</p>
+</div>
+
+
 <div class="card" style="margin-bottom:1.25rem;background:linear-gradient(135deg,#fdf4ff,#ede9fe);border-top:4px solid #c026d3">
     <div class="card-title">💭 Citation du jour</div>
     <p style="font-size:1.05rem;font-style:italic;margin:0.5rem 0">{{ quote_jour }}</p>

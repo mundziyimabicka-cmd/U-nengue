@@ -283,6 +283,17 @@ class Publication(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     author = db.relationship('User')
 
+
+class SongBank(db.Model):
+    """Banque de comptines et chants (modifiable)."""
+    id = db.Column(db.Integer, primary_key=True)
+    titre = db.Column(db.String(200), nullable=False)
+    niveau = db.Column(db.String(40), default='')  # PS, MS, GS, 1ère année...
+    type = db.Column(db.String(20), default='comptine')  # comptine | chant
+    texte = db.Column(db.Text, default='')
+    source = db.Column(db.String(80), default='programme')  # programme | ecole | autre
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
 class Textbook(db.Model):
     """Manuels scolaires en usage"""
     id = db.Column(db.Integer, primary_key=True)
@@ -334,19 +345,40 @@ class ScheduleSlot(db.Model):
 
 
 class RitualSheet(db.Model):
-    """Fiche de commentaire de rituel."""
+    """Fiche journalière de rituels (plusieurs rituels le même jour)."""
     id = db.Column(db.Integer, primary_key=True)
     class_id = db.Column(db.Integer, db.ForeignKey('class_room.id'), nullable=True)
     date = db.Column(db.Date)
-    duration = db.Column(db.String(40), default='')  # temps
+    # Anciens champs (1er rituel / compatibilité)
+    duration = db.Column(db.String(40), default='')
     title = db.Column(db.String(200), default='')
     objective = db.Column(db.Text, default='')
     teacher_role = db.Column(db.Text, default='')
     student_role = db.Column(db.Text, default='')
-    notes = db.Column(db.Text, default='')
+    notes = db.Column(db.Text, default='')  # notes générales de la journée
+    items_json = db.Column(db.Text, default='[]')  # liste de rituels
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     classroom = db.relationship('ClassRoom', backref=db.backref('ritual_sheets', lazy=True))
+
+    def items(self):
+        import json
+        try:
+            data = json.loads(self.items_json or '[]')
+            if data:
+                return data
+        except Exception:
+            pass
+        # Compatibilité ancienne fiche à 1 rituel
+        if self.title or self.duration or self.objective:
+            return [{
+                'duration': self.duration or '',
+                'title': self.title or '',
+                'objective': self.objective or '',
+                'teacher_role': self.teacher_role or '',
+                'student_role': self.student_role or '',
+            }]
+        return []
 
 class PrepSheet(db.Model):
     """Fiche de préparation de séance (modèle officiel enrichi)."""
@@ -839,6 +871,13 @@ def migrate_schema():
             if 'parent_pin' not in cols:
                 with db.engine.begin() as conn:
                     conn.execute(sa_text("ALTER TABLE student ADD COLUMN parent_pin VARCHAR(20) DEFAULT ''"))
+        except Exception:
+            pass
+        try:
+            cols = {c['name'] for c in insp.get_columns('ritual_sheet')}
+            if 'items_json' not in cols:
+                with db.engine.begin() as conn:
+                    conn.execute(sa_text("ALTER TABLE ritual_sheet ADD COLUMN items_json TEXT DEFAULT '[]'"))
         except Exception:
             pass
         # schedule_slot group_label
@@ -3147,8 +3186,9 @@ def fiche_pedagogique_form(id=None):
         {'name': '4. Pratique autonome', 'duration': '9 min', 'teacher': '', 'student': ''},
         {'name': '5. Clôture', 'duration': '3 min', 'teacher': '', 'student': ''},
     ]
+    room_levels = {str(r.id): (r.level or '') for r in rooms}
     return render_template('fiche_pedagogique_form.html', sheet=sheet, rooms=rooms,
-                           subjects=PEDAGO_SUBJECTS, phases=phases)
+                           subjects=PEDAGO_SUBJECTS, phases=phases, room_levels=room_levels)
 
 @app.route('/fiches-pedagogiques/<int:id>')
 @login_required
@@ -3777,164 +3817,638 @@ DICTIONARY_WORDS = [
     ('hier', 'yesterday'), ('semaine', 'week'), ('mois', 'month'), ('année', 'year'),
 ]
 
-MATH_PROGRAMS = {
+
+# Programmes officiels structurés (Cycle 1-3 / mapping Gabon PS→5ème)
+# Sources : programmes FR cycle 1, 2, 3 (français, maths, EMC, etc.) adaptés aux niveaux U nengue
+PROGRAMMES_OFFICIELS = {
     'PS': {
-        'title': 'Mathématiques — Petite section (PS)',
-        'objectifs': [
-            'Découvrir les quantités (beaucoup / peu / un / plusieurs)',
-            'Dénombrer jusqu\'à 3 dans des situations concrètes',
-            'Reconnaître des formes simples (rond, carré)',
-            'Se repérer dans l\'espace (dessus, dessous, dedans, dehors)',
-            'Classer des objets par couleur ou taille',
-        ],
-        'activites': [
-            'Jeux de tri (couleurs, tailles)',
-            'Comptines numériques (1, 2, 3)',
-            'Manipulation de cubes et jetons',
-            'Parcours moteur (devant / derrière)',
-        ],
+        'label': 'Petite section (PS)',
+        'cycle': 'Cycle 1 — Maternelle',
+        'matieres': {
+            'Langage oral et écrit': {
+                'objectifs': [
+                    'Développer le langage oral : écouter, comprendre, s\'exprimer',
+                    'Enrichir le vocabulaire du quotidien et des activités de classe',
+                    'Découvrir le principe alphabétique (premiers sons, prénom)',
+                    'Entrer dans la culture de l\'écrit (albums, comptines, affichages)',
+                ],
+                'competences': [
+                    'Écouter et comprendre un message simple',
+                    'S\'exprimer dans un langage compréhensible',
+                    'Reconnaître son prénom écrit',
+                    'Participer à des échanges guidés',
+                ],
+                'activites': [
+                    'Comptines et jeux de doigts',
+                    'Lecture d\'albums par l\'enseignant',
+                    'Jeux de langage (qui est-ce ?, devinettes)',
+                    'Dictée à l\'adulte (phrases courtes)',
+                ],
+            },
+            'Mathématiques (premiers outils)': {
+                'objectifs': [
+                    'Découvrir les quantités et les nombres (jusqu\'à 3 puis 5)',
+                    'Comparer, trier, classer des objets',
+                    'Se repérer dans le temps (journée, rituels)',
+                    'Se repérer dans l\'espace proche (classe, cour)',
+                ],
+                'competences': [
+                    'Dénombrer de petites collections',
+                    'Associer quantité et symbole (1, 2, 3)',
+                    'Ordonner des événements de la journée',
+                    'Situer des objets (devant, derrière, sur, sous)',
+                ],
+                'activites': [
+                    'Boîtes à compter et cubes',
+                    'Rituels de date et de présence',
+                    'Jeux de tri (couleurs, formes, tailles)',
+                    'Parcours moteurs et repères spatiaux',
+                ],
+            },
+            'Activités physiques': {
+                'objectifs': [
+                    'Développer les déplacements et les équilibres',
+                    'Coopérer dans des jeux simples',
+                    'S\'exprimer avec son corps',
+                ],
+                'competences': ['Courir, sauter, lancer', 'Respecter des règles de jeu', 'Imiter et danser'],
+                'activites': ['Parcours moteurs', 'Jeux de coopération', 'Danses et mimes'],
+            },
+            'Activités artistiques': {
+                'objectifs': [
+                    'Dessiner, graphisme libre',
+                    'Explorer les sons et la voix',
+                    'Éprouver et exprimer des émotions',
+                ],
+                'competences': ['Tracer, coller, modeler', 'Chanter des comptines', 'Observer des images'],
+                'activites': ['Arts plastiques', 'Chansons et instruments', 'Spectacles courts'],
+            },
+            'Découverte du monde': {
+                'objectifs': [
+                    'Découvrir le vivant (animaux, végétaux)',
+                    'Explorer les objets et matériaux',
+                    'Prendre soin de son corps',
+                ],
+                'competences': ['Observer et nommer', 'Manipuler avec précaution', 'Respecter l\'environnement proche'],
+                'activites': ['Jardinage simple', 'Observations en classe', 'Rituels d\'hygiène'],
+            },
+        },
     },
     'MS': {
-        'title': 'Mathématiques — Moyenne section (MS)',
-        'objectifs': [
-            'Dénombrer jusqu\'à 6',
-            'Comparer des quantités (plus, moins, autant)',
-            'Reconnaître cercle, carré, triangle',
-            'Se repérer sur un parcours simple',
-            'Utiliser le calendrier de la classe (jours)',
-        ],
-        'activites': [
-            'Jeux de marché (petites quantités)',
-            'Puzzles géométriques',
-            'Alignements et suites logiques',
-            'Comptines jusqu\'à 10',
-        ],
+        'label': 'Moyenne section (MS)',
+        'cycle': 'Cycle 1 — Maternelle',
+        'matieres': {
+            'Langage oral et écrit': {
+                'objectifs': [
+                    'Structurer le langage oral (phrases plus complexes)',
+                    'Développer la conscience phonologique',
+                    'S\'initier à l\'écriture du prénom et de lettres',
+                    'Comprendre des histoires plus longues',
+                ],
+                'competences': [
+                    'Raconter un événement vécu',
+                    'Distinguer des sons dans les mots',
+                    'Reconnaître des lettres familières',
+                    'Reformuler une histoire simple',
+                ],
+                'activites': [
+                    'Jeux phonologiques (rimes, syllabes)',
+                    'Albums et questionnements',
+                    'Écriture du prénom',
+                    'Théâtre de marionnettes',
+                ],
+            },
+            'Mathématiques (premiers outils)': {
+                'objectifs': [
+                    'Nombres jusqu\'à 10 (dénombrement, comparaison)',
+                    'Résoudre de petits problèmes concrets',
+                    'Se repérer dans le temps (semaine, avant/après)',
+                    'Formes géométriques simples',
+                ],
+                'competences': [
+                    'Compter jusqu\'à 10 avec exactitude',
+                    'Comparer des quantités (plus, moins, autant)',
+                    'Nommer cercle, carré, triangle',
+                    'Utiliser le calendrier de la classe',
+                ],
+                'activites': [
+                    'Jeux de dés et cartes',
+                    'Situations de partage',
+                    'Construction de figures',
+                    'Rituels de la date enrichis',
+                ],
+            },
+            'Activités physiques': {
+                'objectifs': ['Affiner les gestes moteurs', 'Respecter des règles collectives', 'S\'opposer et coopérer'],
+                'competences': ['Enchaîner des actions', 'Jouer en équipe', 'Contrôler son énergie'],
+                'activites': ['Jeux collectifs', 'Ateliers d\'équilibre', 'Danses structurées'],
+            },
+            'Activités artistiques': {
+                'objectifs': ['Graphisme dirigé', 'Répertoire de chansons', 'Création plastique'],
+                'competences': ['Tracer des formes rythmées', 'Mémoriser des comptines', 'Composer une image'],
+                'activites': ['Graphisme', 'Chorale de classe', 'Collages et volumes'],
+            },
+            'Découverte du monde': {
+                'objectifs': ['Cycle de vie simple', 'Matériaux et leurs usages', 'Espace proche élargi'],
+                'competences': ['Décrire un animal ou une plante', 'Classer des objets', 'Se situer dans l\'école'],
+                'activites': ['Élevage / plantation', 'Expériences simples', 'Promenade exploratoire'],
+            },
+        },
     },
     'GS': {
-        'title': 'Mathématiques — Grande section (GS)',
-        'objectifs': [
-            'Dénombrer jusqu\'à 10 (voire 20)',
-            'Associer écriture chiffrée et quantité',
-            'Résoudre de petits problèmes oraux',
-            'Reconnaître et nommer formes planes',
-            'Se préparer à la numération de 1ère année',
-        ],
-        'activites': [
-            'Boîtes à compter',
-            'Jeux de dés et cartes',
-            'Construction de figures',
-            'Problèmes de la vie quotidienne',
-        ],
+        'label': 'Grande section (GS)',
+        'cycle': 'Cycle 1 — Maternelle',
+        'matieres': {
+            'Langage oral et écrit': {
+                'objectifs': [
+                    'Préparer l\'entrée dans la lecture (principe alphabétique)',
+                    'Écrire des mots sous dictée (syllabes connues)',
+                    'Comprendre et raconter des textes',
+                    'Participer à des échanges structurés',
+                ],
+                'competences': [
+                    'Associer lettres et sons fréquents',
+                    'Écrire son prénom et des mots usuels',
+                    'Reformuler le fil d\'une histoire',
+                    'Prendre la parole devant le groupe',
+                ],
+                'activites': [
+                    'Ateliers phonologie intensifs',
+                    'Premiers essais de lecture',
+                    'Production d\'écrits courts',
+                    'Débats guidés',
+                ],
+            },
+            'Mathématiques (premiers outils)': {
+                'objectifs': [
+                    'Nombres jusqu\'à 30 (voire au-delà selon les élèves)',
+                    'Résolution de problèmes avec manipulation',
+                    'Premières écritures additives',
+                    'Grandeurs : longueur, contenance',
+                ],
+                'competences': [
+                    'Dénombrer et constituer des collections',
+                    'Utiliser le signe + dans des situations',
+                    'Comparer des longueurs',
+                    'Lire et écrire les nombres jusqu\'à 20/30',
+                ],
+                'activites': [
+                    'Situations-problèmes de la vie de classe',
+                    'Jeux de marché',
+                    'Frise numérique',
+                    'Mesures avec unités non conventionnelles',
+                ],
+            },
+            'Activités physiques': {
+                'objectifs': ['Enchaînements moteurs', 'Jeux à règles complexes', 'Expression corporelle'],
+                'competences': ['Enchaîner 3 actions', 'Respecter un règlement', 'Créer une petite danse'],
+                'activites': ['Parcours évolués', 'Jeux traditionnels', 'Spectacles corporels'],
+            },
+            'Activités artistiques': {
+                'objectifs': ['Graphisme abouti', 'Création intentionnelle', 'Culture artistique'],
+                'competences': ['Réaliser une composition', 'Interpréter une chanson', 'Parler d\'une œuvre'],
+                'activites': ['Projets artistiques', 'Visite virtuelle d\'œuvres', 'Concerts de classe'],
+            },
+            'Découverte du monde': {
+                'objectifs': ['Vivant et cycles', 'États de la matière', 'Objets techniques simples'],
+                'competences': ['Expliquer une observation', 'Tester une hypothèse simple', 'Utiliser un outil adapté'],
+                'activites': ['Expériences (eau, glace)', 'Montages simples', 'Carnet d\'observation'],
+            },
+        },
     },
     '1ère année': {
-        'title': 'Mathématiques — 1ère année (CP)',
-        'objectifs': [
-            'Nombres jusqu\'à 100',
-            'Addition et soustraction',
-            'Résolution de problèmes simples',
-            'Mesures : longueur, monnaie',
-            'Repérage dans le temps (jours, mois)',
-        ],
-        'activites': [
-            'Calcul mental quotidien',
-            'Situations-problèmes illustrées',
-            'Manipulations monétaires',
-            'Frise numérique',
-        ],
+        'label': '1ère année (équivalent CP)',
+        'cycle': 'Cycle 2',
+        'matieres': {
+            'Français': {
+                'objectifs': [
+                    'Automatiser le décodage (CGP) — apprentissage systématique et quotidien',
+                    'Lire à voix haute des textes courts',
+                    'Comprendre un texte simple',
+                    'Écrire en cursive, encoder sous dictée',
+                    'Produire de courts écrits',
+                    'Écouter, dire, participer aux échanges',
+                    'Enrichir le vocabulaire et mémoriser l\'orthographe lexicale',
+                ],
+                'competences': [
+                    'Identifier les mots de manière de plus en plus aisée',
+                    'Lire à voix haute',
+                    'Comprendre un texte',
+                    'Devenir lecteur',
+                    'Écrire en cursive / encoder / copier / produire',
+                    'Écouter pour comprendre / dire pour être compris',
+                ],
+                'activites': [
+                    'Séances quotidiennes de code (CGP)',
+                    'Lecture à voix haute guidée',
+                    'Questions de compréhension',
+                    'Dictées de mots et de phrases',
+                    'Production d\'écrits (légendes, messages)',
+                    'Jeux de vocabulaire',
+                ],
+            },
+            'Mathématiques': {
+                'objectifs': [
+                    'Nombres jusqu\'à 100',
+                    'Addition et soustraction (sens et techniques)',
+                    'Résolution de problèmes simples',
+                    'Mesures : longueur, monnaie',
+                    'Repérage dans le temps (jours, mois)',
+                    'Calcul mental quotidien',
+                ],
+                'competences': [
+                    'Lire, écrire, comparer les nombres',
+                    'Calculer mentalement',
+                    'Résoudre des problèmes arithmétiques',
+                    'Utiliser des instruments de mesure simples',
+                ],
+                'activites': [
+                    'Calcul mental quotidien',
+                    'Situations-problèmes illustrées',
+                    'Manipulations monétaires',
+                    'Frise numérique',
+                    'Jeux de dés et cartes',
+                ],
+            },
+            'EMC': {
+                'objectifs': [
+                    'Se reconnaître comme individu et élève',
+                    'Connaissance et maîtrise de soi',
+                    'Règles collectives et autonomie',
+                    'Règles d\'hygiène et intimité',
+                    'Être élève à l\'école de la République / de la communauté',
+                ],
+                'competences': ['Respecter les règles de classe', 'Identifier ses émotions', 'Coopérer'],
+                'activites': ['Conseil de classe', 'Jeux de rôle', 'Affiches de règles co-construites'],
+            },
+        },
     },
     '2ème année': {
-        'title': 'Mathématiques — 2ème année (CE1)',
-        'objectifs': [
-            'Nombres jusqu\'à 1000',
-            'Techniques opératoires (+, −)',
-            'Introduction à la multiplication',
-            'Géométrie : solides et figures',
-            'Grandeurs et mesures',
-        ],
-        'activites': [
-            'Tables d\'addition',
-            'Problèmes en plusieurs étapes',
-            'Trace de figures à la règle',
-            'Mesure avec règles et balance',
-        ],
+        'label': '2ème année (équivalent CE1)',
+        'cycle': 'Cycle 2',
+        'matieres': {
+            'Français': {
+                'objectifs': [
+                    'Consolider le décodage et gagner en fluidité',
+                    'Lire à voix haute avec davantage d\'aisance',
+                    'Comprendre des textes plus longs',
+                    'Produire des écrits structurés',
+                    'Enrichir vocabulaire et orthographe',
+                ],
+                'competences': [
+                    'Identifier les mots aisément',
+                    'Lire à voix haute',
+                    'Comprendre un texte',
+                    'Produire des écrits',
+                    'Participer à des échanges',
+                ],
+                'activites': [
+                    'Entraînement à la fluidité',
+                    'Lecture documentaire simple',
+                    'Rédaction de textes courts',
+                    'Dictées préparées',
+                    'Jeux morphologiques',
+                ],
+            },
+            'Mathématiques': {
+                'objectifs': [
+                    'Nombres jusqu\'à 1 000',
+                    'Techniques opératoires (+, −)',
+                    'Introduction à la multiplication',
+                    'Géométrie : solides et figures',
+                    'Grandeurs et mesures',
+                ],
+                'competences': [
+                    'Maîtriser les techniques + et −',
+                    'Résoudre des problèmes en plusieurs étapes',
+                    'Tracer des figures à la règle',
+                    'Mesurer avec règle et balance',
+                ],
+                'activites': [
+                    'Tables d\'addition',
+                    'Problèmes en plusieurs étapes',
+                    'Trace de figures',
+                    'Mesures concrètes',
+                ],
+            },
+            'EMC': {
+                'objectifs': [
+                    'Respecter les autres (altérité et sociabilité)',
+                    'Règles collectives et prise d\'initiative',
+                    'Principes et symboles de la République / du pays',
+                ],
+                'competences': ['Respecter l\'autre', 'Prendre des initiatives', 'Reconnaître des symboles'],
+                'activites': ['Débats réglés', 'Projets solidaires', 'Découverte des symboles'],
+            },
+        },
     },
     '3ème année': {
-        'title': 'Mathématiques — 3ème année (CE2)',
-        'objectifs': [
-            'Nombres jusqu\'à 10 000',
-            'Multiplication et division',
-            'Fractions simples (sens)',
-            'Périmètre de figures usuelles',
-            'Problèmes multi-étapes',
-        ],
-        'activites': [
-            'Tables de multiplication',
-            'Situations de partage',
-            'Construction de périmètres',
-            'Jeux de stratégie numérique',
-        ],
+        'label': '3ème année (équivalent CE2)',
+        'cycle': 'Cycle 2',
+        'matieres': {
+            'Français': {
+                'objectifs': [
+                    'Lire de manière fluide et écrire des énoncés simples (fin de cycle 2)',
+                    'Comprendre des textes variés',
+                    'Produire des écrits cohérents',
+                    'Grammaire et orthographe de base',
+                ],
+                'competences': [
+                    'Fluidité de lecture',
+                    'Compréhension fine',
+                    'Production d\'écrits',
+                    'Vocabulaire enrichi',
+                    'Notions grammaticales de base',
+                ],
+                'activites': [
+                    'Lecture silencieuse et à voix haute',
+                    'Comptes rendus de lecture',
+                    'Rédactions guidées',
+                    'Étude de la langue structurée',
+                ],
+            },
+            'Mathématiques': {
+                'objectifs': [
+                    'Nombres jusqu\'à 10 000',
+                    'Multiplication et division',
+                    'Fractions simples (sens)',
+                    'Périmètre de figures usuelles',
+                    'Problèmes multi-étapes',
+                ],
+                'competences': [
+                    'Maîtriser les tables de multiplication',
+                    'Résoudre des situations de partage',
+                    'Calculer des périmètres',
+                    'Utiliser des stratégies de résolution',
+                ],
+                'activites': [
+                    'Tables de multiplication',
+                    'Situations de partage',
+                    'Construction de périmètres',
+                    'Jeux de stratégie numérique',
+                ],
+            },
+            'EMC': {
+                'objectifs': [
+                    'Apprendre ensemble et vivre ensemble',
+                    'L\'engagement pour le bien commun',
+                    'La République et son fonctionnement (notions adaptées)',
+                ],
+                'competences': ['S\'engager pour le groupe', 'Comprendre des institutions simples'],
+                'activites': ['Projets de classe', 'Élections de délégués', 'Visites / témoignages'],
+            },
+        },
     },
     '4ème année': {
-        'title': 'Mathématiques — 4ème année (CM1)',
-        'objectifs': [
-            'Nombres jusqu\'aux millions',
-            'Les quatre opérations',
-            'Fractions et décimaux (introduction)',
-            'Aire et périmètre',
-            'Proportionnalité simple',
-        ],
-        'activites': [
-            'Calcul posé renforcé',
-            'Problèmes de proportionnalité',
-            'Mesure d\'aires sur quadrillage',
-            'Lecture de graphiques simples',
-        ],
+        'label': '4ème année (équivalent CM1)',
+        'cycle': 'Cycle 3',
+        'matieres': {
+            'Français': {
+                'objectifs': [
+                    'Lire avec fluidité (~110 mots/min en moyenne après préparation)',
+                    'Lire et comprendre seul des textes, documents et images',
+                    'Culture littéraire (héros, merveilleux, morale, poésie…)',
+                    'Écrire à la main de manière fluide ; produire des écrits variés',
+                    'Oral : écouter, dire, échanger',
+                    'Vocabulaire et grammaire (phrase simple, accords)',
+                ],
+                'competences': [
+                    'Lire avec fluidité',
+                    'Lire à voix haute avec expressivité',
+                    'Comprendre textes et documents',
+                    'Lire une œuvre et s\'en approprier',
+                    'Produire des écrits variés',
+                    'Identifier les constituants de la phrase simple',
+                ],
+                'activites': [
+                    'Lecture quotidienne (silencieuse et à voix haute)',
+                    'Au moins 2 œuvres patrimoniales + 5 ouvrages jeunesse / an',
+                    'Écrits réflexifs courts',
+                    'Dictées et étude de la langue',
+                    'Débats littéraires',
+                ],
+            },
+            'Mathématiques': {
+                'objectifs': [
+                    'Nombres jusqu\'aux millions',
+                    'Fractions et nombres décimaux (introduction)',
+                    'Les quatre opérations',
+                    'Aires et périmètres',
+                    'Proportionnalité simple',
+                    'Géométrie plane et solides',
+                ],
+                'competences': [
+                    'Calculer avec les 4 opérations',
+                    'Comprendre fractions et décimaux',
+                    'Mesurer et calculer des aires',
+                    'Résoudre des problèmes de proportionnalité',
+                ],
+                'activites': [
+                    'Calcul posé renforcé',
+                    'Problèmes de proportionnalité',
+                    'Mesure d\'aires sur quadrillage',
+                    'Lecture de graphiques simples',
+                ],
+            },
+            'EMC': {
+                'objectifs': [
+                    'Faire société : civisme et citoyenneté',
+                    'L\'égalité dans la dignité',
+                    'Comment faire société',
+                ],
+                'competences': ['Agir en citoyen de la classe', 'Respecter l\'égalité', 'Débattre'],
+                'activites': ['Projets citoyens', 'Étude de situations d\'égalité', 'Débats réglés'],
+            },
+        },
     },
     '5ème année': {
-        'title': 'Mathématiques — 5ème année (CM2) / préparation CEP',
-        'objectifs': [
-            'Maîtrise des quatre opérations',
-            'Fractions et nombres décimaux',
-            'Proportionnalité et pourcentages simples',
-            'Géométrie plane et solides',
-            'Préparation aux épreuves du CEP',
-        ],
-        'activites': [
-            'Annales et exercices type CEP',
-            'Problèmes complexes',
-            'Constructions géométriques précises',
-            'Entraînement chronométré',
-        ],
+        'label': '5ème année (équivalent CM2) — préparation CEP',
+        'cycle': 'Cycle 3',
+        'matieres': {
+            'Français': {
+                'objectifs': [
+                    'Fluidité ~120 mots/min ; compréhension d\'informations explicites et implicites',
+                    'Lire des œuvres et s\'en approprier',
+                    'Produire des écrits autonomes respectant les codes',
+                    'Grammaire : phrase simple consolidée, notions d\'expansion',
+                    'Préparation aux écrits et lectures du CEP',
+                ],
+                'competences': [
+                    'Lire avec fluidité et expressivité',
+                    'Restituer l\'essentiel d\'un texte',
+                    'Produire des écrits variés de façon autonome',
+                    'Mobiliser grammaire et orthographe en production',
+                ],
+                'activites': [
+                    'Au moins 3 œuvres patrimoniales + 4 ouvrages jeunesse',
+                    'Rédactions type examen',
+                    'Compréhension de documents composites',
+                    'Entraînement CEP',
+                ],
+            },
+            'Mathématiques': {
+                'objectifs': [
+                    'Maîtrise des quatre opérations',
+                    'Fractions et nombres décimaux',
+                    'Proportionnalité et pourcentages simples',
+                    'Géométrie plane et solides',
+                    'Préparation aux épreuves du CEP',
+                ],
+                'competences': [
+                    'Résoudre des problèmes complexes',
+                    'Utiliser fractions et décimaux',
+                    'Constructions géométriques précises',
+                    'Gérer le temps en situation d\'évaluation',
+                ],
+                'activites': [
+                    'Annales et exercices type CEP',
+                    'Problèmes multi-étapes',
+                    'Constructions à la règle et au compas',
+                    'Entraînement chronométré',
+                ],
+            },
+            'EMC': {
+                'objectifs': [
+                    'Vivre en République : citoyenneté et nationalité (notions adaptées)',
+                    'Libertés et droits fondamentaux',
+                    'Respecter les droits de tous',
+                    'Laïcité et vivre-ensemble à l\'école',
+                ],
+                'competences': ['Comprendre des droits et devoirs', 'Respecter les différences', 'Argumenter'],
+                'activites': ['Études de cas', 'Charte de classe', 'Projets de solidarité'],
+            },
+        },
     },
 }
 
+# Alias rétrocompatibilité
+MATH_PROGRAMS = {
+    niv: {
+        'title': data['matieres'].get('Mathématiques', data['matieres'].get('Mathématiques (premiers outils)', {})).get('objectifs', [''])[0] if False else data['label'] + ' — Mathématiques',
+        'objectifs': data['matieres'].get('Mathématiques', data['matieres'].get('Mathématiques (premiers outils)', {})).get('objectifs', []),
+        'activites': data['matieres'].get('Mathématiques', data['matieres'].get('Mathématiques (premiers outils)', {})).get('activites', []),
+    }
+    for niv, data in PROGRAMMES_OFFICIELS.items()
+    if 'Mathématiques' in data['matieres'] or 'Mathématiques (premiers outils)' in data['matieres']
+}
+for niv, data in PROGRAMMES_OFFICIELS.items():
+    m = data['matieres'].get('Mathématiques') or data['matieres'].get('Mathématiques (premiers outils)')
+    if m:
+        MATH_PROGRAMS[niv] = {
+            'title': f"Mathématiques — {data['label']}",
+            'objectifs': m.get('objectifs', []),
+            'activites': m.get('activites', []),
+        }
+
+
+
+def seed_song_bank():
+    """Remplit la banque à partir de COMPTINES si vide."""
+    try:
+        if SongBank.query.count() > 0:
+            return
+        for c in COMPTINES:
+            db.session.add(SongBank(
+                titre=c.get('titre') or 'Sans titre',
+                niveau=c.get('niveau') or '',
+                type=c.get('type') or 'comptine',
+                texte=c.get('texte') or '',
+                source='programme',
+            ))
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+
+
 COMPTINES = [
-    {'titre': 'Une poule sur un mur', 'niveau': 'PS', 'texte':
-     'Une poule sur un mur\nQui picote du pain dur\nPicoti, picota\nLève la queue et puis s\'en va.'},
-    {'titre': 'Ainsi font font font', 'niveau': 'PS', 'texte':
-     'Ainsi font, font, font\nLes petites marionnettes\nAinsi font, font, font\nTrois petits tours et puis s\'en vont.'},
-    {'titre': 'Un kilomètre à pied', 'niveau': 'MS', 'texte':
-     'Un kilomètre à pied, ça use, ça use\nUn kilomètre à pied, ça use les souliers.'},
-    {'titre': '1, 2, 3, nous irons au bois', 'niveau': 'MS', 'texte':
-     '1, 2, 3, nous irons au bois\n4, 5, 6, cueillir des cerises\n7, 8, 9, dans mon panier neuf\n10, 11, 12, elles seront toutes rouges.'},
-    {'titre': 'Frère Jacques', 'niveau': 'GS', 'texte':
-     'Frère Jacques, Frère Jacques\nDormez-vous ? Dormez-vous ?\nSonnez les matines, sonnez les matines\nDing ding dong, ding ding dong.'},
-    {'titre': 'La ronde des lettres', 'niveau': 'GS', 'texte':
-     'A B C D E F G\nH I J K L M N\nO P Q R S T U\nV W X Y Z\nVoilà l\'alphabet chanté !'},
-    {'titre': 'Les doigts de la main', 'niveau': 'PS', 'texte':
-     'Un petit doigt se promène\nDeux petits doigts se saluent\nTrois petits doigts dansent\nQuatre petits doigts chantent\nCinq petits doigts applaudissent.'},
-    {'titre': 'Bonjour, bonjour', 'niveau': 'MS', 'texte':
-     'Bonjour, bonjour, les amis\nBonjour, bonjour, comment allez-vous ?\nTrès bien, merci, et vous ?'},
-    {'titre': 'Le fermier dans son pré', 'niveau': 'GS', 'texte':
-     'Le fermier dans son pré\nA planté des petits pois\nQui poussent, poussent, poussent\nEt font de grands pois.'},
-    {'titre': 'Pomme de reinette', 'niveau': 'MS', 'texte':
-     'Pomme de reinette et pomme d\'api\nTapi tapi tapi\nPomme de reinette et pomme d\'api\nTapi tapi ta.'},
-    {'titre': 'Savez-vous planter les choux', 'niveau': 'PS', 'texte':
-     'Savez-vous planter les choux\nÀ la mode, à la mode\nSavez-vous planter les choux\nÀ la mode de chez nous ?'},
-    {'titre': 'Un éléphant qui se balançait', 'niveau': 'GS', 'texte':
-     'Un éléphant qui se balançait\nSur une toile, toile, toile, toile d\'araignée\nC\'était un jeu tellement amusant\nQue tout l\'après-midi il s\'est balancé.'},
-    {'titre': 'Head, shoulders (EN)', 'niveau': 'GS', 'texte':
-     'Head, shoulders, knees and toes\nKnees and toes\nHead, shoulders, knees and toes\nEyes and ears and mouth and nose.'},
+    # —— PS ——
+    {'titre': 'Une poule sur un mur', 'niveau': 'PS', 'type': 'comptine',
+     'texte': 'Une poule sur un mur\nQui picote du pain dur\nPicoti, picota\nLève la queue et puis s\'en va.'},
+    {'titre': 'Ainsi font font font', 'niveau': 'PS', 'type': 'comptine',
+     'texte': 'Ainsi font, font, font\nLes petites marionnettes\nAinsi font, font, font\nTrois petits tours et puis s\'en vont.'},
+    {'titre': 'Am stram gram', 'niveau': 'PS', 'type': 'comptine',
+     'texte': 'Am stram gram\nPic et pic et colegram\nBour et bour et ratatam\nAm stram gram.'},
+    {'titre': 'Bateau sur l\'eau', 'niveau': 'PS', 'type': 'comptine',
+     'texte': 'Bateau sur l\'eau\nLa rivière, la rivière\nBateau sur l\'eau\nLa rivière au bord de l\'eau.'},
+    {'titre': 'Savez-vous planter les choux', 'niveau': 'PS', 'type': 'chant',
+     'texte': 'Savez-vous planter les choux\nÀ la mode, à la mode\nSavez-vous planter les choux\nÀ la mode de chez nous ?\nOn les plante avec le doigt…'},
+    {'titre': 'Tapent petits doigts', 'niveau': 'PS', 'type': 'comptine',
+     'texte': 'Tapent, tapent petits doigts\nDoigts de la main, doigts du pied\nTourne, tourne petit pouce\nEt les autres font comme ça.'},
+    # —— MS ——
+    {'titre': 'Un kilomètre à pied', 'niveau': 'MS', 'type': 'chant',
+     'texte': 'Un kilomètre à pied, ça use, ça use\nUn kilomètre à pied, ça use les souliers.\nDeux kilomètres à pied…'},
+    {'titre': '1, 2, 3, nous irons au bois', 'niveau': 'MS', 'type': 'comptine',
+     'texte': '1, 2, 3, nous irons au bois\n4, 5, 6, cueillir des cerises\n7, 8, 9, dans mon panier neuf\n10, 11, 12, elles seront toutes rouges.'},
+    {'titre': 'Pomme de reinette', 'niveau': 'MS', 'type': 'comptine',
+     'texte': 'Pomme de reinette et pomme d\'api\nTapi tapi tapi\nPomme de reinette et pomme d\'api\nTapi tapi ta.'},
+    {'titre': 'Bonjour, bonjour', 'niveau': 'MS', 'type': 'chant',
+     'texte': 'Bonjour, bonjour, les amis\nBonjour, bonjour, comment allez-vous ?\nTrès bien, merci, et vous ?'},
+    {'titre': 'Les petites marionnettes', 'niveau': 'MS', 'type': 'comptine',
+     'texte': 'Ainsi font, font, font\nLes petites marionnettes\nElles font, font, font\nTrois petits tours et puis s\'en vont\nElles reprennent, prennent, prennent\nLe chemin des écoliers…'},
+    {'titre': 'Il court, il court le furet', 'niveau': 'MS', 'type': 'chant',
+     'texte': 'Il court, il court, le furet\nLe furet du bois, mesdames\nIl court, il court, le furet\nLe furet du bois joli.'},
+    # —— GS ——
+    {'titre': 'Frère Jacques', 'niveau': 'GS', 'type': 'chant',
+     'texte': 'Frère Jacques, Frère Jacques\nDormez-vous ? Dormez-vous ?\nSonnez les matines, sonnez les matines\nDing ding dong, ding ding dong.'},
+    {'titre': 'Le fermier dans son pré', 'niveau': 'GS', 'type': 'chant',
+     'texte': 'Le fermier dans son pré\nA planté des petits pois\nQui poussent, poussent, poussent\nEt font de grands pois.'},
+    {'titre': 'Un éléphant qui se balançait', 'niveau': 'GS', 'type': 'comptine',
+     'texte': 'Un éléphant qui se balançait\nSur une toile, toile, toile, toile d\'araignée\nC\'était un jeu tellement amusant\nQue tout l\'après-midi il s\'est balancé.'},
+    {'titre': 'La ronde des lettres', 'niveau': 'GS', 'type': 'comptine',
+     'texte': 'A, B, C, D, E, F, G\nH, I, J, K, L, M, N, O, P\nQ, R, S, T, U, V\nW, X, Y, Z\nMaintenant je connais mon alphabet !'},
+    {'titre': 'Head, shoulders (EN)', 'niveau': 'GS', 'type': 'chant',
+     'texte': 'Head, shoulders, knees and toes\nKnees and toes\nHead, shoulders, knees and toes\nEyes and ears and mouth and nose.'},
+    {'titre': 'Meunier tu dors', 'niveau': 'GS', 'type': 'chant',
+     'texte': 'Meunier, tu dors, ton moulin va trop vite\nMeunier, tu dors, ton moulin va trop fort.'},
+    {'titre': 'Compter jusqu\'à dix', 'niveau': 'GS', 'type': 'comptine',
+     'texte': 'Un, deux, trois\nJ\'irai dans les bois\nQuatre, cinq, six\nCueillir des cerises\nSept, huit, neuf\nDans mon panier neuf\nDix, onze, douze\nElles seront toutes rouges.'},
+    # —— 1ère année (CP) ——
+    {'titre': 'Au clair de la lune', 'niveau': '1ère année', 'type': 'chant',
+     'texte': 'Au clair de la lune\nMon ami Pierrot\nPrête-moi ta plume\nPour écrire un mot.\nMa chandelle est morte\nJe n\'ai plus de feu\nOuvre-moi ta porte\nPour l\'amour de Dieu.'},
+    {'titre': 'Dans la forêt lointaine', 'niveau': '1ère année', 'type': 'chant',
+     'texte': 'Dans la forêt lointaine\nOn entend le coucou\nDu haut de son grand chêne\nIl répond au hibou\nCoucou, coucou…'},
+    {'titre': 'Alphabet chanté', 'niveau': '1ère année', 'type': 'chant',
+     'texte': 'A B C D E F G\nH I J K L M N O P\nQ R S T U V\nW X Y et Z\nC\'est l\'alphabet, je le connais !'},
+    {'titre': 'Les jours de la semaine', 'niveau': '1ère année', 'type': 'comptine',
+     'texte': 'Lundi, mardi, mercredi\nJeudi, vendredi, samedi\nEt dimanche terminé\nLa semaine est passée.'},
+    {'titre': 'Comptine des sons', 'niveau': '1ère année', 'type': 'comptine',
+     'texte': 'Le [a] de papa, le [i] de pipi\nLe [o] de vélo, le [u] de tortue\nJ\'écoute les sons, je les reconnais\nPour bien apprendre à lire, c\'est vrai !'},
+    # —— 2ème année (CE1) ——
+    {'titre': 'À la claire fontaine', 'niveau': '2ème année', 'type': 'chant',
+     'texte': 'À la claire fontaine\nM\'en allant promener\nJ\'ai trouvé l\'eau si belle\nQue je m\'y suis baigné…'},
+    {'titre': 'Gentil coquelicot', 'niveau': '2ème année', 'type': 'chant',
+     'texte': 'J\'ai descendu dans mon jardin\nPour y cueillir du thym\nGentil coquelicot, mesdames\nGentil coquelicot.'},
+    {'titre': 'La marelle chantée', 'niveau': '2ème année', 'type': 'comptine',
+     'texte': 'Un, deux, trois, j\'irai dans les bois\nQuatre, cinq, six, cueillir des cerises\nSept, huit, neuf, dans mon panier neuf\nDix, j\'arrive enfin !'},
+    {'titre': 'Chanson des mois', 'niveau': '2ème année', 'type': 'chant',
+     'texte': 'Janvier, février, mars et avril\nMai, juin, juillet font mûrir le blé\nAoût, septembre, octobre aussi\nNovembre, décembre : l\'année est finie.'},
+    # —— 3ème année (CE2) ——
+    {'titre': 'Il était un petit navire', 'niveau': '3ème année', 'type': 'chant',
+     'texte': 'Il était un petit navire\nQui n\'avait ja-ja-jamais navigué\nOhé ! Ohé !'},
+    {'titre': 'La chenille', 'niveau': '3ème année', 'type': 'chant',
+     'texte': 'Une chenille se balançait\nSur une feuille, feuille, feuille\nC\'était un jeu si amusant\nQu\'une autre chenille est montée…'},
+    {'titre': 'Comptine multiplicative', 'niveau': '3ème année', 'type': 'comptine',
+     'texte': '2 et 2 font 4, 4 et 4 font 8\n8 et 8 font 16, 16 et 16 font 32\nJe multiplie, je progresse\nLes tables dans ma tête !'},
+    {'titre': 'Vent frais', 'niveau': '3ème année', 'type': 'chant',
+     'texte': 'Vent frais, vent du matin\nVent qui souffle au sommet des grands pins\nJoie du vent qui passe\nAllons dans le grand vent !'},
+    # —— 4ème année (CM1) ——
+    {'titre': 'Le temps des cerises', 'niveau': '4ème année', 'type': 'chant',
+     'texte': 'Quand nous chanterons le temps des cerises\nEt gai rossignol et merle moqueur\nSeront tous en fête…'},
+    {'titre': 'Chant des poètes', 'niveau': '4ème année', 'type': 'chant',
+     'texte': 'Les mots dansent, les rimes chantent\nSur la page blanche du cahier\nPoésie, ouvre tes ailes\nEt fais voyager nos pensées.'},
+    {'titre': 'Géométrie en chanson', 'niveau': '4ème année', 'type': 'comptine',
+     'texte': 'Le carré a quatre côtés égaux\nLe rectangle deux longs, deux petits\nLe triangle trois côtés bien rangés\nLe cercle n\'en finit plus de tourner !'},
+    {'titre': 'La Marseillaise (extrait pédagogique)', 'niveau': '4ème année', 'type': 'chant',
+     'texte': 'Allons enfants de la Patrie\nLe jour de gloire est arrivé…\n(extrait — éducation civique / culture)'},
+    # —— 5ème année (CM2) ——
+    {'titre': 'Hymne à la joie (thème)', 'niveau': '5ème année', 'type': 'chant',
+     'texte': 'Chantons tous en chœur la joie\nQui unit les cœurs des hommes\nAmis, laissons la colère\nEt marchons vers la lumière.'},
+    {'titre': 'Chant pour le CEP', 'niveau': '5ème année', 'type': 'chant',
+     'texte': 'Courage, courage, les candidats\nLe CEP n\'est pas si loin\nOn révise, on s\'entraîne\nEt la réussite sera nôtre !'},
+    {'titre': 'Les continents', 'niveau': '5ème année', 'type': 'comptine',
+     'texte': 'Afrique, Amérique, Antarctique\nAsie, Europe et Océanie\nSix continents sur la Terre\nJe les connais, je les situe !'},
+    {'titre': 'Poème-comptine des fractions', 'niveau': '5ème année', 'type': 'comptine',
+     'texte': 'Un demi, c\'est la moitié\nUn tiers, c\'est trois parts égales\nUn quart, quatre parts du gâteau\nLes fractions, c\'est pas compliqué !'},
 ]
 
 QUOTES_JOUR = [
@@ -3978,21 +4492,142 @@ def dictionnaire():
 @app.route('/programmes-maths')
 @login_required
 def programmes_maths():
+    return redirect(url_for('programmes', matiere='Mathématiques'))
+
+@app.route('/programmes')
+@login_required
+def programmes():
     niveau = request.args.get('niveau', 'GS')
-    if niveau not in MATH_PROGRAMS:
+    matiere = request.args.get('matiere', '')
+    if niveau not in PROGRAMMES_OFFICIELS:
         niveau = 'GS'
-    return render_template('programmes_maths.html', programmes=MATH_PROGRAMS,
-                           niveau=niveau, niveaux=list(MATH_PROGRAMS.keys()))
+    data = PROGRAMMES_OFFICIELS[niveau]
+    matieres = list(data['matieres'].keys())
+    if matiere not in data['matieres']:
+        matiere = matieres[0] if matieres else ''
+    content = data['matieres'].get(matiere, {})
+    return render_template(
+        'programmes.html',
+        programmes=PROGRAMMES_OFFICIELS,
+        niveau=niveau,
+        matiere=matiere,
+        matieres=matieres,
+        content=content,
+        niveaux=list(PROGRAMMES_OFFICIELS.keys()),
+        data=data,
+    )
+
+@app.route('/api/programme-suggestions')
+@login_required
+def api_programme_suggestions():
+    """JSON pour préremplir fiches pédagogiques / préparations."""
+    niveau = request.args.get('niveau', '')
+    matiere = request.args.get('matiere', '')
+    data = PROGRAMMES_OFFICIELS.get(niveau)
+    if not data:
+        return jsonify({'ok': False, 'error': 'niveau inconnu'})
+    # recherche souple de matière
+    mdata = None
+    for k, v in data['matieres'].items():
+        if matiere.lower() in k.lower() or k.lower() in matiere.lower():
+            mdata = v
+            break
+    if not mdata and data['matieres']:
+        mdata = list(data['matieres'].values())[0]
+    if not mdata:
+        return jsonify({'ok': False})
+    return jsonify({
+        'ok': True,
+        'niveau': niveau,
+        'cycle': data.get('cycle', ''),
+        'objectifs': mdata.get('objectifs', []),
+        'competences': mdata.get('competences', []),
+        'activites': mdata.get('activites', []),
+    })
+
 
 @app.route('/comptines')
 @login_required
 def comptines():
+    seed_song_bank()
     niveau = request.args.get('niveau', '')
-    items = COMPTINES
+    type_f = request.args.get('type', '')
+    q = (request.args.get('q') or '').strip().lower()
+    query = SongBank.query
     if niveau:
-        items = [c for c in COMPTINES if c['niveau'] == niveau]
-    return render_template('comptines.html', items=items, niveau=niveau,
-                           niveaux=['PS', 'MS', 'GS'])
+        query = query.filter_by(niveau=niveau)
+    if type_f:
+        query = query.filter_by(type=type_f)
+    items = query.order_by(SongBank.niveau, SongBank.titre).all()
+    if q:
+        items = [c for c in items if q in (c.titre or '').lower() or q in (c.texte or '').lower()]
+    # Fallback si table vide / seed échec
+    if not items and not niveau and not type_f and not q:
+        items = []
+        for c in COMPTINES:
+            items.append(type('O', (), c)())
+    niveaux = ['PS','MS','GS','1ère année','2ème année','3ème année','4ème année','5ème année']
+    return render_template('comptines.html', items=items, niveau=niveau, type_f=type_f, q=q, niveaux=niveaux)
+
+@app.route('/comptines/ajouter', methods=['POST'])
+@login_required
+def comptines_ajouter():
+    if session.get('role') != 'Directeur':
+        flash('Réservé au directeur.', 'danger')
+        return redirect(url_for('comptines'))
+    titre = request.form.get('titre', '').strip()
+    if not titre:
+        flash('Titre obligatoire.', 'danger')
+        return redirect(url_for('comptines'))
+    s = SongBank(
+        titre=titre,
+        niveau=request.form.get('niveau', '').strip(),
+        type=request.form.get('type', 'comptine').strip() or 'comptine',
+        texte=request.form.get('texte', '').strip(),
+        source=request.form.get('source', 'ecole').strip() or 'ecole',
+    )
+    db.session.add(s)
+    db.session.commit()
+    flash('Ajouté à la banque de comptines & chants.', 'success')
+    return redirect(url_for('comptines', niveau=s.niveau or None))
+
+@app.route('/comptines/<int:id>/supprimer')
+@login_required
+def comptines_supprimer(id):
+    if session.get('role') != 'Directeur':
+        flash('Réservé au directeur.', 'danger')
+        return redirect(url_for('comptines'))
+    s = SongBank.query.get_or_404(id)
+    db.session.delete(s)
+    db.session.commit()
+    flash('Supprimé de la banque.', 'success')
+    return redirect(url_for('comptines'))
+
+@app.route('/comptines/recharger-programmes')
+@login_required
+def comptines_recharger():
+    """Réinjecte les titres programme manquants (sans doublons de titre+niveau)."""
+    if session.get('role') != 'Directeur':
+        flash('Réservé au directeur.', 'danger')
+        return redirect(url_for('comptines'))
+    existing = {(x.titre, x.niveau) for x in SongBank.query.all()}
+    n = 0
+    for c in COMPTINES:
+        key = (c.get('titre'), c.get('niveau'))
+        if key in existing:
+            continue
+        db.session.add(SongBank(
+            titre=c.get('titre') or 'Sans titre',
+            niveau=c.get('niveau') or '',
+            type=c.get('type') or 'comptine',
+            texte=c.get('texte') or '',
+            source='programme',
+        ))
+        n += 1
+    db.session.commit()
+    flash(f'{n} titre(s) programme ajouté(s) à la banque.', 'success')
+    return redirect(url_for('comptines'))
+
 
 @app.route('/calendrier-scolaire')
 @login_required
@@ -4096,7 +4731,7 @@ def fiches_rituels():
         if u and u.class_id:
             rooms = [r for r in rooms if r.id == u.class_id]
     class_id = request.args.get('class_id', type=int)
-    q = RitualSheet.query.order_by(RitualSheet.created_at.desc())
+    q = RitualSheet.query.order_by(RitualSheet.date.desc(), RitualSheet.created_at.desc())
     if class_id:
         q = q.filter_by(class_id=class_id)
     elif session.get('role') == 'Enseignant':
@@ -4110,6 +4745,7 @@ def fiches_rituels():
 @app.route('/fiches-rituels/<int:id>/edit', methods=['GET', 'POST'])
 @login_required
 def fiche_rituel_form(id=None):
+    import json
     sheet = RitualSheet.query.get(id) if id else None
     rooms = ClassRoom.query.order_by(ClassRoom.level, ClassRoom.name).all()
     if session.get('role') == 'Enseignant':
@@ -4126,49 +4762,83 @@ def fiche_rituel_form(id=None):
             sheet.date = datetime.strptime(d, '%Y-%m-%d').date() if d else datetime.utcnow().date()
         except Exception:
             sheet.date = datetime.utcnow().date()
-        sheet.duration = request.form.get('duration', '').strip()
-        sheet.title = request.form.get('title', '').strip()
-        sheet.objective = request.form.get('objective', '').strip()
-        sheet.teacher_role = request.form.get('teacher_role', '').strip()
-        sheet.student_role = request.form.get('student_role', '').strip()
         sheet.notes = request.form.get('notes', '').strip()
+        durs = request.form.getlist('r_duration[]')
+        titles = request.form.getlist('r_title[]')
+        objs = request.form.getlist('r_objective[]')
+        teachs = request.form.getlist('r_teacher[]')
+        studs = request.form.getlist('r_student[]')
+        items = []
+        for i in range(max(len(durs), len(titles), 1)):
+            title = (titles[i] if i < len(titles) else '').strip()
+            duration = (durs[i] if i < len(durs) else '').strip()
+            objective = (objs[i] if i < len(objs) else '').strip()
+            teacher_role = (teachs[i] if i < len(teachs) else '').strip()
+            student_role = (studs[i] if i < len(studs) else '').strip()
+            if not any([title, duration, objective, teacher_role, student_role]):
+                continue
+            items.append({
+                'duration': duration,
+                'title': title,
+                'objective': objective,
+                'teacher_role': teacher_role,
+                'student_role': student_role,
+            })
+        if not items:
+            flash('Ajoutez au moins un rituel (titre ou durée).', 'danger')
+            return redirect(request.url)
+        sheet.items_json = json.dumps(items, ensure_ascii=False)
+        # Compat champs simples = 1er rituel
+        first = items[0]
+        sheet.duration = first.get('duration', '')
+        sheet.title = first.get('title', '')
+        sheet.objective = first.get('objective', '')
+        sheet.teacher_role = first.get('teacher_role', '')
+        sheet.student_role = first.get('student_role', '')
         db.session.commit()
-        flash('Fiche rituel enregistrée.', 'success')
+        flash(f'{len(items)} rituel(s) enregistré(s) pour cette journée.', 'success')
         return redirect(url_for('fiche_rituel_pdf', id=sheet.id))
-    return render_template('fiche_rituel_form.html', sheet=sheet, rooms=rooms)
+    items = sheet.items() if sheet else [
+        {'duration': '', 'title': '', 'objective': '', 'teacher_role': '', 'student_role': ''},
+        {'duration': '', 'title': '', 'objective': '', 'teacher_role': '', 'student_role': ''},
+    ]
+    return render_template('fiche_rituel_form.html', sheet=sheet, rooms=rooms, items=items)
 
 @app.route('/fiches-rituels/<int:id>/pdf')
 @login_required
 def fiche_rituel_pdf(id):
     from reportlab.lib.pagesizes import A4
     from reportlab.lib import colors
-    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, KeepTogether
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     from reportlab.lib.units import cm, mm
     from reportlab.lib.enums import TA_CENTER, TA_LEFT
     sheet = RitualSheet.query.get_or_404(id)
     settings = SchoolSettings.query.first()
+    items = sheet.items()
     buffer = io.BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=A4, leftMargin=1.5*cm, rightMargin=1.5*cm,
-                            topMargin=1.2*cm, bottomMargin=1.2*cm)
+    doc = SimpleDocTemplate(buffer, pagesize=A4, leftMargin=1.4*cm, rightMargin=1.4*cm,
+                            topMargin=1*cm, bottomMargin=1*cm)
     styles = getSampleStyleSheet()
     title_s = ParagraphStyle('t', parent=styles['Normal'], fontSize=16, alignment=TA_CENTER,
-                             fontName='Helvetica-Bold', textColor=colors.HexColor('#a21caf'), spaceAfter=8)
+                             fontName='Helvetica-Bold', textColor=colors.HexColor('#a21caf'), spaceAfter=4)
     h = ParagraphStyle('h', parent=styles['Normal'], fontSize=10, fontName='Helvetica-Bold',
-                       textColor=colors.HexColor('#86198f'), spaceBefore=8, spaceAfter=3)
+                       textColor=colors.HexColor('#86198f'), spaceBefore=6, spaceAfter=2)
     body = ParagraphStyle('b', parent=styles['Normal'], fontSize=9, leading=12)
+    small = ParagraphStyle('sm', parent=styles['Normal'], fontSize=8, leading=11)
     elements = []
     school = settings.school_name if settings else 'École'
-    elements.append(Paragraph('FICHE RITUEL', title_s))
+    elements.append(Paragraph('FICHE RITUELS — Journée', title_s))
     elements.append(Paragraph(f'{school} — U nengue', ParagraphStyle(
-        's', parent=styles['Normal'], fontSize=9, alignment=TA_CENTER, spaceAfter=10)))
+        's', parent=styles['Normal'], fontSize=9, alignment=TA_CENTER, spaceAfter=8)))
     cls = sheet.classroom.name if sheet.classroom else '—'
-    meta = [
-        [Paragraph(f'<b>Classe :</b> {cls}', body),
-         Paragraph(f'<b>Date :</b> {sheet.date.strftime("%d/%m/%Y") if sheet.date else "—"}', body),
-         Paragraph(f'<b>Temps / Durée :</b> {sheet.duration or "—"}', body)],
-    ]
-    mt = Table(meta, colWidths=[5.5*cm, 5.5*cm, 5.5*cm])
+    level = sheet.classroom.level if sheet.classroom else ''
+    meta = [[
+        Paragraph(f'<b>Classe :</b> {cls} {("(" + level + ")") if level else ""}', body),
+        Paragraph(f'<b>Date :</b> {sheet.date.strftime("%d/%m/%Y") if sheet.date else "—"}', body),
+        Paragraph(f'<b>Nombre de rituels :</b> {len(items)}', body),
+    ]]
+    mt = Table(meta, colWidths=[6*cm, 5*cm, 5*cm])
     mt.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#fdf4ff')),
         ('BOX', (0, 0), (-1, -1), 1.5, colors.HexColor('#c026d3')),
@@ -4177,41 +4847,64 @@ def fiche_rituel_pdf(id):
         ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
     ]))
     elements.append(mt)
-    elements.append(Spacer(1, 6*mm))
-    elements.append(Paragraph('Titre du rituel', h))
-    elements.append(Paragraph(sheet.title or '—', body))
-    elements.append(Paragraph('Objectif', h))
-    elements.append(Paragraph(sheet.objective or '—', body))
-    data = [
-        [Paragraph('<b>Rôle de l\'enseignant</b>', body),
-         Paragraph('<b>Rôle de l\'élève</b>', body)],
-        [Paragraph(sheet.teacher_role or '—', body),
-         Paragraph(sheet.student_role or '—', body)],
+    elements.append(Spacer(1, 5*mm))
+
+    palette = [
+        ('#c026d3', '#fdf4ff'),
+        ('#7c3aed', '#f5f3ff'),
+        ('#db2777', '#fdf2f8'),
+        ('#0891b2', '#ecfeff'),
+        ('#ea580c', '#fff7ed'),
     ]
-    t = Table(data, colWidths=[8.5*cm, 8*cm])
-    t.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#c026d3')),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-        ('BACKGROUND', (0, 1), (0, 1), colors.HexColor('#ede9fe')),
-        ('BACKGROUND', (1, 1), (1, 1), colors.HexColor('#fce7f3')),
-        ('BOX', (0, 0), (-1, -1), 1.2, colors.HexColor('#a21caf')),
-        ('INNERGRID', (0, 0), (-1, -1), 0.6, colors.HexColor('#d946ef')),
-        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-        ('TOPPADDING', (0, 0), (-1, -1), 8),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
-    ]))
-    elements.append(Spacer(1, 4*mm))
-    elements.append(t)
+    for idx, it in enumerate(items, 1):
+        bg_h, bg_b = palette[(idx - 1) % len(palette)]
+        block = []
+        block.append(Paragraph(
+            f'<b>Rituel {idx}</b> — {it.get("title") or "Sans titre"} '
+            f'&nbsp;&nbsp;|&nbsp;&nbsp; <b>Temps :</b> {it.get("duration") or "—"}',
+            ParagraphStyle('rh', parent=styles['Normal'], fontSize=10, fontName='Helvetica-Bold',
+                           textColor=colors.white, spaceBefore=0, spaceAfter=0)))
+        head_t = Table([[block[-1]]], colWidths=[17*cm])
+        head_t.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor(bg_h)),
+            ('TOPPADDING', (0, 0), (-1, -1), 6),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+            ('LEFTPADDING', (0, 0), (-1, -1), 8),
+        ]))
+        obj = Paragraph(f'<b>Objectif :</b> {it.get("objective") or "—"}', small)
+        roles = Table([[
+            Paragraph(f'<b>Rôle de l\'enseignant</b><br/>{it.get("teacher_role") or "—"}', small),
+            Paragraph(f'<b>Rôle de l\'élève</b><br/>{it.get("student_role") or "—"}', small),
+        ]], colWidths=[8.5*cm, 8.5*cm])
+        roles.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor(bg_b)),
+            ('BOX', (0, 0), (-1, -1), 0.8, colors.HexColor(bg_h)),
+            ('INNERGRID', (0, 0), (-1, -1), 0.4, colors.HexColor(bg_h)),
+            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+            ('TOPPADDING', (0, 0), (-1, -1), 6),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+            ('LEFTPADDING', (0, 0), (-1, -1), 6),
+        ]))
+        obj_t = Table([[obj]], colWidths=[17*cm])
+        obj_t.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor(bg_b)),
+            ('BOX', (0, 0), (-1, -1), 0.6, colors.HexColor(bg_h)),
+            ('TOPPADDING', (0, 0), (-1, -1), 5),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+            ('LEFTPADDING', (0, 0), (-1, -1), 6),
+        ]))
+        elements.append(KeepTogether([head_t, obj_t, roles, Spacer(1, 4*mm)]))
+
     if sheet.notes:
-        elements.append(Paragraph('Notes / observations', h))
+        elements.append(Paragraph('Notes / observations de la journée', h))
         elements.append(Paragraph(sheet.notes, body))
-    elements.append(Spacer(1, 10*mm))
+    elements.append(Spacer(1, 8*mm))
     elements.append(Paragraph('Document généré par U nengue — MM', ParagraphStyle(
         'f', parent=styles['Normal'], fontSize=7, alignment=TA_CENTER, textColor=colors.grey)))
     doc.build(elements)
     buffer.seek(0)
     return send_file(buffer, mimetype='application/pdf', as_attachment=True,
-                     download_name=f'rituel_{sheet.id}.pdf')
+                     download_name=f'rituels_{sheet.date.isoformat() if sheet.date else sheet.id}.pdf')
 
 @app.route('/fiches-preparation')
 @login_required

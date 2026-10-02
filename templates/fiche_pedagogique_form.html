@@ -1,18 +1,33 @@
 {% extends "base.html" %}
 {% block title %}{{ 'Modifier' if sheet else 'Nouvelle' }} fiche pédagogique{% endblock %}
 {% block content %}
-<div class="page-header">
-    <h2>{{ '✏️ Modifier' if sheet else '➕ Nouvelle' }} fiche pédagogique</h2>
+<div class="page-header" style="display:flex;flex-wrap:wrap;gap:1rem;justify-content:space-between;align-items:center">
+    <div>
+        <h2 style="margin:0">{{ '✏️ Modifier' if sheet else '➕ Nouvelle' }} fiche pédagogique</h2>
+        <p class="subtitle" style="margin:0.25rem 0 0">Professionnelle · Alignée sur les programmes officiels</p>
+    </div>
     <a href="{{ url_for('fiches_pedagogiques') }}" class="btn btn-secondary">← Retour</a>
 </div>
 
-<form method="POST" class="card" style="max-width:960px">
+<form method="POST" class="card" style="max-width:980px;border-top:5px solid #7c3aed" id="fiche-form">
+    <div id="prog-banner" style="display:none" class="alert alert-success"></div>
+
+    <div class="card" style="margin-bottom:1.25rem;background:linear-gradient(135deg,#fdf4ff,#ede9fe,#ecfeff);padding:1rem;border:2px solid #e9d5ff">
+        <div style="font-weight:800;color:#6d28d9;margin-bottom:0.5rem">📚 Charger le programme de la classe</div>
+        <p style="font-size:0.88rem;color:#6b7280;margin:0 0 0.75rem">
+            Choisissez la classe et la matière, puis cliquez pour remplir objectifs, compétences et suggestions d’activités.
+        </p>
+        <button type="button" class="btn btn-primary" id="btn-load-prog">✨ Importer objectifs & activités du programme</button>
+        <a class="btn btn-secondary" href="{{ url_for('programmes') }}" target="_blank" style="margin-left:0.35rem">Voir les programmes</a>
+    </div>
+
     <div class="form-row">
         <div class="form-group">
             <label>Classe *</label>
-            <select name="class_id" class="form-control" required>
+            <select name="class_id" id="class_id" class="form-control" required>
                 {% for r in rooms %}
-                <option value="{{ r.id }}" {% if sheet and sheet.class_id == r.id %}selected{% elif not sheet and loop.first %}selected{% endif %}>
+                <option value="{{ r.id }}" data-level="{{ r.level }}"
+                    {% if sheet and sheet.class_id == r.id %}selected{% elif not sheet and loop.first %}selected{% endif %}>
                     {{ r.name }} — {{ r.level }}
                 </option>
                 {% endfor %}
@@ -20,7 +35,7 @@
         </div>
         <div class="form-group">
             <label>Matière *</label>
-            <select name="subject" class="form-control" required>
+            <select name="subject" id="subject" class="form-control" required>
                 {% for s in subjects %}
                 <option value="{{ s }}" {% if sheet and sheet.subject == s %}selected{% endif %}>{{ s }}</option>
                 {% endfor %}
@@ -37,9 +52,9 @@
     <div class="form-row">
         <div class="form-group" style="flex:2">
             <label>Titre de la fiche</label>
-            <input type="text" name="title" class="form-control"
+            <input type="text" name="title" id="title" class="form-control"
                    value="{{ sheet.title if sheet else '' }}"
-                   placeholder="ex. FICHE PÉDAGOGIQUE - PRODUCTION D'ÉCRITS">
+                   placeholder="ex. FICHE PÉDAGOGIQUE — Production d'écrits">
         </div>
         <div class="form-group">
             <label>Durée</label>
@@ -51,48 +66,54 @@
     <div class="form-row">
         <div class="form-group">
             <label>Domaine</label>
-            <input type="text" name="domain" class="form-control"
-                   value="{{ sheet.domain if sheet else '' }}" placeholder="ex. Français - Écriture">
+            <input type="text" name="domain" id="domain" class="form-control"
+                   value="{{ sheet.domain if sheet else '' }}" placeholder="ex. Français — Écriture">
         </div>
         <div class="form-group">
-            <label>Démarche</label>
+            <label>Démarche / approche</label>
             <input type="text" name="approach" class="form-control"
-                   value="{{ sheet.approach if sheet else '' }}" placeholder="ex. Enseignement explicite">
+                   value="{{ sheet.approach if sheet else '' }}" placeholder="ex. Explicit teaching">
         </div>
         <div class="form-group">
-            <label>Notion</label>
-            <input type="text" name="notion" class="form-control"
-                   value="{{ sheet.notion if sheet else '' }}" placeholder="ex. Écrire une phrase">
+            <label>Enseignant(e)</label>
+            <input type="text" name="teacher" class="form-control"
+                   value="{{ sheet.teacher if sheet else session.get('full_name','') }}">
         </div>
     </div>
 
+    <hr>
+
+    <div class="form-group">
+        <label>🎯 Objectif(s) de la séance</label>
+        <textarea name="objective" id="objective" class="form-control" rows="3"
+                  placeholder="Objectifs issus du programme (modifiables)">{{ sheet.objective if sheet else '' }}</textarea>
+    </div>
+    <div class="form-group">
+        <label>✅ Compétence(s) travaillée(s)</label>
+        <textarea name="competence" id="competence" class="form-control" rows="3"
+                  placeholder="Compétences du programme">{{ sheet.competence if sheet else '' }}</textarea>
+    </div>
+    <div class="form-group">
+        <label>💡 Activités suggérées (programme)</label>
+        <textarea name="notion" id="notion" class="form-control" rows="3"
+                  placeholder="Activités proposées par le programme — à adapter">{{ sheet.notion if sheet else '' }}</textarea>
+        <small style="color:#7c3aed">Ces activités viennent du programme officiel. Adaptez-les à votre classe.</small>
+    </div>
     <div class="form-group">
         <label>Matériel</label>
-        <input type="text" name="material" class="form-control"
-               value="{{ sheet.material if sheet else '' }}"
-               placeholder="Images, tableau, ardoises, cahier…">
+        <textarea name="material" class="form-control" rows="2"
+                  placeholder="Cahiers, affiches, fiches…">{{ sheet.material if sheet else '' }}</textarea>
+    </div>
+    <div class="form-group">
+        <label>Trace écrite</label>
+        <textarea name="written_trace" class="form-control" rows="2"
+                  placeholder="Ce que les élèves gardent en mémoire / dans le cahier">{{ sheet.written_trace if sheet else '' }}</textarea>
     </div>
 
-    <div class="form-group">
-        <label>Objectif</label>
-        <textarea name="objective" class="form-control" rows="2"
-                  placeholder="Écrire une phrase simple et correcte…">{{ sheet.objective if sheet else '' }}</textarea>
-    </div>
-    <div class="form-group">
-        <label>Compétence</label>
-        <textarea name="competence" class="form-control" rows="2"
-                  placeholder="Produire une phrase cohérente…">{{ sheet.competence if sheet else '' }}</textarea>
-    </div>
-    <div class="form-group">
-        <label>Enseignant(e)</label>
-        <input type="text" name="teacher" class="form-control"
-               value="{{ sheet.teacher if sheet else '' }}">
-    </div>
-
-    <hr style="margin:1.5rem 0;border:none;border-top:2px solid #f0abfc">
-    <h3 style="color:#a21caf;margin:0 0 0.75rem">Phases de la séance</h3>
+    <hr>
+    <h3 style="color:#6d28d9;margin:0 0 0.5rem">📋 Déroulement (phases)</h3>
     <p style="font-size:0.85rem;color:var(--text-muted);margin:0 0 1rem">
-        Ajoutez ou retirez des lignes selon votre déroulement (ouverture, modélisation, pratique guidée…).
+        Ouverture · Modélisation · Pratique guidée · Pratique autonome · Clôture — ou votre propre structure.
     </p>
 
     <div id="phases-box">
@@ -119,31 +140,30 @@
                 </div>
             </div>
             <button type="button" class="btn btn-secondary" style="font-size:0.75rem;background:#fee2e2;color:#b91c1c"
-                    onclick="this.closest('.phase-row').remove()">Retirer cette phase</button>
+                    onclick="this.closest('.phase-row').remove()">Retirer la phase</button>
         </div>
         {% endfor %}
     </div>
-    <button type="button" class="btn btn-secondary" onclick="addPhase()" style="margin-bottom:1.25rem">+ Ajouter une phase</button>
+    <button type="button" class="btn btn-secondary" onclick="addPhase()" style="margin-bottom:1rem">+ Ajouter une phase</button>
 
-    <div class="form-group">
-        <label>Trace écrite</label>
-        <textarea name="written_trace" class="form-control" rows="3"
-                  placeholder="Pour écrire une phrase : 1. …">{{ sheet.written_trace if sheet else '' }}</textarea>
+    <div>
+        <button type="submit" class="btn btn-primary">💾 Enregistrer la fiche</button>
+        {% if sheet %}
+        <a class="btn btn-pdf-dynamic" href="{{ url_for('fiche_pedagogique_pdf', id=sheet.id) }}">📄 PDF</a>
+        {% endif %}
     </div>
-
-    <button type="submit" class="btn btn-primary">💾 Enregistrer la fiche</button>
 </form>
 
-<template id="phase-template">
+<template id="phase-tpl">
     <div class="phase-row card" style="padding:0.85rem;margin-bottom:0.75rem;background:#fdf4ff;border:1px solid #f0abfc">
         <div class="form-row">
             <div class="form-group">
                 <label>Phase</label>
-                <input type="text" name="phase_name[]" class="form-control" value="" required>
+                <input type="text" name="phase_name[]" class="form-control" value="Nouvelle phase" required>
             </div>
             <div class="form-group" style="max-width:120px">
                 <label>Durée</label>
-                <input type="text" name="phase_duration[]" class="form-control" value="">
+                <input type="text" name="phase_duration[]" class="form-control" value="5 min">
             </div>
         </div>
         <div class="form-row">
@@ -157,13 +177,59 @@
             </div>
         </div>
         <button type="button" class="btn btn-secondary" style="font-size:0.75rem;background:#fee2e2;color:#b91c1c"
-                onclick="this.closest('.phase-row').remove()">Retirer cette phase</button>
+                onclick="this.closest('.phase-row').remove()">Retirer la phase</button>
     </div>
 </template>
+
 <script>
-function addPhase() {
-    var t = document.getElementById('phase-template');
-    document.getElementById('phases-box').appendChild(t.content.cloneNode(true));
+const ROOM_LEVELS = {{ room_levels | tojson }};
+function addPhase(){
+  document.getElementById('phases-box').appendChild(
+    document.getElementById('phase-tpl').content.cloneNode(true)
+  );
 }
+function currentLevel(){
+  const sel = document.getElementById('class_id');
+  const opt = sel.options[sel.selectedIndex];
+  return (opt && opt.getAttribute('data-level')) || ROOM_LEVELS[sel.value] || '';
+}
+function loadProgramme(force){
+  const niveau = currentLevel();
+  const matiere = document.getElementById('subject').value || '';
+  if (!niveau) {
+    alert('Choisissez une classe avec un niveau (PS, GS, 1ère année…).');
+    return;
+  }
+  fetch('/api/programme-suggestions?niveau=' + encodeURIComponent(niveau) + '&matiere=' + encodeURIComponent(matiere))
+    .then(r => r.json())
+    .then(data => {
+      if (!data.ok) {
+        alert('Aucun programme trouvé pour ce niveau / matière.');
+        return;
+      }
+      const obj = document.getElementById('objective');
+      const comp = document.getElementById('competence');
+      const notion = document.getElementById('notion');
+      const domain = document.getElementById('domain');
+      const title = document.getElementById('title');
+      if (force || !obj.value.trim()) obj.value = (data.objectifs || []).join('\n');
+      if (force || !comp.value.trim()) comp.value = (data.competences || []).join('\n');
+      if (force || !notion.value.trim()) notion.value = (data.activites || []).join('\n');
+      if (domain && !domain.value.trim()) domain.value = matiere + (data.cycle ? ' — ' + data.cycle : '');
+      if (title && !title.value.trim()) title.value = 'Fiche pédagogique — ' + matiere + ' (' + niveau + ')';
+      const banner = document.getElementById('prog-banner');
+      banner.style.display = 'block';
+      banner.innerHTML = '✨ Programme chargé : <strong>' + niveau + '</strong> · ' + matiere +
+        (data.cycle ? ' <span style="opacity:0.8">(' + data.cycle + ')</span>' : '') +
+        '. Objectifs, compétences et activités suggérées sont prêts — vous pouvez les adapter.';
+    })
+    .catch(() => alert('Erreur de chargement du programme.'));
+}
+document.getElementById('btn-load-prog').addEventListener('click', function(){ loadProgramme(true); });
+// Auto-charge à l'ouverture si champs vides
+document.addEventListener('DOMContentLoaded', function(){
+  const obj = document.getElementById('objective');
+  if (obj && !obj.value.trim()) loadProgramme(false);
+});
 </script>
 {% endblock %}

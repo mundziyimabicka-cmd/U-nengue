@@ -1,5 +1,43 @@
 {% extends "base.html" %}
-{% block title %}Fiche de préparation{% endblock %}
+{% block title %}Fiche de préparation
+<script>
+(function(){
+  const params = new URLSearchParams(window.location.search);
+  const niveau = params.get('niveau') || '';
+  const matiere = params.get('matiere') || '';
+  if (!niveau && !matiere) return;
+  // Préremplir matière si vide
+  const subj = document.querySelector('input[name="subject"]');
+  if (subj && !subj.value && matiere) subj.value = matiere;
+  fetch(`/api/programme-suggestions?niveau=${encodeURIComponent(niveau)}&matiere=${encodeURIComponent(matiere)}`)
+    .then(r => r.json())
+    .then(data => {
+      if (!data.ok) return;
+      const setIfEmpty = (name, text) => {
+        const el = document.querySelector(`[name="${name}"]`);
+        if (el && !el.value.trim()) el.value = text;
+      };
+      if (data.objectifs && data.objectifs.length)
+        setIfEmpty('general_objectives', data.objectifs.join('\n'));
+      if (data.competences && data.competences.length)
+        setIfEmpty('competences', data.competences.join('\n'));
+      if (data.activites && data.activites.length)
+        setIfEmpty('operational_objective', 'S'appuyer sur : ' + data.activites.slice(0,3).join(' · '));
+      // Banner
+      const form = document.querySelector('form.card');
+      if (form) {
+        const tip = document.createElement('div');
+        tip.className = 'alert alert-success';
+        tip.style.marginBottom = '1rem';
+        tip.innerHTML = '✨ Objectifs et compétences préremplis depuis le programme <strong>'
+          + (niveau || '') + '</strong> — ' + (matiere || data.cycle || '') + '. Vous pouvez les modifier.';
+        form.insertBefore(tip, form.firstChild);
+      }
+    }).catch(()=>{});
+})();
+</script>
+
+{% endblock %}
 {% block content %}
 <div class="page-header">
     <h2>{{ 'Modifier' if sheet else 'Nouvelle' }} fiche de préparation</h2>
@@ -132,4 +170,42 @@
 <script>
 function addRow(){ document.getElementById('rows-box').appendChild(document.getElementById('row-tpl').content.cloneNode(true)); }
 </script>
+
+<script>
+(function(){
+  const params = new URLSearchParams(window.location.search);
+  const niveau = params.get('niveau') || '';
+  const matiere = params.get('matiere') || '';
+  if (!niveau && !matiere) return;
+  // Préremplir matière si vide
+  const subj = document.querySelector('input[name="subject"]');
+  if (subj && !subj.value && matiere) subj.value = matiere;
+  fetch(`/api/programme-suggestions?niveau=${encodeURIComponent(niveau)}&matiere=${encodeURIComponent(matiere)}`)
+    .then(r => r.json())
+    .then(data => {
+      if (!data.ok) return;
+      const setIfEmpty = (name, text) => {
+        const el = document.querySelector(`[name="${name}"]`);
+        if (el && !el.value.trim()) el.value = text;
+      };
+      if (data.objectifs && data.objectifs.length)
+        setIfEmpty('general_objectives', data.objectifs.join('\n'));
+      if (data.competences && data.competences.length)
+        setIfEmpty('competences', data.competences.join('\n'));
+      if (data.activites && data.activites.length)
+        setIfEmpty('operational_objective', 'S'appuyer sur : ' + data.activites.slice(0,3).join(' · '));
+      // Banner
+      const form = document.querySelector('form.card');
+      if (form) {
+        const tip = document.createElement('div');
+        tip.className = 'alert alert-success';
+        tip.style.marginBottom = '1rem';
+        tip.innerHTML = '✨ Objectifs et compétences préremplis depuis le programme <strong>'
+          + (niveau || '') + '</strong> — ' + (matiere || data.cycle || '') + '. Vous pouvez les modifier.';
+        form.insertBefore(tip, form.firstChild);
+      }
+    }).catch(()=>{});
+})();
+</script>
+
 {% endblock %}
