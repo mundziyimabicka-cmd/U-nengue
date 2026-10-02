@@ -1,6 +1,40 @@
 {% extends "base.html" %}
 {% block title %}Accueil — U nengue{% endblock %}
 {% block content %}
+
+<div class="card" style="margin-bottom:1.25rem;background:linear-gradient(135deg,#fdf4ff,#ede9fe);border-top:4px solid #c026d3">
+    <div class="card-title">💭 Citation du jour</div>
+    <p style="font-size:1.05rem;font-style:italic;margin:0.5rem 0">{{ quote_jour }}</p>
+</div>
+<div class="stats-grid" style="margin-bottom:1rem">
+    <a class="card" href="{{ url_for('dictionnaire') }}" style="text-decoration:none">
+        <div class="card-title">📖 Dictionnaire</div>
+        <div class="card-value" style="font-size:1.2rem">FR ↔ EN</div>
+    </a>
+    <a class="card" href="{{ url_for('programmes_maths') }}" style="text-decoration:none">
+        <div class="card-title">🔢 Programmes maths</div>
+        <div class="card-value" style="font-size:1.2rem">PS → 5ème</div>
+    </a>
+    <a class="card" href="{{ url_for('comptines') }}" style="text-decoration:none">
+        <div class="card-title">🎵 Comptines</div>
+        <div class="card-value" style="font-size:1.2rem">Maternelle</div>
+    </a>
+    <a class="card" href="{{ url_for('calendrier_scolaire') }}" style="text-decoration:none">
+        <div class="card-title">📅 Calendrier</div>
+        <div class="card-value" style="font-size:1.2rem">Année</div>
+    </a>
+</div>
+{% if upcoming_holidays %}
+<div class="card" style="margin-bottom:1.25rem">
+    <div class="card-title">📌 Prochains jours fériés / vacances</div>
+    <ul style="margin:0.5rem 0 0;padding-left:1.2rem">
+    {% for h in upcoming_holidays %}
+        <li><strong>{{ h.date.strftime('%d/%m/%Y') }}</strong> — {{ h.label }}</li>
+    {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
 <div class="page-header">
     <div>
         <h2>Bonjour {{ session.get('full_name', session.get('username', '')) }} 👋</h2>

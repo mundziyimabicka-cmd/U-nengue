@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Programmes de mathématiques{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2>🔢 Programmes de mathématiques</h2>
+        <p class="subtitle">De la maternelle (PS) à la 5ème année — objectifs et activités</p>
+    </div>
+</div>
+<div class="card" style="margin-bottom:1rem">
+    <form method="GET" style="display:flex;flex-wrap:wrap;gap:0.5rem">
+        {% for n in niveaux %}
+        <button type="submit" name="niveau" value="{{ n }}"
+            class="btn {% if n == niveau %}btn-primary{% else %}btn-secondary{% endif %}"
+            style="font-size:0.85rem">{{ n }}</button>
+        {% endfor %}
+    </form>
+</div>
+{% set p = programmes[niveau] %}
+<div class="card" style="border-top:5px solid #ef4444">
+    <h3 style="color:#b91c1c;margin-top:0">{{ p.title }}</h3>
+    <h4 style="color:#a21caf">Objectifs</h4>
+    <ul>{% for o in p.objectifs %}<li>{{ o }}</li>{% endfor %}</ul>
+    <h4 style="color:#a21caf">Activités suggérées</h4>
+    <ul>{% for a in p.activites %}<li>{{ a }}</li>{% endfor %}</ul>
+    <p style="font-size:0.85rem;color:var(--text-muted)">
+        Utilisez ces objectifs dans vos <a href="{{ url_for('fiches_pedagogiques') }}">fiches pédagogiques</a>.
+    </p>
+</div>
+{% endblock %}

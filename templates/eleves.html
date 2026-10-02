@@ -1,22 +1,29 @@
 {% extends "base.html" %}
 {% block title %}Élèves — U nengue{% endblock %}
 {% block content %}
-<div class="page-header">
-    <h2>👨‍🎓 Élèves</h2>
-    <div class="btn-group">
+<div class="page-header" style="display:flex;flex-wrap:wrap;gap:1rem;align-items:center;justify-content:space-between">
+    <h2 style="margin:0">👨‍🎓 Élèves</h2>
+    <div class="btn-group" style="display:flex;flex-wrap:wrap;gap:0.5rem">
         {% if session.get('role') == 'Directeur' %}
         <a href="{{ url_for('ajouter_eleve') }}" class="btn btn-primary">+ Inscrire un élève</a>
+        <a href="{{ url_for('backup_json') }}" class="btn btn-secondary">💾 Sauvegarde JSON</a>
+        <a href="{{ url_for('restore_json') }}" class="btn btn-secondary">♻️ Restauration</a>
+        <a href="{{ url_for('export_eleves_xlsx') }}" class="btn btn-secondary">⬇️ Excel</a>
         {% endif %}
+        <a href="{{ url_for('eleves_pdf', q=q, class_id=class_filter, level=level_filter) }}"
+           class="btn btn-pdf-dynamic">📄 Enregistrer en PDF</a>
     </div>
 </div>
+
 <div class="card" style="margin-bottom:1.25rem">
     <form method="GET" style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:end">
         <div class="form-group" style="margin:0;flex:1;min-width:160px">
-            <label>Rechercher</label>
-            <input type="text" name="q" class="form-control" value="{{ q }}" placeholder="Nom, prénom, matricule...">
+            <label>🔍 Rechercher</label>
+            <input type="text" name="q" class="form-control" value="{{ q }}"
+                   placeholder="Nom, prénom, matricule, parent…">
         </div>
         {% if session.get('role') == 'Directeur' %}
-        <div class="form-group" style="margin:0;min-width:140px">
+        <div class="form-group" style="margin:0;min-width:130px">
             <label>Niveau</label>
             <select name="level" class="form-control">
                 <option value="">Tous</option>
@@ -31,16 +38,42 @@
             </select>
         </div>
         {% endif %}
-        <button type="submit" class="btn btn-outline">Filtrer</button>
+        <div class="form-group" style="margin:0;min-width:140px">
+            <label>Trier par</label>
+            <select name="sort" class="form-control">
+                <option value="name" {% if sort=='name' %}selected{% endif %}>Nom</option>
+                <option value="matricule" {% if sort=='matricule' %}selected{% endif %}>Matricule</option>
+                <option value="class" {% if sort=='class' %}selected{% endif %}>Classe</option>
+                <option value="status" {% if sort=='status' %}selected{% endif %}>Statut</option>
+                <option value="birth" {% if sort=='birth' %}selected{% endif %}>Date de naissance</option>
+            </select>
+        </div>
+        <div class="form-group" style="margin:0;min-width:110px">
+            <label>Ordre</label>
+            <select name="order" class="form-control">
+                <option value="asc" {% if order=='asc' %}selected{% endif %}>A → Z</option>
+                <option value="desc" {% if order=='desc' %}selected{% endif %}>Z → A</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Filtrer / Trier</button>
     </form>
 </div>
+
 <div class="card">
+    <p style="font-size:0.85rem;color:var(--text-muted);margin:0 0 0.75rem">
+        {{ students|length }} élève(s) trouvé(s)
+    </p>
     <div class="table-wrap">
         <table>
             <thead>
                 <tr>
-                    <th>Photo</th><th>Élève</th><th>Matricule</th><th>Né(e) le / à</th>
-                    <th>Classe</th><th>Statut</th><th>Actions</th>
+                    <th>Photo</th>
+                    <th><a href="?q={{ q }}&class_id={{ class_filter }}&level={{ level_filter }}&sort=name&order={{ 'desc' if sort=='name' and order=='asc' else 'asc' }}">Élève</a></th>
+                    <th><a href="?q={{ q }}&class_id={{ class_filter }}&level={{ level_filter }}&sort=matricule&order={{ 'desc' if sort=='matricule' and order=='asc' else 'asc' }}">Matricule</a></th>
+                    <th>Né(e) le / à</th>
+                    <th><a href="?q={{ q }}&class_id={{ class_filter }}&level={{ level_filter }}&sort=class&order={{ 'desc' if sort=='class' and order=='asc' else 'asc' }}">Classe</a></th>
+                    <th>Statut</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>

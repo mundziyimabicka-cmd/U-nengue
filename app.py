@@ -62,7 +62,13 @@ COMPETENCES = {
     }
 }
 
-NIVEAUX = ['1ère année', '2ème année', '3ème année', '4ème année', '5ème année']
+NIVEAUX = ['PS', 'MS', 'GS', '1ère année', '2ème année', '3ème année', '4ème année', '5ème année']
+NIVEAUX_LABELS = {
+    'PS': 'Petite section (PS)', 'MS': 'Moyenne section (MS)', 'GS': 'Grande section (GS)',
+    '1ère année': '1ère année', '2ème année': '2ème année', '3ème année': '3ème année',
+    '4ème année': '4ème année', '5ème année': '5ème année',
+}
+PREPRIMARY = ['PS', 'MS', 'GS']
 
 
 SCHEDULE_DAYS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi']
@@ -199,6 +205,7 @@ class Student(db.Model):
     nationality = db.Column(db.String(50), default='Gabonaise')
     provenance = db.Column(db.String(50), default='meme_ecole')
     # meme_ecole | meme_circonscription | autres_circonscriptions | autres
+    parent_pin = db.Column(db.String(20), default='')  # code espace parents
     is_handicapped = db.Column(db.Boolean, default=False)
     is_primal = db.Column(db.Boolean, default=False)  # Primaux arrivés
     cep_selected = db.Column(db.Boolean, default=False)
@@ -320,6 +327,55 @@ class ScheduleSlot(db.Model):
     classroom = db.relationship('ClassRoom', backref=db.backref('schedule_slots', lazy=True, cascade='all, delete-orphan'))
 
 
+
+
+class RitualSheet(db.Model):
+    """Fiche de commentaire de rituel."""
+    id = db.Column(db.Integer, primary_key=True)
+    class_id = db.Column(db.Integer, db.ForeignKey('class_room.id'), nullable=True)
+    date = db.Column(db.Date)
+    duration = db.Column(db.String(40), default='')  # temps
+    title = db.Column(db.String(200), default='')
+    objective = db.Column(db.Text, default='')
+    teacher_role = db.Column(db.Text, default='')
+    student_role = db.Column(db.Text, default='')
+    notes = db.Column(db.Text, default='')
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    classroom = db.relationship('ClassRoom', backref=db.backref('ritual_sheets', lazy=True))
+
+class PrepSheet(db.Model):
+    """Fiche de préparation de séance (modèle officiel enrichi)."""
+    id = db.Column(db.Integer, primary_key=True)
+    class_id = db.Column(db.Integer, db.ForeignKey('class_room.id'), nullable=True)
+    title = db.Column(db.String(250), default='')
+    prerequisites = db.Column(db.Text, default='')
+    competences = db.Column(db.Text, default='')
+    general_objectives = db.Column(db.Text, default='')
+    phase_comprehension = db.Column(db.Text, default='Mise en situation - Recherche - Mise en commun - Institutionnalisation')
+    phase_automation = db.Column(db.Text, default='Structuration/entraînement (exercices, jeux, rituels…) + Évaluation et Remédiation')
+    phase_reinvestment = db.Column(db.Text, default='')
+    operational_objective = db.Column(db.Text, default='')
+    core_competence = db.Column(db.Text, default='')
+    opening = db.Column(db.Text, default='')
+    scaffolding = db.Column(db.Text, default='')
+    closing = db.Column(db.Text, default='')
+    obstacles = db.Column(db.Text, default='')
+    instruction = db.Column(db.Text, default='')  # consigne
+    rows_json = db.Column(db.Text, default='[]')  # tableau séance
+    subject = db.Column(db.String(80), default='')
+    duration = db.Column(db.String(40), default='')
+    teacher = db.Column(db.String(120), default='')
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    classroom = db.relationship('ClassRoom', backref=db.backref('prep_sheets', lazy=True))
+
+    def rows(self):
+        import json
+        try:
+            return json.loads(self.rows_json or '[]')
+        except Exception:
+            return []
 
 class PedagogicalSheet(db.Model):
     """Fiche pédagogique / fiche de préparation."""
@@ -774,6 +830,13 @@ def migrate_schema():
                         pass
 
 
+        try:
+            cols = {c['name'] for c in insp.get_columns('student')}
+            if 'parent_pin' not in cols:
+                with db.engine.begin() as conn:
+                    conn.execute(sa_text("ALTER TABLE student ADD COLUMN parent_pin VARCHAR(20) DEFAULT ''"))
+        except Exception:
+            pass
         # schedule_slot group_label
         try:
             cols = {c['name'] for c in insp.get_columns('schedule_slot')}
@@ -976,9 +1039,15 @@ def dashboard():
     all_s = Student.query.all()
     gender_counts = gft(all_s) if all_s else {'G': 0, 'F': 0, 'T': 0}
     max_level = max([c for _, c in by_level], default=1) or 1
+    import random
+    quote_jour = QUOTES_JOUR[datetime.now().timetuple().tm_yday % len(QUOTES_JOUR)]
+    try:
+        upcoming_holidays = Holiday.query.filter(Holiday.date >= datetime.utcnow().date()).order_by(Holiday.date).limit(5).all()
+    except Exception:
+        upcoming_holidays = []
     return render_template('dashboard.html', total=total, classes=classes,
                            cep_count=cep_count, by_level=by_level, recent=recent,
-                           news=news, gender_counts=gender_counts, max_level=max_level)
+                           news=news, gender_counts=gender_counts, max_level=max_level, quote_jour=quote_jour, upcoming_holidays=upcoming_holidays)
 
 # ==================== ÉLÈVES ====================
 
@@ -988,8 +1057,9 @@ def eleves():
     q = request.args.get('q', '')
     class_filter = request.args.get('class_id', '')
     level_filter = request.args.get('level', '')
+    sort = request.args.get('sort', 'name')  # name, matricule, class, status, birth
+    order = request.args.get('order', 'asc')
     query = Student.query
-    # Enseignant : uniquement sa classe
     tc = teacher_class_filter()
     if tc:
         query = query.filter_by(class_id=tc)
@@ -998,19 +1068,39 @@ def eleves():
         query = query.filter(
             db.or_(Student.last_name.ilike(f'%{q}%'),
                    Student.first_name.ilike(f'%{q}%'),
-                   Student.matricule.ilike(f'%{q}%'))
+                   Student.matricule.ilike(f'%{q}%'),
+                   Student.parent_name.ilike(f'%{q}%'))
         )
     if class_filter and not tc:
-        query = query.filter_by(class_id=int(class_filter))
+        try:
+            query = query.filter_by(class_id=int(class_filter))
+        except Exception:
+            pass
     if level_filter and not tc:
         query = query.join(ClassRoom).filter(ClassRoom.level == level_filter)
-    students = query.order_by(Student.last_name).all()
+    # tri
+    col = Student.last_name
+    if sort == 'matricule':
+        col = Student.matricule
+    elif sort == 'status':
+        col = Student.status
+    elif sort == 'birth':
+        col = Student.birth_date
+    elif sort == 'class':
+        query = query.outerjoin(ClassRoom)
+        col = ClassRoom.name
+    if order == 'desc':
+        col = col.desc()
+    else:
+        col = col.asc()
+    students = query.order_by(col).all()
     if tc:
         classes = ClassRoom.query.filter_by(id=tc).all()
     else:
         classes = ClassRoom.query.order_by(ClassRoom.level, ClassRoom.name).all()
     return render_template('eleves.html', students=students, classes=classes,
-                           q=q, class_filter=class_filter, level_filter=level_filter)
+                           q=q, class_filter=class_filter, level_filter=level_filter,
+                           sort=sort, order=order)
 
 @app.route('/eleves/ajouter', methods=['GET', 'POST'])
 @director_required
@@ -1094,6 +1184,7 @@ def modifier_eleve(id):
         student.is_primal = bool(request.form.get('is_primal'))
         student.class_id = int(request.form.get('class_id')) if request.form.get('class_id') else None
         student.parent_name = request.form.get('parent_name')
+        student.parent_pin = request.form.get('parent_pin', '').strip()
         student.parent_phone = request.form.get('parent_phone')
         student.parent_relation = request.form.get('parent_relation')
         student.address = request.form.get('address')
@@ -2214,11 +2305,14 @@ def parametres():
 # ==================== RÉINSCRIPTION / PASSAGE DE CLASSE ====================
 
 NEXT_LEVEL = {
+    'PS': 'MS',
+    'MS': 'GS',
+    'GS': '1ère année',
     '1ère année': '2ème année',
     '2ème année': '3ème année',
     '3ème année': '4ème année',
     '4ème année': '5ème année',
-    '5ème année': 'CEP',  # sortie primaire
+    '5ème année': 'CEP',
 }
 
 def student_can_promote(student_id):
@@ -3634,10 +3728,915 @@ def emploi_pdf(class_id):
     return send_file(buffer, mimetype='application/pdf', as_attachment=True,
                      download_name=fname)
 
+
+# ==================== RESSOURCES PÉDAGOGIQUES ====================
+
+DICTIONARY_WORDS = [
+    ('école', 'school'), ('élève', 'pupil / student'), ('enseignant', 'teacher'),
+    ('classe', 'classroom'), ('livre', 'book'), ('cahier', 'notebook'),
+    ('crayon', 'pencil'), ('stylo', 'pen'), ('tableau', 'blackboard'),
+    ('ardoise', 'slate'), ('gomme', 'eraser'), ('règle', 'ruler'),
+    ('calculer', 'to calculate'), ('lire', 'to read'), ('écrire', 'to write'),
+    ('compter', 'to count'), ('nombre', 'number'), ('chiffre', 'digit'),
+    ('addition', 'addition'), ('soustraction', 'subtraction'),
+    ('multiplication', 'multiplication'), ('division', 'division'),
+    ('matin', 'morning'), ('après-midi', 'afternoon'), ('soir', 'evening'),
+    ('lundi', 'Monday'), ('mardi', 'Tuesday'), ('mercredi', 'Wednesday'),
+    ('jeudi', 'Thursday'), ('vendredi', 'Friday'), ('samedi', 'Saturday'),
+    ('dimanche', 'Sunday'), ('bonjour', 'hello / good morning'),
+    ('au revoir', 'goodbye'), ('merci', 'thank you'), ('s\'il vous plaît', 'please'),
+    ('oui', 'yes'), ('non', 'no'), ('famille', 'family'), ('père', 'father'),
+    ('mère', 'mother'), ('frère', 'brother'), ('sœur', 'sister'),
+    ('ami', 'friend'), ('maison', 'house'), ('eau', 'water'), ('pain', 'bread'),
+    ('lait', 'milk'), ('fruit', 'fruit'), ('légume', 'vegetable'),
+    ('corps', 'body'), ('tête', 'head'), ('main', 'hand'), ('pied', 'foot'),
+    ('œil', 'eye'), ('oreille', 'ear'), ('nez', 'nose'), ('bouche', 'mouth'),
+    ('rouge', 'red'), ('bleu', 'blue'), ('vert', 'green'), ('jaune', 'yellow'),
+    ('noir', 'black'), ('blanc', 'white'), ('grand', 'big / tall'),
+    ('petit', 'small'), ('rond', 'round'), ('carré', 'square'),
+    ('cercle', 'circle'), ('triangle', 'triangle'), ('ligne', 'line'),
+    ('point', 'dot / full stop'), ('phrase', 'sentence'), ('mot', 'word'),
+    ('lettre', 'letter'), ('alphabet', 'alphabet'), ('voyelle', 'vowel'),
+    ('consonne', 'consonant'), ('histoire', 'story / history'),
+    ('géographie', 'geography'), ('science', 'science'), ('sport', 'sport'),
+    ('musique', 'music'), ('dessin', 'drawing'), ('chant', 'song'),
+    ('jeu', 'game'), ('jouet', 'toy'), ('récréation', 'break / recess'),
+    ('devoirs', 'homework'), ('examen', 'exam'), ('note', 'grade / mark'),
+    ('bulletin', 'report card'), ('directeur', 'headteacher / principal'),
+    ('bibliothèque', 'library'), ('ordinateur', 'computer'),
+    ('Gabon', 'Gabon'), ('Libreville', 'Libreville'), ('Afrique', 'Africa'),
+    ('français', 'French'), ('anglais', 'English'), ('mathématiques', 'mathematics'),
+    ('un', 'one'), ('deux', 'two'), ('trois', 'three'), ('quatre', 'four'),
+    ('cinq', 'five'), ('six', 'six'), ('sept', 'seven'), ('huit', 'eight'),
+    ('neuf', 'nine'), ('dix', 'ten'), ('vingt', 'twenty'), ('cent', 'hundred'),
+    ('mille', 'thousand'), ('aujourd\'hui', 'today'), ('demain', 'tomorrow'),
+    ('hier', 'yesterday'), ('semaine', 'week'), ('mois', 'month'), ('année', 'year'),
+]
+
+MATH_PROGRAMS = {
+    'PS': {
+        'title': 'Mathématiques — Petite section (PS)',
+        'objectifs': [
+            'Découvrir les quantités (beaucoup / peu / un / plusieurs)',
+            'Dénombrer jusqu\'à 3 dans des situations concrètes',
+            'Reconnaître des formes simples (rond, carré)',
+            'Se repérer dans l\'espace (dessus, dessous, dedans, dehors)',
+            'Classer des objets par couleur ou taille',
+        ],
+        'activites': [
+            'Jeux de tri (couleurs, tailles)',
+            'Comptines numériques (1, 2, 3)',
+            'Manipulation de cubes et jetons',
+            'Parcours moteur (devant / derrière)',
+        ],
+    },
+    'MS': {
+        'title': 'Mathématiques — Moyenne section (MS)',
+        'objectifs': [
+            'Dénombrer jusqu\'à 6',
+            'Comparer des quantités (plus, moins, autant)',
+            'Reconnaître cercle, carré, triangle',
+            'Se repérer sur un parcours simple',
+            'Utiliser le calendrier de la classe (jours)',
+        ],
+        'activites': [
+            'Jeux de marché (petites quantités)',
+            'Puzzles géométriques',
+            'Alignements et suites logiques',
+            'Comptines jusqu\'à 10',
+        ],
+    },
+    'GS': {
+        'title': 'Mathématiques — Grande section (GS)',
+        'objectifs': [
+            'Dénombrer jusqu\'à 10 (voire 20)',
+            'Associer écriture chiffrée et quantité',
+            'Résoudre de petits problèmes oraux',
+            'Reconnaître et nommer formes planes',
+            'Se préparer à la numération de 1ère année',
+        ],
+        'activites': [
+            'Boîtes à compter',
+            'Jeux de dés et cartes',
+            'Construction de figures',
+            'Problèmes de la vie quotidienne',
+        ],
+    },
+    '1ère année': {
+        'title': 'Mathématiques — 1ère année (CP)',
+        'objectifs': [
+            'Nombres jusqu\'à 100',
+            'Addition et soustraction',
+            'Résolution de problèmes simples',
+            'Mesures : longueur, monnaie',
+            'Repérage dans le temps (jours, mois)',
+        ],
+        'activites': [
+            'Calcul mental quotidien',
+            'Situations-problèmes illustrées',
+            'Manipulations monétaires',
+            'Frise numérique',
+        ],
+    },
+    '2ème année': {
+        'title': 'Mathématiques — 2ème année (CE1)',
+        'objectifs': [
+            'Nombres jusqu\'à 1000',
+            'Techniques opératoires (+, −)',
+            'Introduction à la multiplication',
+            'Géométrie : solides et figures',
+            'Grandeurs et mesures',
+        ],
+        'activites': [
+            'Tables d\'addition',
+            'Problèmes en plusieurs étapes',
+            'Trace de figures à la règle',
+            'Mesure avec règles et balance',
+        ],
+    },
+    '3ème année': {
+        'title': 'Mathématiques — 3ème année (CE2)',
+        'objectifs': [
+            'Nombres jusqu\'à 10 000',
+            'Multiplication et division',
+            'Fractions simples (sens)',
+            'Périmètre de figures usuelles',
+            'Problèmes multi-étapes',
+        ],
+        'activites': [
+            'Tables de multiplication',
+            'Situations de partage',
+            'Construction de périmètres',
+            'Jeux de stratégie numérique',
+        ],
+    },
+    '4ème année': {
+        'title': 'Mathématiques — 4ème année (CM1)',
+        'objectifs': [
+            'Nombres jusqu\'aux millions',
+            'Les quatre opérations',
+            'Fractions et décimaux (introduction)',
+            'Aire et périmètre',
+            'Proportionnalité simple',
+        ],
+        'activites': [
+            'Calcul posé renforcé',
+            'Problèmes de proportionnalité',
+            'Mesure d\'aires sur quadrillage',
+            'Lecture de graphiques simples',
+        ],
+    },
+    '5ème année': {
+        'title': 'Mathématiques — 5ème année (CM2) / préparation CEP',
+        'objectifs': [
+            'Maîtrise des quatre opérations',
+            'Fractions et nombres décimaux',
+            'Proportionnalité et pourcentages simples',
+            'Géométrie plane et solides',
+            'Préparation aux épreuves du CEP',
+        ],
+        'activites': [
+            'Annales et exercices type CEP',
+            'Problèmes complexes',
+            'Constructions géométriques précises',
+            'Entraînement chronométré',
+        ],
+    },
+}
+
+COMPTINES = [
+    {'titre': 'Une poule sur un mur', 'niveau': 'PS', 'texte':
+     'Une poule sur un mur\nQui picote du pain dur\nPicoti, picota\nLève la queue et puis s\'en va.'},
+    {'titre': 'Ainsi font font font', 'niveau': 'PS', 'texte':
+     'Ainsi font, font, font\nLes petites marionnettes\nAinsi font, font, font\nTrois petits tours et puis s\'en vont.'},
+    {'titre': 'Un kilomètre à pied', 'niveau': 'MS', 'texte':
+     'Un kilomètre à pied, ça use, ça use\nUn kilomètre à pied, ça use les souliers.'},
+    {'titre': '1, 2, 3, nous irons au bois', 'niveau': 'MS', 'texte':
+     '1, 2, 3, nous irons au bois\n4, 5, 6, cueillir des cerises\n7, 8, 9, dans mon panier neuf\n10, 11, 12, elles seront toutes rouges.'},
+    {'titre': 'Frère Jacques', 'niveau': 'GS', 'texte':
+     'Frère Jacques, Frère Jacques\nDormez-vous ? Dormez-vous ?\nSonnez les matines, sonnez les matines\nDing ding dong, ding ding dong.'},
+    {'titre': 'La ronde des lettres', 'niveau': 'GS', 'texte':
+     'A B C D E F G\nH I J K L M N\nO P Q R S T U\nV W X Y Z\nVoilà l\'alphabet chanté !'},
+    {'titre': 'Les doigts de la main', 'niveau': 'PS', 'texte':
+     'Un petit doigt se promène\nDeux petits doigts se saluent\nTrois petits doigts dansent\nQuatre petits doigts chantent\nCinq petits doigts applaudissent.'},
+    {'titre': 'Bonjour, bonjour', 'niveau': 'MS', 'texte':
+     'Bonjour, bonjour, les amis\nBonjour, bonjour, comment allez-vous ?\nTrès bien, merci, et vous ?'},
+    {'titre': 'Le fermier dans son pré', 'niveau': 'GS', 'texte':
+     'Le fermier dans son pré\nA planté des petits pois\nQui poussent, poussent, poussent\nEt font de grands pois.'},
+    {'titre': 'Pomme de reinette', 'niveau': 'MS', 'texte':
+     'Pomme de reinette et pomme d\'api\nTapi tapi tapi\nPomme de reinette et pomme d\'api\nTapi tapi ta.'},
+    {'titre': 'Savez-vous planter les choux', 'niveau': 'PS', 'texte':
+     'Savez-vous planter les choux\nÀ la mode, à la mode\nSavez-vous planter les choux\nÀ la mode de chez nous ?'},
+    {'titre': 'Un éléphant qui se balançait', 'niveau': 'GS', 'texte':
+     'Un éléphant qui se balançait\nSur une toile, toile, toile, toile d\'araignée\nC\'était un jeu tellement amusant\nQue tout l\'après-midi il s\'est balancé.'},
+    {'titre': 'Head, shoulders (EN)', 'niveau': 'GS', 'texte':
+     'Head, shoulders, knees and toes\nKnees and toes\nHead, shoulders, knees and toes\nEyes and ears and mouth and nose.'},
+]
+
+QUOTES_JOUR = [
+    '« L\'éducation est l\'arme la plus puissante pour changer le monde. » — Nelson Mandela',
+    '« Chaque enfant est un explorateur. » — U nengue',
+    '« Apprendre, c\'est allumer une flamme, non remplir un vase. »',
+    '« La patience est un arbre dont la racine est amère, mais le fruit est doux. »',
+    '« Un livre ouvert, c\'est une bouche qui parle. »',
+    '« L\'école du Gabon forme les citoyens de demain. » — U nengue',
+    '« Petit à petit, l\'oiseau fait son nid. »',
+    '« Qui veut voyager loin ménage sa monture — et révise chaque jour. »',
+]
+
+CALENDRIER_SCOLAIRE_GABON = [
+    {'mois': 'Septembre', 'evenements': ['Rentrée des classes', 'Constitution des effectifs']},
+    {'mois': 'Octobre', 'evenements': ['Évaluations de début d\'année', 'Réunion parents']},
+    {'mois': 'Novembre', 'evenements': ['Palier / période 1', 'Fête nationale (selon calendrier)']},
+    {'mois': 'Décembre', 'evenements': ['Vacances de Noël', 'Bilans de période']},
+    {'mois': 'Janvier', 'evenements': ['Reprise des cours', 'Évaluations']},
+    {'mois': 'Février', 'evenements': ['Période 2', 'Activités culturelles']},
+    {'mois': 'Mars', 'evenements': ['Préparation CEP (5ème année)', 'Évaluations']},
+    {'mois': 'Avril', 'evenements': ['Vacances de Pâques', 'Révisions CEP']},
+    {'mois': 'Mai', 'evenements': ['Examens blancs CEP', 'Fête du travail']},
+    {'mois': 'Juin', 'evenements': ['Examens CEP', 'Conseils de classe', 'Fin d\'année']},
+    {'mois': 'Juillet', 'evenements': ['Vacances scolaires', 'Résultats']},
+]
+
+@app.route('/dictionnaire')
+@login_required
+def dictionnaire():
+    q = (request.args.get('q') or '').strip().lower()
+    results = []
+    if q:
+        for fr, en in DICTIONARY_WORDS:
+            if q in fr.lower() or q in en.lower():
+                results.append((fr, en))
+    else:
+        results = DICTIONARY_WORDS
+    return render_template('dictionnaire.html', results=results, q=q, total=len(DICTIONARY_WORDS))
+
+@app.route('/programmes-maths')
+@login_required
+def programmes_maths():
+    niveau = request.args.get('niveau', 'GS')
+    if niveau not in MATH_PROGRAMS:
+        niveau = 'GS'
+    return render_template('programmes_maths.html', programmes=MATH_PROGRAMS,
+                           niveau=niveau, niveaux=list(MATH_PROGRAMS.keys()))
+
+@app.route('/comptines')
+@login_required
+def comptines():
+    niveau = request.args.get('niveau', '')
+    items = COMPTINES
+    if niveau:
+        items = [c for c in COMPTINES if c['niveau'] == niveau]
+    return render_template('comptines.html', items=items, niveau=niveau,
+                           niveaux=['PS', 'MS', 'GS'])
+
+@app.route('/calendrier-scolaire')
+@login_required
+def calendrier_scolaire():
+    holidays = Holiday.query.order_by(Holiday.date).all()
+    return render_template('calendrier_scolaire.html',
+                           calendrier=CALENDRIER_SCOLAIRE_GABON,
+                           holidays=holidays)
+
+@app.route('/espace-parents', methods=['GET', 'POST'])
+def espace_parents():
+    """Accès parents par matricule + code PIN (sans compte enseignant)."""
+    student = None
+    error = None
+    if request.method == 'POST':
+        mat = (request.form.get('matricule') or '').strip()
+        pin = (request.form.get('pin') or '').strip()
+        student = Student.query.filter_by(matricule=mat).first()
+        if not student:
+            error = 'Matricule introuvable.'
+            student = None
+        elif not student.parent_pin or student.parent_pin != pin:
+            error = 'Code PIN incorrect. Demandez-le à l\'école.'
+            student = None
+    return render_template('espace_parents.html', student=student, error=error)
+
+@app.route('/export/eleves.xlsx')
+@login_required
+def export_eleves_xlsx():
+    try:
+        from openpyxl import Workbook
+        from openpyxl.styles import Font, PatternFill, Alignment
+    except ImportError:
+        flash('openpyxl non installé. Ajoutez-le dans requirements.txt', 'danger')
+        return redirect(url_for('eleves'))
+    if session.get('role') == 'Enseignant':
+        u = User.query.get(session.get('user_id'))
+        students = Student.query.filter_by(class_id=u.class_id).order_by(Student.last_name).all() if u else []
+    else:
+        students = Student.query.order_by(Student.last_name).all()
+    wb = Workbook()
+    ws = wb.active
+    ws.title = 'Élèves'
+    headers = ['Matricule', 'Nom', 'Prénom', 'Classe', 'Niveau', 'Sexe', 'Né(e) le',
+               'Lieu de naissance', 'Parent', 'Téléphone', 'Statut', 'PIN parents']
+    ws.append(headers)
+    for cell in ws[1]:
+        cell.font = Font(bold=True, color='FFFFFF')
+        cell.fill = PatternFill('solid', fgColor='C026D3')
+    for s in students:
+        ws.append([
+            s.matricule or '', s.last_name or '', s.first_name or '',
+            s.classroom.name if s.classroom else '',
+            s.classroom.level if s.classroom else '',
+            s.gender or '',
+            s.birth_date.strftime('%d/%m/%Y') if s.birth_date else '',
+            s.birth_place or '', s.parent_name or '', s.parent_phone or '',
+            s.status or '', getattr(s, 'parent_pin', '') or '',
+        ])
+    buf = io.BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+    return send_file(buf, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                     as_attachment=True, download_name='eleves_u_nengue.xlsx')
+
+@app.route('/export/classes.xlsx')
+@login_required
+def export_classes_xlsx():
+    try:
+        from openpyxl import Workbook
+        from openpyxl.styles import Font, PatternFill
+    except ImportError:
+        flash('openpyxl manquant.', 'danger')
+        return redirect(url_for('classes'))
+    wb = Workbook()
+    ws = wb.active
+    ws.title = 'Classes'
+    ws.append(['Classe', 'Niveau', 'Enseignant', 'Effectif'])
+    for cell in ws[1]:
+        cell.font = Font(bold=True, color='FFFFFF')
+        cell.fill = PatternFill('solid', fgColor='C026D3')
+    for r in ClassRoom.query.order_by(ClassRoom.level, ClassRoom.name).all():
+        n = Student.query.filter_by(class_id=r.id).count()
+        ws.append([r.name, r.level, r.teacher or '', n])
+    buf = io.BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+    return send_file(buf, as_attachment=True, download_name='classes_u_nengue.xlsx',
+                     mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+
+
+
+# ==================== FICHES RITUELS & PRÉPARATION ====================
+
+@app.route('/fiches-rituels')
+@login_required
+def fiches_rituels():
+    rooms = ClassRoom.query.order_by(ClassRoom.level, ClassRoom.name).all()
+    if session.get('role') == 'Enseignant':
+        u = User.query.get(session.get('user_id'))
+        if u and u.class_id:
+            rooms = [r for r in rooms if r.id == u.class_id]
+    class_id = request.args.get('class_id', type=int)
+    q = RitualSheet.query.order_by(RitualSheet.created_at.desc())
+    if class_id:
+        q = q.filter_by(class_id=class_id)
+    elif session.get('role') == 'Enseignant':
+        u = User.query.get(session.get('user_id'))
+        if u and u.class_id:
+            q = q.filter_by(class_id=u.class_id)
+    sheets = q.limit(100).all()
+    return render_template('fiches_rituels.html', sheets=sheets, rooms=rooms, class_id=class_id)
+
+@app.route('/fiches-rituels/nouvelle', methods=['GET', 'POST'])
+@app.route('/fiches-rituels/<int:id>/edit', methods=['GET', 'POST'])
+@login_required
+def fiche_rituel_form(id=None):
+    sheet = RitualSheet.query.get(id) if id else None
+    rooms = ClassRoom.query.order_by(ClassRoom.level, ClassRoom.name).all()
+    if session.get('role') == 'Enseignant':
+        u = User.query.get(session.get('user_id'))
+        if u and u.class_id:
+            rooms = [r for r in rooms if r.id == u.class_id]
+    if request.method == 'POST':
+        if not sheet:
+            sheet = RitualSheet(created_by=session.get('user_id'))
+            db.session.add(sheet)
+        sheet.class_id = request.form.get('class_id', type=int) or None
+        d = request.form.get('date') or ''
+        try:
+            sheet.date = datetime.strptime(d, '%Y-%m-%d').date() if d else datetime.utcnow().date()
+        except Exception:
+            sheet.date = datetime.utcnow().date()
+        sheet.duration = request.form.get('duration', '').strip()
+        sheet.title = request.form.get('title', '').strip()
+        sheet.objective = request.form.get('objective', '').strip()
+        sheet.teacher_role = request.form.get('teacher_role', '').strip()
+        sheet.student_role = request.form.get('student_role', '').strip()
+        sheet.notes = request.form.get('notes', '').strip()
+        db.session.commit()
+        flash('Fiche rituel enregistrée.', 'success')
+        return redirect(url_for('fiche_rituel_pdf', id=sheet.id))
+    return render_template('fiche_rituel_form.html', sheet=sheet, rooms=rooms)
+
+@app.route('/fiches-rituels/<int:id>/pdf')
+@login_required
+def fiche_rituel_pdf(id):
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib import colors
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import cm, mm
+    from reportlab.lib.enums import TA_CENTER, TA_LEFT
+    sheet = RitualSheet.query.get_or_404(id)
+    settings = SchoolSettings.query.first()
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4, leftMargin=1.5*cm, rightMargin=1.5*cm,
+                            topMargin=1.2*cm, bottomMargin=1.2*cm)
+    styles = getSampleStyleSheet()
+    title_s = ParagraphStyle('t', parent=styles['Normal'], fontSize=16, alignment=TA_CENTER,
+                             fontName='Helvetica-Bold', textColor=colors.HexColor('#a21caf'), spaceAfter=8)
+    h = ParagraphStyle('h', parent=styles['Normal'], fontSize=10, fontName='Helvetica-Bold',
+                       textColor=colors.HexColor('#86198f'), spaceBefore=8, spaceAfter=3)
+    body = ParagraphStyle('b', parent=styles['Normal'], fontSize=9, leading=12)
+    elements = []
+    school = settings.school_name if settings else 'École'
+    elements.append(Paragraph('FICHE RITUEL', title_s))
+    elements.append(Paragraph(f'{school} — U nengue', ParagraphStyle(
+        's', parent=styles['Normal'], fontSize=9, alignment=TA_CENTER, spaceAfter=10)))
+    cls = sheet.classroom.name if sheet.classroom else '—'
+    meta = [
+        [Paragraph(f'<b>Classe :</b> {cls}', body),
+         Paragraph(f'<b>Date :</b> {sheet.date.strftime("%d/%m/%Y") if sheet.date else "—"}', body),
+         Paragraph(f'<b>Temps / Durée :</b> {sheet.duration or "—"}', body)],
+    ]
+    mt = Table(meta, colWidths=[5.5*cm, 5.5*cm, 5.5*cm])
+    mt.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#fdf4ff')),
+        ('BOX', (0, 0), (-1, -1), 1.5, colors.HexColor('#c026d3')),
+        ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#e879f9')),
+        ('TOPPADDING', (0, 0), (-1, -1), 8),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+    ]))
+    elements.append(mt)
+    elements.append(Spacer(1, 6*mm))
+    elements.append(Paragraph('Titre du rituel', h))
+    elements.append(Paragraph(sheet.title or '—', body))
+    elements.append(Paragraph('Objectif', h))
+    elements.append(Paragraph(sheet.objective or '—', body))
+    data = [
+        [Paragraph('<b>Rôle de l\'enseignant</b>', body),
+         Paragraph('<b>Rôle de l\'élève</b>', body)],
+        [Paragraph(sheet.teacher_role or '—', body),
+         Paragraph(sheet.student_role or '—', body)],
+    ]
+    t = Table(data, colWidths=[8.5*cm, 8*cm])
+    t.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#c026d3')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('BACKGROUND', (0, 1), (0, 1), colors.HexColor('#ede9fe')),
+        ('BACKGROUND', (1, 1), (1, 1), colors.HexColor('#fce7f3')),
+        ('BOX', (0, 0), (-1, -1), 1.2, colors.HexColor('#a21caf')),
+        ('INNERGRID', (0, 0), (-1, -1), 0.6, colors.HexColor('#d946ef')),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('TOPPADDING', (0, 0), (-1, -1), 8),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+    ]))
+    elements.append(Spacer(1, 4*mm))
+    elements.append(t)
+    if sheet.notes:
+        elements.append(Paragraph('Notes / observations', h))
+        elements.append(Paragraph(sheet.notes, body))
+    elements.append(Spacer(1, 10*mm))
+    elements.append(Paragraph('Document généré par U nengue — MM', ParagraphStyle(
+        'f', parent=styles['Normal'], fontSize=7, alignment=TA_CENTER, textColor=colors.grey)))
+    doc.build(elements)
+    buffer.seek(0)
+    return send_file(buffer, mimetype='application/pdf', as_attachment=True,
+                     download_name=f'rituel_{sheet.id}.pdf')
+
+@app.route('/fiches-preparation')
+@login_required
+def fiches_preparation():
+    rooms = ClassRoom.query.order_by(ClassRoom.level, ClassRoom.name).all()
+    if session.get('role') == 'Enseignant':
+        u = User.query.get(session.get('user_id'))
+        if u and u.class_id:
+            rooms = [r for r in rooms if r.id == u.class_id]
+    class_id = request.args.get('class_id', type=int)
+    q = PrepSheet.query.order_by(PrepSheet.created_at.desc())
+    if class_id:
+        q = q.filter_by(class_id=class_id)
+    elif session.get('role') == 'Enseignant':
+        u = User.query.get(session.get('user_id'))
+        if u and u.class_id:
+            q = q.filter_by(class_id=u.class_id)
+    sheets = q.limit(100).all()
+    return render_template('fiches_preparation.html', sheets=sheets, rooms=rooms, class_id=class_id)
+
+@app.route('/fiches-preparation/nouvelle', methods=['GET', 'POST'])
+@app.route('/fiches-preparation/<int:id>/edit', methods=['GET', 'POST'])
+@login_required
+def fiche_preparation_form(id=None):
+    import json
+    sheet = PrepSheet.query.get(id) if id else None
+    rooms = ClassRoom.query.order_by(ClassRoom.level, ClassRoom.name).all()
+    if session.get('role') == 'Enseignant':
+        u = User.query.get(session.get('user_id'))
+        if u and u.class_id:
+            rooms = [r for r in rooms if r.id == u.class_id]
+    if request.method == 'POST':
+        if not sheet:
+            sheet = PrepSheet(created_by=session.get('user_id'))
+            db.session.add(sheet)
+        sheet.class_id = request.form.get('class_id', type=int) or None
+        sheet.title = request.form.get('title', '').strip()
+        sheet.subject = request.form.get('subject', '').strip()
+        sheet.duration = request.form.get('duration', '').strip()
+        sheet.teacher = request.form.get('teacher', '').strip()
+        sheet.prerequisites = request.form.get('prerequisites', '').strip()
+        sheet.competences = request.form.get('competences', '').strip()
+        sheet.general_objectives = request.form.get('general_objectives', '').strip()
+        sheet.phase_comprehension = request.form.get('phase_comprehension', '').strip()
+        sheet.phase_automation = request.form.get('phase_automation', '').strip()
+        sheet.phase_reinvestment = request.form.get('phase_reinvestment', '').strip()
+        sheet.operational_objective = request.form.get('operational_objective', '').strip()
+        sheet.core_competence = request.form.get('core_competence', '').strip()
+        sheet.opening = request.form.get('opening', '').strip()
+        sheet.scaffolding = request.form.get('scaffolding', '').strip()
+        sheet.closing = request.form.get('closing', '').strip()
+        sheet.obstacles = request.form.get('obstacles', '').strip()
+        sheet.instruction = request.form.get('instruction', '').strip()
+        durs = request.form.getlist('row_duration[]')
+        tasks = request.form.getlist('row_tasks[]')
+        acts = request.form.getlist('row_activity[]')
+        mats = request.form.getlist('row_material[]')
+        roles = request.form.getlist('row_teacher[]')
+        crits = request.form.getlist('row_criteria[]')
+        rows = []
+        for i in range(len(durs)):
+            if not any([(durs[i] if i < len(durs) else '').strip(),
+                        (tasks[i] if i < len(tasks) else '').strip(),
+                        (acts[i] if i < len(acts) else '').strip()]):
+                continue
+            rows.append({
+                'duration': (durs[i] if i < len(durs) else '').strip(),
+                'tasks': (tasks[i] if i < len(tasks) else '').strip(),
+                'activity': (acts[i] if i < len(acts) else '').strip(),
+                'material': (mats[i] if i < len(mats) else '').strip(),
+                'teacher': (roles[i] if i < len(roles) else '').strip(),
+                'criteria': (crits[i] if i < len(crits) else '').strip(),
+            })
+        sheet.rows_json = json.dumps(rows, ensure_ascii=False)
+        db.session.commit()
+        flash('Fiche de préparation enregistrée.', 'success')
+        return redirect(url_for('fiche_preparation_pdf', id=sheet.id))
+    rows = sheet.rows() if sheet else [
+        {'duration': '', 'tasks': '', 'activity': '', 'material': '', 'teacher': '', 'criteria': ''},
+        {'duration': '', 'tasks': '', 'activity': '', 'material': '', 'teacher': '', 'criteria': ''},
+        {'duration': '', 'tasks': '', 'activity': '', 'material': '', 'teacher': '', 'criteria': ''},
+    ]
+    return render_template('fiche_preparation_form.html', sheet=sheet, rooms=rooms, rows=rows)
+
+@app.route('/fiches-preparation/<int:id>/pdf')
+@login_required
+def fiche_preparation_pdf(id):
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib import colors
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, KeepTogether
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import cm, mm
+    from reportlab.lib.enums import TA_CENTER, TA_LEFT
+    sheet = PrepSheet.query.get_or_404(id)
+    settings = SchoolSettings.query.first()
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4, leftMargin=1.2*cm, rightMargin=1.2*cm,
+                            topMargin=1*cm, bottomMargin=1*cm)
+    styles = getSampleStyleSheet()
+    title_s = ParagraphStyle('t', parent=styles['Normal'], fontSize=14, alignment=TA_CENTER,
+                             fontName='Helvetica-Bold', textColor=colors.HexColor('#6d28d9'), spaceAfter=6)
+    h = ParagraphStyle('h', parent=styles['Normal'], fontSize=9, fontName='Helvetica-Bold',
+                       textColor=colors.HexColor('#5b21b6'), spaceBefore=5, spaceAfter=2)
+    body = ParagraphStyle('b', parent=styles['Normal'], fontSize=8, leading=10)
+    cell = ParagraphStyle('c', parent=styles['Normal'], fontSize=7, leading=9)
+    elements = []
+    school = settings.school_name if settings else 'École'
+    elements.append(Paragraph('FICHE DE PRÉPARATION', title_s))
+    elements.append(Paragraph(f'{school} — U nengue — {sheet.subject or ""}', ParagraphStyle(
+        's', parent=styles['Normal'], fontSize=8, alignment=TA_CENTER, spaceAfter=6)))
+    cls = sheet.classroom.name if sheet.classroom else '—'
+    head = [[
+        Paragraph(f'<b>Titre :</b> {sheet.title or "—"}', body),
+        Paragraph(f'<b>Classe :</b> {cls}', body),
+        Paragraph(f'<b>Durée :</b> {sheet.duration or "—"}', body),
+    ]]
+    ht = Table(head, colWidths=[8*cm, 4.5*cm, 4*cm])
+    ht.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#f5f3ff')),
+        ('BOX', (0, 0), (-1, -1), 1.2, colors.HexColor('#7c3aed')),
+        ('TOPPADDING', (0, 0), (-1, -1), 6),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+    ]))
+    elements.append(ht)
+    elements.append(Spacer(1, 3*mm))
+    for label, val in [
+        ('Prérequis', sheet.prerequisites),
+        ('Compétence(s) travaillée(s)', sheet.competences),
+        ('Objectifs généraux à atteindre', sheet.general_objectives),
+    ]:
+        elements.append(Paragraph(f'<b>{label} :</b> {val or "—"}', body))
+    elements.append(Spacer(1, 2*mm))
+    phases = [
+        [Paragraph('<b>1. Phase de compréhension</b>', cell),
+         Paragraph(sheet.phase_comprehension or '—', cell)],
+        [Paragraph('<b>2. Phase d\'automatisation</b>', cell),
+         Paragraph(sheet.phase_automation or '—', cell)],
+        [Paragraph('<b>3. Phase de réinvestissement</b>', cell),
+         Paragraph(sheet.phase_reinvestment or '—', cell)],
+    ]
+    pt = Table(phases, colWidths=[4.5*cm, 12*cm])
+    pt.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (0, 0), colors.HexColor('#c4b5fd')),
+        ('BACKGROUND', (0, 1), (0, 1), colors.HexColor('#a5b4fc')),
+        ('BACKGROUND', (0, 2), (0, 2), colors.HexColor('#67e8f9')),
+        ('BOX', (0, 0), (-1, -1), 1, colors.HexColor('#6d28d9')),
+        ('INNERGRID', (0, 0), (-1, -1), 0.4, colors.HexColor('#a78bfa')),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('TOPPADDING', (0, 0), (-1, -1), 4),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+    ]))
+    elements.append(pt)
+    elements.append(Spacer(1, 3*mm))
+    elements.append(Paragraph('<b>Pour chaque séance</b>', h))
+    seance = [
+        [Paragraph(f'<b>Objectif opérationnel :</b> {sheet.operational_objective or "—"}', body)],
+        [Paragraph(f'<b>Compétence cœur de cible :</b> {sheet.core_competence or "—"}', body)],
+        [Paragraph(f'<b>Ouverture :</b> {sheet.opening or "—"}', body)],
+        [Paragraph(f'<b>Étayage :</b> {sheet.scaffolding or "—"}', body)],
+        [Paragraph(f'<b>Clôture :</b> {sheet.closing or "—"}', body)],
+        [Paragraph(f'<b>Obstacles :</b> {sheet.obstacles or "—"}', body)],
+    ]
+    st = Table(seance, colWidths=[16.5*cm])
+    st.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#faf5ff')),
+        ('BOX', (0, 0), (-1, -1), 1, colors.HexColor('#c026d3')),
+        ('TOPPADDING', (0, 0), (-1, -1), 3),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+    ]))
+    elements.append(st)
+    if sheet.instruction:
+        elements.append(Paragraph(f'<b>CONSIGNE :</b> {sheet.instruction}', body))
+    elements.append(Spacer(1, 3*mm))
+    rows = sheet.rows()
+    if rows:
+        data = [[
+            Paragraph('<b>Durée</b>', cell),
+            Paragraph('<b>Tâches élèves / modalités</b>', cell),
+            Paragraph('<b>Activité élève</b>', cell),
+            Paragraph('<b>Matériel</b>', cell),
+            Paragraph('<b>Rôle enseignant / différenciation</b>', cell),
+            Paragraph('<b>Critères de réussite</b>', cell),
+        ]]
+        for r in rows:
+            data.append([
+                Paragraph(r.get('duration') or '—', cell),
+                Paragraph(r.get('tasks') or '—', cell),
+                Paragraph(r.get('activity') or '—', cell),
+                Paragraph(r.get('material') or '—', cell),
+                Paragraph(r.get('teacher') or '—', cell),
+                Paragraph(r.get('criteria') or '—', cell),
+            ])
+        tbl = Table(data, colWidths=[2*cm, 3.2*cm, 2.8*cm, 2.5*cm, 3.5*cm, 2.5*cm])
+        tbl.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#7c3aed')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#faf5ff')),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#8b5cf6')),
+            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+            ('TOPPADDING', (0, 0), (-1, -1), 3),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1),
+             [colors.HexColor('#faf5ff'), colors.HexColor('#fdf4ff')]),
+        ]))
+        elements.append(tbl)
+    elements.append(Spacer(1, 6*mm))
+    elements.append(Paragraph(
+        f'{sheet.teacher or ""} — U nengue — MM',
+        ParagraphStyle('f', parent=styles['Normal'], fontSize=7, alignment=TA_CENTER,
+                       textColor=colors.grey)))
+    doc.build(elements)
+    buffer.seek(0)
+    return send_file(buffer, mimetype='application/pdf', as_attachment=True,
+                     download_name=f'preparation_{sheet.id}.pdf')
+
+@app.route('/guide-postgresql')
+@login_required
+def guide_postgresql():
+    if session.get('role') != 'Directeur':
+        flash('Réservé au directeur.', 'danger')
+        return redirect(url_for('dashboard'))
+    return render_template('guide_postgresql.html')
+
+
+
+@app.route('/admin/sauvegarde')
+@login_required
+def backup_json():
+    """Sauvegarde JSON (élèves, classes, paramètres)."""
+    if session.get('role') != 'Directeur':
+        flash('Réservé au directeur.', 'danger')
+        return redirect(url_for('dashboard'))
+    import json
+    data = {
+        'version': 1,
+        'exported_at': datetime.utcnow().isoformat() + 'Z',
+        'settings': {},
+        'classes': [],
+        'students': [],
+    }
+    s = SchoolSettings.query.first()
+    if s:
+        data['settings'] = {
+            'school_name': s.school_name, 'address': s.address, 'phone': s.phone,
+            'email': s.email, 'province': s.province, 'circonscription': s.circonscription,
+            'director_name': s.director_name, 'annee_scolaire': s.annee_scolaire,
+        }
+    for c in ClassRoom.query.all():
+        data['classes'].append({
+            'id': c.id, 'name': c.name, 'level': c.level, 'teacher': c.teacher or '',
+        })
+    for st in Student.query.all():
+        data['students'].append({
+            'matricule': st.matricule, 'last_name': st.last_name, 'first_name': st.first_name,
+            'birth_date': st.birth_date.isoformat() if st.birth_date else None,
+            'birth_place': st.birth_place or '', 'gender': st.gender or '',
+            'nationality': st.nationality or '', 'class_name': st.classroom.name if st.classroom else '',
+            'class_level': st.classroom.level if st.classroom else '',
+            'parent_name': st.parent_name or '', 'parent_phone': st.parent_phone or '',
+            'parent_pin': getattr(st, 'parent_pin', '') or '',
+            'status': st.status or '', 'address': st.address or '',
+            'cep_selected': bool(getattr(st, 'cep_selected', False)),
+        })
+    buf = io.BytesIO(json.dumps(data, ensure_ascii=False, indent=2).encode('utf-8'))
+    fname = f"sauvegarde_u_nengue_{datetime.utcnow().strftime('%Y%m%d_%H%M')}.json"
+    return send_file(buf, mimetype='application/json', as_attachment=True, download_name=fname)
+
+@app.route('/admin/restauration', methods=['GET', 'POST'])
+@login_required
+def restore_json():
+    if session.get('role') != 'Directeur':
+        flash('Réservé au directeur.', 'danger')
+        return redirect(url_for('dashboard'))
+    if request.method == 'POST':
+        import json
+        f = request.files.get('backup')
+        if not f or not f.filename:
+            flash('Choisissez un fichier JSON de sauvegarde.', 'danger')
+            return redirect(url_for('restore_json'))
+        try:
+            data = json.loads(f.read().decode('utf-8'))
+        except Exception as e:
+            flash(f'Fichier invalide : {e}', 'danger')
+            return redirect(url_for('restore_json'))
+        # Classes
+        class_map = {}  # name -> id
+        for c in data.get('classes') or []:
+            room = ClassRoom.query.filter_by(name=c.get('name')).first()
+            if not room:
+                room = ClassRoom(name=c.get('name') or 'Classe', level=c.get('level') or '',
+                                 teacher=c.get('teacher') or '')
+                db.session.add(room)
+                db.session.flush()
+            else:
+                room.level = c.get('level') or room.level
+                room.teacher = c.get('teacher') or room.teacher
+            class_map[room.name] = room.id
+        # Students
+        n_new = n_upd = 0
+        for st in data.get('students') or []:
+            mat = (st.get('matricule') or '').strip()
+            student = Student.query.filter_by(matricule=mat).first() if mat else None
+            if not student:
+                student = Student(matricule=mat or None)
+                db.session.add(student)
+                n_new += 1
+            else:
+                n_upd += 1
+            student.last_name = st.get('last_name') or student.last_name or ''
+            student.first_name = st.get('first_name') or student.first_name or ''
+            bd = st.get('birth_date')
+            if bd:
+                try:
+                    student.birth_date = datetime.strptime(bd[:10], '%Y-%m-%d').date()
+                except Exception:
+                    pass
+            student.birth_place = st.get('birth_place') or ''
+            student.gender = st.get('gender') or ''
+            student.nationality = st.get('nationality') or 'Gabonaise'
+            student.parent_name = st.get('parent_name') or ''
+            student.parent_phone = st.get('parent_phone') or ''
+            student.parent_pin = st.get('parent_pin') or ''
+            student.status = st.get('status') or 'Nouveau'
+            student.address = st.get('address') or ''
+            student.cep_selected = bool(st.get('cep_selected'))
+            cn = st.get('class_name')
+            if cn and cn in class_map:
+                student.class_id = class_map[cn]
+            elif cn:
+                room = ClassRoom.query.filter_by(name=cn).first()
+                if room:
+                    student.class_id = room.id
+        # Settings
+        sett = data.get('settings') or {}
+        if sett:
+            s = SchoolSettings.query.first()
+            if not s:
+                s = SchoolSettings()
+                db.session.add(s)
+            for k, v in sett.items():
+                if hasattr(s, k) and v is not None:
+                    setattr(s, k, v)
+        db.session.commit()
+        flash(f'Restauration terminée : {n_new} élève(s) créé(s), {n_upd} mis à jour.', 'success')
+        return redirect(url_for('eleves'))
+    return render_template('restauration.html')
+
+@app.route('/eleves/pdf')
+@login_required
+def eleves_pdf():
+    from reportlab.lib.pagesizes import A4, landscape
+    from reportlab.lib import colors
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import cm
+    from reportlab.lib.enums import TA_CENTER
+    q = request.args.get('q', '')
+    class_filter = request.args.get('class_id', '')
+    level_filter = request.args.get('level', '')
+    query = Student.query
+    tc = teacher_class_filter()
+    if tc:
+        query = query.filter_by(class_id=tc)
+    if q:
+        query = query.filter(db.or_(
+            Student.last_name.ilike(f'%{q}%'), Student.first_name.ilike(f'%{q}%'),
+            Student.matricule.ilike(f'%{q}%')))
+    if class_filter and not tc:
+        try:
+            query = query.filter_by(class_id=int(class_filter))
+        except Exception:
+            pass
+    if level_filter and not tc:
+        query = query.join(ClassRoom).filter(ClassRoom.level == level_filter)
+    students = query.order_by(Student.last_name).all()
+    settings = SchoolSettings.query.first()
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=landscape(A4),
+                            leftMargin=1*cm, rightMargin=1*cm, topMargin=1*cm, bottomMargin=1*cm)
+    styles = getSampleStyleSheet()
+    title = ParagraphStyle('t', parent=styles['Normal'], fontSize=14, alignment=TA_CENTER,
+                           fontName='Helvetica-Bold', textColor=colors.HexColor('#a21caf'), spaceAfter=8)
+    cell = ParagraphStyle('c', parent=styles['Normal'], fontSize=8, leading=10)
+    elements = []
+    school = settings.school_name if settings else 'École'
+    elements.append(Paragraph(f'Liste des élèves — {school}', title))
+    elements.append(Paragraph(f'U nengue — {datetime.utcnow().strftime("%d/%m/%Y")} — {len(students)} élève(s)',
+                              ParagraphStyle('s', parent=styles['Normal'], fontSize=9, alignment=TA_CENTER, spaceAfter=8)))
+    data = [[Paragraph(f'<b>{h}</b>', cell) for h in
+             ['N°', 'Matricule', 'Nom', 'Prénom', 'Classe', 'Né(e) le', 'Lieu', 'Statut']]]
+    for i, s in enumerate(students, 1):
+        data.append([
+            Paragraph(str(i), cell),
+            Paragraph(s.matricule or '—', cell),
+            Paragraph(s.last_name or '', cell),
+            Paragraph(s.first_name or '', cell),
+            Paragraph(s.classroom.name if s.classroom else '—', cell),
+            Paragraph(s.birth_date.strftime('%d/%m/%Y') if s.birth_date else '—', cell),
+            Paragraph(s.birth_place or '—', cell),
+            Paragraph(s.status or '—', cell),
+        ])
+    t = Table(data, colWidths=[1.2*cm, 3*cm, 3.5*cm, 3.2*cm, 3.5*cm, 2.5*cm, 3.5*cm, 2.5*cm])
+    t.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#c026d3')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('GRID', (0, 0), (-1, -1), 0.4, colors.HexColor('#e879f9')),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1),
+         [colors.white, colors.HexColor('#fdf4ff')]),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('TOPPADDING', (0, 0), (-1, -1), 4),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+    ]))
+    elements.append(t)
+    elements.append(Spacer(1, 8))
+    elements.append(Paragraph('Document généré par U nengue — MM',
+                              ParagraphStyle('f', parent=styles['Normal'], fontSize=7,
+                                             alignment=TA_CENTER, textColor=colors.grey)))
+    doc.build(elements)
+    buffer.seek(0)
+    return send_file(buffer, mimetype='application/pdf', as_attachment=True,
+                     download_name='liste_eleves.pdf')
+
+
 # ==================== THEMES ====================
 
 THEMES = [
     ('fuchsia', 'Fuchsia Gabon'),
+    ('maternelle-pastel', 'Maternelle pastel'),
     ('mauve-spatial', 'Mauve spatial'),
     ('emeraude-mer', 'Émeraude & mer'),
     ('cristal-miranda', 'Cristal Miranda'),

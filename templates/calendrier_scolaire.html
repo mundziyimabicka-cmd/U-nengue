@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Calendrier scolaire{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2>📅 Calendrier scolaire (Gabon)</h2>
+        <p class="subtitle">Repères annuels — à adapter selon la circulaire officielle</p>
+    </div>
+    <a class="btn btn-secondary" href="{{ url_for('jours_feries') }}">Jours fériés</a>
+</div>
+<div class="dashboard-grid">
+{% for m in calendrier %}
+<div class="card">
+    <div class="card-title">{{ m.mois }}</div>
+    <ul style="margin:0;padding-left:1.2rem">
+        {% for e in m.evenements %}<li>{{ e }}</li>{% endfor %}
+    </ul>
+</div>
+{% endfor %}
+</div>
+{% if holidays %}
+<div class="card" style="margin-top:1.25rem">
+    <h3 style="color:#a21caf">Jours fériés / vacances enregistrés</h3>
+    <ul>
+    {% for h in holidays %}
+        <li><strong>{{ h.date.strftime('%d/%m/%Y') }}</strong> — {{ h.label }}</li>
+    {% endfor %}
+    </ul>
+</div>
+{% endif %}
+{% endblock %}

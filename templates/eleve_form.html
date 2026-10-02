@@ -145,6 +145,11 @@
         <div class="form-group">
             <label><input type="checkbox" name="is_primal" value="1" {% if student and student.is_primal %}checked{% endif %}> Primaux arrivés</label>
         </div>
+<div class="form-group">
+        <label>Code PIN espace parents</label>
+        <input type="text" name="parent_pin" class="form-control" value="{{ student.parent_pin if student else '' }}" placeholder="ex. 1234" maxlength="10">
+        <small style="color:#6b7280">Les parents l'utilisent sur /espace-parents avec le matricule</small>
+    </div>
 </form>
 </div>
 <script>

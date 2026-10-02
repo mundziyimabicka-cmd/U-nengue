@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Dictionnaire FR–EN{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2>📖 Dictionnaire scolaire français ↔ anglais</h2>
+        <p class="subtitle">{{ total }} mots utiles pour l'école</p>
+    </div>
+</div>
+<div class="card" style="margin-bottom:1rem">
+    <form method="GET" style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:end">
+        <div class="form-group" style="flex:1;min-width:200px;margin:0">
+            <label>Rechercher</label>
+            <input type="text" name="q" class="form-control" value="{{ q }}" placeholder="ex. école, school, calculer…">
+        </div>
+        <button class="btn btn-primary" type="submit">Chercher</button>
+        <a class="btn btn-secondary" href="{{ url_for('dictionnaire') }}">Tout voir</a>
+    </form>
+</div>
+<div class="card table-wrap">
+    <table>
+        <thead><tr><th>Français</th><th>English</th></tr></thead>
+        <tbody>
+        {% for fr, en in results %}
+            <tr><td><strong>{{ fr }}</strong></td><td>{{ en }}</td></tr>
+        {% else %}
+            <tr><td colspan="2">Aucun résultat pour « {{ q }} »</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

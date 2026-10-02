@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Comptines & chants{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2>🎵 Comptines et chants</h2>
+        <p class="subtitle">Pour la maternelle (PS, MS, GS) et le début du primaire</p>
+    </div>
+</div>
+<div class="card" style="margin-bottom:1rem">
+    <form method="GET" style="display:flex;gap:0.5rem;flex-wrap:wrap">
+        <a class="btn {% if not niveau %}btn-primary{% else %}btn-secondary{% endif %}" href="{{ url_for('comptines') }}">Toutes</a>
+        {% for n in niveaux %}
+        <button type="submit" name="niveau" value="{{ n }}" class="btn {% if niveau==n %}btn-primary{% else %}btn-secondary{% endif %}">{{ n }}</button>
+        {% endfor %}
+    </form>
+</div>
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1rem">
+{% for c in items %}
+<div class="card" style="border-top:4px solid #a855f7">
+    <div style="font-size:0.75rem;font-weight:700;color:#7c3aed">{{ c.niveau }}</div>
+    <h3 style="margin:0.35rem 0">{{ c.titre }}</h3>
+    <pre style="white-space:pre-wrap;font-family:inherit;font-size:0.9rem;line-height:1.45;margin:0;color:#334155">{{ c.texte }}</pre>
+</div>
+{% else %}
+<div class="card">Aucune comptine pour ce filtre.</div>
+{% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}PostgreSQL{% endblock %}
+{% block content %}
+<div class="page-header"><h2>🗄️ PostgreSQL sur Render (données durables)</h2></div>
+<div class="card" style="max-width:720px;border-top:5px solid #0d9488">
+    <p>Sur le plan gratuit, SQLite peut perdre les données. PostgreSQL les conserve.</p>
+    <ol style="line-height:1.7">
+        <li>Dashboard Render → <strong>New +</strong> → <strong>PostgreSQL</strong></li>
+        <li>Nom : <code>u-nengue-db</code> · Plan <strong>Free</strong> → Create</li>
+        <li>Ouvrez la base → copiez <strong>Internal Database URL</strong></li>
+        <li>Service <strong>U-nengue-app</strong> → <strong>Environment</strong></li>
+        <li>Ajoutez : <code>DATABASE_URL</code> = l’URL copiée</li>
+        <li><strong>Save</strong> puis redéployez</li>
+    </ol>
+    <p style="background:#ecfdf5;padding:0.75rem;border-radius:10px;border-left:4px solid #10b981">
+        L’application détecte automatiquement <code>DATABASE_URL</code> et utilise PostgreSQL.
+        Après le premier démarrage, reconnectez-vous avec <strong>admin / admin123</strong> puis recréez vos données.
+    </p>
+</div>
+{% endblock %}

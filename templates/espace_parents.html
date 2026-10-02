@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="fuchsia">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Espace parents — U nengue</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<div class="login-page">
+    <div class="login-card" style="max-width:520px">
+        <h1>U nengue</h1>
+        <p class="subtitle">Espace parents — suivi de l'élève</p>
+        {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+        {% if not student %}
+        <form method="POST">
+            <div class="form-group">
+                <label>Matricule de l'élève</label>
+                <input type="text" name="matricule" class="form-control" required autocomplete="username">
+            </div>
+            <div class="form-group">
+                <label>Code PIN parents</label>
+                <input type="password" name="pin" class="form-control" required autocomplete="current-password">
+            </div>
+            <button class="btn btn-primary" style="width:100%;justify-content:center">Consulter le dossier</button>
+        </form>
+        <p style="font-size:0.8rem;color:#9ca3af;margin-top:1rem;text-align:center">
+            Le PIN est indiqué sur la fiche élève par l'école.
+        </p>
+        {% else %}
+        <div class="alert alert-success">Dossier de <strong>{{ student.full_name }}</strong></div>
+        <table style="width:100%;font-size:0.95rem">
+            <tr><td style="padding:0.35rem 0;color:#6b7280">Matricule</td><td><strong>{{ student.matricule or '—' }}</strong></td></tr>
+            <tr><td style="padding:0.35rem 0;color:#6b7280">Classe</td><td>{{ student.classroom.name if student.classroom else '—' }}</td></tr>
+            <tr><td style="padding:0.35rem 0;color:#6b7280">Niveau</td><td>{{ student.classroom.level if student.classroom else '—' }}</td></tr>
+            <tr><td style="padding:0.35rem 0;color:#6b7280">Né(e) le</td><td>{{ student.birth_date.strftime('%d/%m/%Y') if student.birth_date else '—' }}</td></tr>
+            <tr><td style="padding:0.35rem 0;color:#6b7280">Lieu</td><td>{{ student.birth_place or '—' }}</td></tr>
+            <tr><td style="padding:0.35rem 0;color:#6b7280">Statut</td><td>{{ student.status or '—' }}</td></tr>
+            <tr><td style="padding:0.35rem 0;color:#6b7280">Parent</td><td>{{ student.parent_name or '—' }}</td></tr>
+        </table>
+        <p style="font-size:0.85rem;color:#6b7280;margin-top:1rem;background:#fdf4ff;padding:0.75rem;border-radius:10px">
+            Pour les bulletins et relevés détaillés, contactez l'enseignant ou le directeur de l'école.
+        </p>
+        <a class="btn btn-secondary" href="{{ url_for('espace_parents') }}">Autre élève</a>
+        {% endif %}
+        <p style="text-align:center;margin-top:1.25rem"><a href="{{ url_for('login') }}">← Connexion école</a></p>
+    </div>
+</div>
+</body>
+</html>

@@ -7,17 +7,11 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <!-- Barre mobile -->
-    <header class="mobile-topbar">
-        <button type="button" class="menu-toggle" id="menuToggle" aria-label="Ouvrir le menu">
-            <span></span><span></span><span></span>
-        </button>
-        <div class="mobile-brand">
-            <strong>U nengue</strong>
-            <span class="mm-badge">MM</span>
-        </div>
-        <a href="{{ url_for('logout') }}" class="mobile-logout" title="Déconnexion">⏻</a>
-    </header>
+    <!-- Bouton menu toujours visible -->
+    <button type="button" class="menu-fab" id="menuToggle" aria-label="Menu">
+        <span></span><span></span><span></span>
+    </button>
+
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
     <aside class="sidebar" id="sidebar">
@@ -33,6 +27,7 @@
             <a href="{{ url_for('actualites') }}" class="nav-item {% if request.endpoint and 'actualite' in request.endpoint %}active{% endif %}">📰 Actualités</a>
             <a href="{{ url_for('statistiques') }}" class="nav-item {% if request.endpoint and 'statistique' in request.endpoint %}active{% endif %}">📈 Statistiques</a>
             <a href="{{ url_for('eleves') }}" class="nav-item {% if 'eleve' in (request.endpoint or '') %}active{% endif %}">👨‍🎓 Élèves <span class="badge">{{ students_count }}</span></a>
+            <a href="{{ url_for('export_eleves_xlsx') }}" class="nav-item">⬇️ Export Excel élèves</a>
             {% if session.get('role') == 'Directeur' %}
             <a href="{{ url_for('classes') }}" class="nav-item {% if 'classe' in (request.endpoint or '') %}active{% endif %}">🏫 Classes</a>
             {% endif %}
@@ -40,7 +35,14 @@
             <a href="{{ url_for('appels') }}" class="nav-item {% if request.endpoint and 'appel' in request.endpoint %}active{% endif %}">📋 Appels</a>
             <a href="{{ url_for('cahier_journal') }}" class="nav-item {% if request.endpoint and 'cahier' in request.endpoint %}active{% endif %}">📓 Cahier journal</a>
             <a href="{{ url_for('emploi_du_temps') }}" class="nav-item {% if request.endpoint and 'emploi' in (request.endpoint or '') %}active{% endif %}">🗓️ Emploi du temps</a>
+            <a href="{{ url_for('fiches_rituels') }}" class="nav-item {% if request.endpoint and 'rituel' in (request.endpoint or '') %}active{% endif %}">🔁 Fiches rituels</a>
+            <a href="{{ url_for('fiches_preparation') }}" class="nav-item {% if request.endpoint and 'preparation' in (request.endpoint or '') %}active{% endif %}">📝 Préparations</a>
             <a href="{{ url_for('fiches_pedagogiques') }}" class="nav-item {% if request.endpoint and 'fiche_pedago' in (request.endpoint or '') or request.endpoint == 'fiches_pedagogiques' %}active{% endif %}">📋 Fiches pédagogiques</a>
+
+            <a href="{{ url_for('dictionnaire') }}" class="nav-item {% if request.endpoint == 'dictionnaire' %}active{% endif %}">📖 Dictionnaire FR–EN</a>
+            <a href="{{ url_for('programmes_maths') }}" class="nav-item {% if request.endpoint == 'programmes_maths' %}active{% endif %}">🔢 Programmes maths</a>
+            <a href="{{ url_for('comptines') }}" class="nav-item {% if request.endpoint == 'comptines' %}active{% endif %}">🎵 Comptines</a>
+            <a href="{{ url_for('calendrier_scolaire') }}" class="nav-item {% if request.endpoint == 'calendrier_scolaire' %}active{% endif %}">📅 Calendrier scolaire</a>
             <a href="{{ url_for('evaluations') }}" class="nav-item {% if 'evaluation' in (request.endpoint or '') or request.endpoint == 'saisir_evaluation' %}active{% endif %}">📝 Évaluations</a>
             <a href="{{ url_for('bulletins') }}" class="nav-item {% if request.endpoint in ('bulletins', 'bulletin', 'bulletin_pdf') %}active{% endif %}">📄 Bulletins</a>
             <a href="{{ url_for('releves') }}" class="nav-item {% if request.endpoint == 'releves' %}active{% endif %}">📊 Relevés de notes</a>
@@ -51,6 +53,9 @@
             <a href="{{ url_for('reinscription') }}" class="nav-item {% if 'reinscription' in (request.endpoint or '') %}active{% endif %}">🔄 Réinscription / Passage</a>
             <a href="{{ url_for('enseignants') }}" class="nav-item {% if 'enseignant' in (request.endpoint or '') %}active{% endif %}">👩‍🏫 Enseignants</a>
             <a href="{{ url_for('parametres') }}" class="nav-item {% if request.endpoint == 'parametres' %}active{% endif %}">⚙️ Paramètres</a>
+            <a href="{{ url_for('guide_postgresql') }}" class="nav-item {% if request.endpoint == 'guide_postgresql' %}active{% endif %}">🗄️ PostgreSQL</a>
+            <a href="{{ url_for('backup_json') }}" class="nav-item">💾 Sauvegarde</a>
+            <a href="{{ url_for('restore_json') }}" class="nav-item">♻️ Restauration</a>
             {% endif %}
             <a href="{{ url_for('messages') }}" class="nav-item {% if 'message' in (request.endpoint or '') %}active{% endif %}">💬 Messagerie</a>
             <a href="{{ url_for('whatsapp') }}" class="nav-item {% if 'whatsapp' in (request.endpoint or '') %}active{% endif %}">📱 WhatsApp</a>
@@ -66,10 +71,11 @@
         </div>
     </aside>
 
-    <main class="main">
+    <main class="main" id="mainContent">
         <div class="theme-bar-top">
             <span>🎨 Thème :</span>
             <a href="{{ url_for('set_theme', name='fuchsia') }}" class="theme-dot" style="background:#d946ef" title="Fuchsia"></a>
+            <a href="{{ url_for('set_theme', name='maternelle-pastel') }}" class="theme-dot" style="background:#f9a8d4" title="Maternelle"></a>
             <a href="{{ url_for('set_theme', name='mauve-spatial') }}" class="theme-dot" style="background:#7c3aed" title="Mauve"></a>
             <a href="{{ url_for('set_theme', name='emeraude-mer') }}" class="theme-dot" style="background:#0d9488" title="Émeraude"></a>
             <a href="{{ url_for('set_theme', name='cristal-miranda') }}" class="theme-dot" style="background:#e2e8f0;border:1px solid #94a3b8" title="Cristal"></a>
@@ -83,7 +89,9 @@
                 <div class="alert alert-{{ category }}">{{ message }}</div>
             {% endfor %}
         {% endwith %}
-        {% block content %}{% endblock %}
+        <div class="page-body">
+            {% block content %}{% endblock %}
+        </div>
     </main>
 
 <script>
@@ -92,29 +100,66 @@
     var overlay = document.getElementById('sidebarOverlay');
     var toggle = document.getElementById('menuToggle');
     var closeBtn = document.getElementById('menuClose');
+    var body = document.body;
+
+    function isMobile(){ return window.innerWidth <= 900; }
+
     function openMenu(){
         sidebar.classList.add('open');
-        overlay.classList.add('show');
-        document.body.classList.add('menu-open');
-        toggle.classList.add('is-open');
+        body.classList.add('menu-open');
+        if (toggle) toggle.classList.add('is-open');
+        if (isMobile() && overlay) overlay.classList.add('show');
     }
     function closeMenu(){
         sidebar.classList.remove('open');
-        overlay.classList.remove('show');
-        document.body.classList.remove('menu-open');
-        toggle.classList.remove('is-open');
+        body.classList.remove('menu-open');
+        if (toggle) toggle.classList.remove('is-open');
+        if (overlay) overlay.classList.remove('show');
+        // sur bureau : menu replié = contenu pleine largeur
+        if (!isMobile()) body.classList.add('sidebar-collapsed');
     }
-    if(toggle) toggle.addEventListener('click', function(){
-        if(sidebar.classList.contains('open')) closeMenu(); else openMenu();
+    function toggleMenu(){
+        if (sidebar.classList.contains('open') || (!isMobile() && !body.classList.contains('sidebar-collapsed') && sidebar.classList.contains('open') === false && !body.classList.contains('sidebar-collapsed'))) {
+            // desktop: if not collapsed, collapse; if open drawer, close
+        }
+        if (isMobile()) {
+            if (sidebar.classList.contains('open')) closeMenu(); else openMenu();
+        } else {
+            // Desktop: bascule repli / dépli
+            if (body.classList.contains('sidebar-collapsed')) {
+                body.classList.remove('sidebar-collapsed');
+                sidebar.classList.add('open');
+            } else {
+                body.classList.add('sidebar-collapsed');
+                sidebar.classList.remove('open');
+            }
+        }
+    }
+
+    if (toggle) toggle.addEventListener('click', function(e){
+        e.preventDefault();
+        if (isMobile()) {
+            if (sidebar.classList.contains('open')) closeMenu(); else openMenu();
+        } else {
+            body.classList.toggle('sidebar-collapsed');
+        }
     });
-    if(closeBtn) closeBtn.addEventListener('click', closeMenu);
-    if(overlay) overlay.addEventListener('click', closeMenu);
-    // Fermer après clic sur un lien (mobile)
+    if (closeBtn) closeBtn.addEventListener('click', function(){
+        if (isMobile()) closeMenu();
+        else body.classList.add('sidebar-collapsed');
+    });
+    if (overlay) overlay.addEventListener('click', closeMenu);
+
     sidebar.querySelectorAll('.nav-item').forEach(function(a){
         a.addEventListener('click', function(){
-            if(window.innerWidth <= 900) closeMenu();
+            if (isMobile()) closeMenu();
         });
     });
+
+    // Desktop: menu ouvert par défaut
+    if (!isMobile()) {
+        body.classList.remove('sidebar-collapsed');
+    }
 })();
 </script>
 </body>

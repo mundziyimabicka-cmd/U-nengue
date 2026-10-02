@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% block title %}Fiche de préparation{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>{{ 'Modifier' if sheet else 'Nouvelle' }} fiche de préparation</h2>
+    <a class="btn btn-secondary" href="{{ url_for('fiches_preparation') }}">← Retour</a>
+</div>
+<form method="POST" class="card" style="max-width:960px;border-top:5px solid #7c3aed">
+    <div class="form-row">
+        <div class="form-group" style="flex:2">
+            <label>Titre *</label>
+            <input type="text" name="title" class="form-control" required value="{{ sheet.title if sheet else '' }}">
+        </div>
+        <div class="form-group">
+            <label>Classe</label>
+            <select name="class_id" class="form-control">
+                {% for r in rooms %}
+                <option value="{{ r.id }}" {% if sheet and sheet.class_id==r.id %}selected{% endif %}>{{ r.name }} — {{ r.level }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+    <div class="form-row">
+        <div class="form-group">
+            <label>Matière / domaine</label>
+            <input type="text" name="subject" class="form-control" value="{{ sheet.subject if sheet else '' }}" placeholder="Français, Maths…">
+        </div>
+        <div class="form-group">
+            <label>Durée</label>
+            <input type="text" name="duration" class="form-control" value="{{ sheet.duration if sheet else '45 min' }}">
+        </div>
+        <div class="form-group">
+            <label>Enseignant(e)</label>
+            <input type="text" name="teacher" class="form-control" value="{{ sheet.teacher if sheet else session.get('full_name','') }}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label>Prérequis</label>
+        <textarea name="prerequisites" class="form-control" rows="2">{{ sheet.prerequisites if sheet else '' }}</textarea>
+    </div>
+    <div class="form-group">
+        <label>Compétence(s) travaillée(s)</label>
+        <textarea name="competences" class="form-control" rows="2">{{ sheet.competences if sheet else '' }}</textarea>
+    </div>
+    <div class="form-group">
+        <label>Objectifs généraux à atteindre</label>
+        <textarea name="general_objectives" class="form-control" rows="2">{{ sheet.general_objectives if sheet else '' }}</textarea>
+    </div>
+    <hr style="border:none;border-top:2px solid #ddd6fe;margin:1.25rem 0">
+    <h3 style="color:#6d28d9;margin:0 0 0.75rem">Phases de la séance</h3>
+    <div class="form-group">
+        <label>1. Phase de compréhension</label>
+        <textarea name="phase_comprehension" class="form-control" rows="2">{{ sheet.phase_comprehension if sheet else 'Mise en situation - Recherche - Mise en commun - Institutionnalisation' }}</textarea>
+    </div>
+    <div class="form-group">
+        <label>2. Phase d'automatisation</label>
+        <textarea name="phase_automation" class="form-control" rows="2">{{ sheet.phase_automation if sheet else 'Structuration/entraînement (exercices, jeux, rituels…) + Évaluation et Remédiation' }}</textarea>
+    </div>
+    <div class="form-group">
+        <label>3. Phase éventuelle de réinvestissement</label>
+        <textarea name="phase_reinvestment" class="form-control" rows="2">{{ sheet.phase_reinvestment if sheet else '' }}</textarea>
+    </div>
+    <hr style="border:none;border-top:2px solid #f0abfc;margin:1.25rem 0">
+    <h3 style="color:#a21caf;margin:0 0 0.75rem">Pour chaque séance</h3>
+    <div class="form-group"><label>Objectif opérationnel</label>
+        <textarea name="operational_objective" class="form-control" rows="2">{{ sheet.operational_objective if sheet else '' }}</textarea></div>
+    <div class="form-group"><label>Compétence cœur de cible</label>
+        <textarea name="core_competence" class="form-control" rows="2">{{ sheet.core_competence if sheet else '' }}</textarea></div>
+    <div class="form-group"><label>Ouverture</label>
+        <textarea name="opening" class="form-control" rows="2">{{ sheet.opening if sheet else '' }}</textarea></div>
+    <div class="form-group"><label>Étayage</label>
+        <textarea name="scaffolding" class="form-control" rows="2">{{ sheet.scaffolding if sheet else '' }}</textarea></div>
+    <div class="form-group"><label>Clôture</label>
+        <textarea name="closing" class="form-control" rows="2">{{ sheet.closing if sheet else '' }}</textarea></div>
+    <div class="form-group"><label>Obstacles</label>
+        <textarea name="obstacles" class="form-control" rows="2">{{ sheet.obstacles if sheet else '' }}</textarea></div>
+    <div class="form-group"><label>Consigne (vocabulaire adapté au niveau)</label>
+        <textarea name="instruction" class="form-control" rows="2">{{ sheet.instruction if sheet else '' }}</textarea></div>
+
+    <hr style="border:none;border-top:2px solid #c4b5fd;margin:1.25rem 0">
+    <h3 style="color:#6d28d9;margin:0 0 0.5rem">Tableau de déroulement</h3>
+    <p style="font-size:0.85rem;color:var(--text-muted)">Durée · Tâches élèves · Activité · Matériel · Rôle enseignant · Critères de réussite</p>
+    <div id="rows-box">
+        {% for r in rows %}
+        <div class="card" style="padding:0.75rem;margin-bottom:0.65rem;background:#faf5ff;border:1px solid #ddd6fe">
+            <div class="form-row">
+                <div class="form-group"><label>Durée</label>
+                    <input type="text" name="row_duration[]" class="form-control" value="{{ r.duration }}" placeholder="10 min"></div>
+                <div class="form-group"><label>Tâches élèves / modalités</label>
+                    <textarea name="row_tasks[]" class="form-control" rows="2">{{ r.tasks }}</textarea></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>Activité de l'élève</label>
+                    <textarea name="row_activity[]" class="form-control" rows="2">{{ r.activity }}</textarea></div>
+                <div class="form-group"><label>Matériel / support</label>
+                    <textarea name="row_material[]" class="form-control" rows="2">{{ r.material }}</textarea></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>Rôle enseignant / différenciation / consignes</label>
+                    <textarea name="row_teacher[]" class="form-control" rows="2">{{ r.teacher }}</textarea></div>
+                <div class="form-group"><label>Critères de réussite</label>
+                    <textarea name="row_criteria[]" class="form-control" rows="2">{{ r.criteria }}</textarea></div>
+            </div>
+            <button type="button" class="btn btn-secondary" style="font-size:0.75rem;background:#fee2e2;color:#b91c1c"
+                    onclick="this.closest('.card').remove()">Retirer la ligne</button>
+        </div>
+        {% endfor %}
+    </div>
+    <button type="button" class="btn btn-secondary" onclick="addRow()" style="margin-bottom:1rem">+ Ajouter une ligne</button>
+    <div>
+        <button type="submit" class="btn btn-primary">💾 Enregistrer et télécharger le PDF</button>
+    </div>
+</form>
+<template id="row-tpl">
+    <div class="card" style="padding:0.75rem;margin-bottom:0.65rem;background:#faf5ff;border:1px solid #ddd6fe">
+        <div class="form-row">
+            <div class="form-group"><label>Durée</label><input type="text" name="row_duration[]" class="form-control"></div>
+            <div class="form-group"><label>Tâches élèves / modalités</label><textarea name="row_tasks[]" class="form-control" rows="2"></textarea></div>
+        </div>
+        <div class="form-row">
+            <div class="form-group"><label>Activité de l'élève</label><textarea name="row_activity[]" class="form-control" rows="2"></textarea></div>
+            <div class="form-group"><label>Matériel / support</label><textarea name="row_material[]" class="form-control" rows="2"></textarea></div>
+        </div>
+        <div class="form-row">
+            <div class="form-group"><label>Rôle enseignant / différenciation / consignes</label><textarea name="row_teacher[]" class="form-control" rows="2"></textarea></div>
+            <div class="form-group"><label>Critères de réussite</label><textarea name="row_criteria[]" class="form-control" rows="2"></textarea></div>
+        </div>
+        <button type="button" class="btn btn-secondary" style="font-size:0.75rem;background:#fee2e2;color:#b91c1c"
+                onclick="this.closest('.card').remove()">Retirer la ligne</button>
+    </div>
+</template>
+<script>
+function addRow(){ document.getElementById('rows-box').appendChild(document.getElementById('row-tpl').content.cloneNode(true)); }
+</script>
+{% endblock %}
