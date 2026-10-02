@@ -22,9 +22,13 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'u-nengue-changez-moi-en-production-2026')
 _BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 _DB_PATH = os.path.join(_BASE_DIR, 'kyaf_edu.db')
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///' + _DB_PATH)
-if app.config['SQLALCHEMY_DATABASE_URI'].startswith('postgres://'):
-    app.config['SQLALCHEMY_DATABASE_URI'] = app.config['SQLALCHEMY_DATABASE_URI'].replace('postgres://', 'postgresql://', 1)
+_db_uri = os.environ.get('DATABASE_URL', '').strip()
+if _db_uri.startswith('postgres://'):
+    _db_uri = 'postgresql://' + _db_uri[len('postgres://'):]
+# Forcer le driver psycopg2 (paquet psycopg2-binary)
+if _db_uri.startswith('postgresql://') and '+psycopg' not in _db_uri:
+    _db_uri = _db_uri.replace('postgresql://', 'postgresql+psycopg2://', 1)
+app.config['SQLALCHEMY_DATABASE_URI'] = _db_uri or ('sqlite:///' + _DB_PATH)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(__file__), 'static', 'uploads')
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16 MB
