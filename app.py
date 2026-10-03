@@ -3804,7 +3804,51 @@ def _load_dictionary():
         ('bonjour', 'hello'), ('merci', 'thank you'),
     ]
 
+
 DICTIONARY_WORDS = _load_dictionary()
+
+def _load_ipunu_dict():
+    import json
+    p = os.path.join(_BASE_DIR, 'data', 'dictionnaire_ipunu.json')
+    try:
+        with open(p, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except Exception:
+        return []
+
+def _load_ipunu_lecons():
+    import json
+    p = os.path.join(_BASE_DIR, 'data', 'lecons_ipunu.json')
+    try:
+        with open(p, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except Exception:
+        return []
+
+IPUNU_DICT = _load_ipunu_dict()
+IPUNU_LECONS = _load_ipunu_lecons()
+
+def _load_hebreu_dict():
+    import json
+    p = os.path.join(_BASE_DIR, 'data', 'dictionnaire_hebreu.json')
+    try:
+        with open(p, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except Exception:
+        return []
+
+def _load_hebreu_lecons():
+    import json
+    p = os.path.join(_BASE_DIR, 'data', 'lecons_hebreu.json')
+    try:
+        with open(p, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except Exception:
+        return []
+
+HEBREU_DICT = _load_hebreu_dict()
+HEBREU_LECONS = _load_hebreu_lecons()
+
 
 
 # Programmes officiels structurés (Cycle 1-3 / mapping Gabon PS→5ème)
@@ -3898,567 +3942,7 @@ PROGRAMME_PDFS = {
     ],
 }
 
-# Contenu structuré (objectifs / compétences / activités) pour livrets, guides, exemples
-# → même usage que PROGRAMMES_OFFICIELS (tableaux + import fiche + préparer séance)
-DOCUMENTS_STRUCTURES = {
-    'PS': {
-        'label': 'Petite section',
-        'cycle': 'Cycle 1 — Maternelle',
-        'matieres': {
-            'Langage oral et écrit (livret avant 4 ans)': {
-                'objectifs': [
-                    'Développer la motricité générale et fine pour le geste d\'écriture',
-                    'Développer la coordination œil-main',
-                    'Produire librement pour tendre vers un contrôle des mouvements',
-                    'Explorer et verbaliser différents tracés (traits, points, boucles, cercles)',
-                    'Adopter une posture adaptée et se repérer sur un support',
-                ],
-                'competences': [
-                    'Comprendre et utiliser le langage oral en situation',
-                    'Découvrir les premiers tracés graphiques',
-                    'Participer aux rituels langagiers de la classe',
-                ],
-                'activites': [
-                    'Jeux de motricité fine (pâte, perles, pinces)',
-                    'Tracés libres sur grands supports (sol, tableau, sable)',
-                    'Comptines et jeux de doigts liés au langage',
-                    'Verbalisation des gestes lors des tracés',
-                ],
-                'pdf': 'livret-langage-avant4ans.pdf',
-                'type_doc': 'livret',
-            },
-            'Premiers outils mathématiques (cycle 1)': {
-                'objectifs': [
-                    'Découvrir les quantités et les premiers nombres',
-                    'Comparer, classer, ranger des objets',
-                    'Se repérer dans l\'espace et le temps de la classe',
-                ],
-                'competences': [
-                    'Dénombrer une petite collection',
-                    'Utiliser le vocabulaire spatial (dessus, dessous, à côté)',
-                ],
-                'activites': [
-                    'Jeux de tri et de classement',
-                    'Comptines numériques',
-                    'Manipulation d\'objets et boîtes à nombres',
-                ],
-                'pdf': 'cycle1-maths.pdf',
-                'type_doc': 'programme',
-            },
-        },
-    },
-    'MS': {
-        'label': 'Moyenne section',
-        'cycle': 'Cycle 1 — Maternelle',
-        'matieres': {
-            'Langage oral et écrit (livret à partir de 4 ans)': {
-                'objectifs': [
-                    'Maîtriser la pression du crayon et la fluidité du tracé',
-                    'S\'exercer à la motricité fine et au graphisme',
-                    'Prendre des repères gauche → droite sur le support',
-                    'S\'initier aux lettres capitales et à l\'écriture cursive',
-                ],
-                'competences': [
-                    'Produire des tracés contrôlés',
-                    'Nommer et reconnaître des lettres',
-                    'Participer à des échanges langagiers structurés',
-                ],
-                'activites': [
-                    'Ateliers graphisme (boucles, ponts, vagues)',
-                    'Dictée de tracés et de lettres',
-                    'Jeux de reconnaissance de lettres en capitales',
-                    'Comptines et récits à reconstituer',
-                ],
-                'pdf': 'livret-langage-avant4ans.pdf',
-                'type_doc': 'livret',
-            },
-            'Mathématiques — à partir de 4 ans (livret)': {
-                'objectifs': [
-                    'Construire la bande numérique jusqu\'à 10',
-                    'Associer quantité, doigts, constellations et écriture chiffrée',
-                    'Itérer l\'unité (n → n+1) avec matériel',
-                ],
-                'competences': [
-                    'Dénombrer jusqu\'à 10',
-                    'Comparer deux collections',
-                    'Utiliser la bande numérique comme référent',
-                ],
-                'activites': [
-                    'Boîtes à trésors et sachets d\'objets',
-                    'Construction d\'escaliers de cubes',
-                    'Jeux de réussite sur bande numérique',
-                    'Comptine « Les cubes » mise en scène',
-                ],
-                'pdf': 'livret-maths-apartir4ans.pdf',
-                'type_doc': 'livret',
-            },
-        },
-    },
-    'GS': {
-        'label': 'Grande section',
-        'cycle': 'Cycle 1 — Maternelle',
-        'matieres': {
-            'Langage oral et écrit (livret à partir de 5 ans)': {
-                'objectifs': [
-                    'Tracer des lettres en écriture cursive et les lier',
-                    'Affiner l\'écriture et automatiser le geste',
-                    'Adapter le geste à des formats et espaces variés',
-                    'Tenir correctement son stylo',
-                ],
-                'competences': [
-                    'Écrire son prénom en cursive',
-                    'Lire des mots simples et des phrases courtes',
-                    'Produire un message écrit guidé',
-                ],
-                'activites': [
-                    'Entraînement quotidien à l\'écriture cursive',
-                    'Copie de mots et petites phrases',
-                    'Ateliers phonologie et conscience syllabique',
-                    'Dictées de lettres et de mots',
-                ],
-                'pdf': 'livret-langage-apartir5ans.pdf',
-                'type_doc': 'livret',
-            },
-            'Mathématiques — à partir de 5 ans (livret)': {
-                'objectifs': [
-                    'Prolonger la bande numérique au-delà de 10',
-                    'Comprendre les familles de nombres (10, 20…)',
-                    'Préparer la liaison avec le CP',
-                ],
-                'competences': [
-                    'Dénombrer et représenter des quantités > 10',
-                    'Utiliser les écritures chiffrées jusqu\'à 30',
-                    'Résoudre de petits problèmes de réunification',
-                ],
-                'activites': [
-                    'Prolongement de la bande numérique personnelle',
-                    'Jeux de position sur bande lacunaire',
-                    'Problèmes en situation avec matériel',
-                ],
-                'pdf': 'livret-maths-apartir5ans.pdf',
-                'type_doc': 'livret',
-            },
-        },
-    },
-    '1ère année': {
-        'label': '1ère année (CP)',
-        'cycle': 'Cycle 2',
-        'matieres': {
-            'Français — Livret d\'accompagnement CP': {
-                'objectifs': [
-                    'Entrer dans le code alphabétique',
-                    'Lire des mots et de courtes phrases',
-                    'Écrire sous la dictée des syllabes et des mots',
-                    'Comprendre un texte entendu et un texte lu',
-                ],
-                'competences': [
-                    'Décoder des mots réguliers',
-                    'Identifier les sons et les graphèmes étudiés',
-                    'Produire un écrit simple (légende, message)',
-                ],
-                'activites': [
-                    'Séances quotidiennes de lecture-écriture',
-                    'Manipulation de lettres mobiles',
-                    'Dictées de syllabes et de mots',
-                    'Compréhension orale et lecture guidée',
-                ],
-                'pdf': 'livret-francais-cp.pdf',
-                'type_doc': 'livret',
-            },
-            'Français — Guide lecture et écriture CP': {
-                'objectifs': [
-                    'Enseigner explicitement le code grapho-phonologique',
-                    'Automatiser la reconnaissance des mots',
-                    'Développer la fluidité et la compréhension',
-                ],
-                'competences': [
-                    'Lire à voix haute avec exactitude',
-                    'Comprendre des textes adaptés au niveau',
-                    'Écrire en respectant les correspondances étudiées',
-                ],
-                'activites': [
-                    'Entraînement à la combinatoire',
-                    'Lecture répétée et fluence',
-                    'Production d\'écrits courts guidés',
-                ],
-                'pdf': 'guide-lecture-ecriture-cp.pdf',
-                'type_doc': 'guide',
-            },
-            'Mathématiques — Guide nombres, calcul, problèmes CP': {
-                'objectifs': [
-                    'Construire le nombre jusqu\'à 100',
-                    'Maîtriser les faits numériques additifs',
-                    'Résoudre des problèmes additifs et soustractifs',
-                ],
-                'competences': [
-                    'Dénombrer, comparer, ordonner',
-                    'Calculer mentalement des sommes et différences simples',
-                    'Modéliser un problème simple',
-                ],
-                'activites': [
-                    'Calcul mental quotidien',
-                    'Manipulation et représentation des nombres',
-                    'Résolution de problèmes en situation',
-                ],
-                'pdf': 'guide-maths-nombres-cp.pdf',
-                'type_doc': 'guide',
-            },
-            'Mathématiques — Calcul mental CP–CM2': {
-                'objectifs': [
-                    'Automatiser les résultats additifs',
-                    'Développer des procédures de calcul mental',
-                    'Ancrer une pratique quotidienne du calcul mental',
-                ],
-                'competences': [
-                    'Connaître les compléments à 10',
-                    'Ajouter ou retirer 1, 2, 5, 10',
-                    'Expliquer une procédure de calcul',
-                ],
-                'activites': [
-                    'Rituels de calcul mental (5–10 min)',
-                    'Jeux de dés, cartes et tableaux',
-                    'Défis chronométrés progressifs',
-                ],
-                'pdf': 'guide-calcul-mental-cp-cm2.pdf',
-                'type_doc': 'guide',
-            },
-            'EMC — Livret CP': {
-                'objectifs': [
-                    'Respecter les règles de vie de la classe',
-                    'Identifier émotions et sentiments',
-                    'S\'engager dans des projets collectifs simples',
-                ],
-                'competences': [
-                    'Participer au débat réglé',
-                    'Reconnaître les droits et devoirs de l\'élève',
-                ],
-                'activites': [
-                    'Conseil d\'élèves',
-                    'Jeux de rôle sur les émotions',
-                    'Projets de coopération',
-                ],
-                'pdf': 'livret-emc-cp.pdf',
-                'type_doc': 'livret',
-            },
-            'Grammaire — Guide CP à 6e': {
-                'objectifs': [
-                    'Identifier la phrase et ses constituants',
-                    'Reconnaître nom, verbe, déterminant',
-                    'Utiliser une terminologie grammaticale progressive',
-                ],
-                'competences': [
-                    'Analyser une phrase simple',
-                    'Accorder le nom et le déterminant',
-                ],
-                'activites': [
-                    'Manipulation de groupes dans la phrase',
-                    'Coloriage grammatical',
-                    'Dictées préparées',
-                ],
-                'pdf': 'guide-grammaire-cp-6e.pdf',
-                'type_doc': 'guide',
-            },
-        },
-    },
-    '2ème année': {
-        'label': '2ème année (CE1)',
-        'cycle': 'Cycle 2',
-        'matieres': {
-            'Français — Livret d\'accompagnement CE1': {
-                'objectifs': [
-                    'Consolider le décodage et la fluence',
-                    'Comprendre des textes plus longs',
-                    'Produire des écrits structurés (récit, message)',
-                ],
-                'competences': [
-                    'Lire à voix haute avec aisance',
-                    'Repérer les informations dans un texte',
-                    'Rédiger quelques phrases cohérentes',
-                ],
-                'activites': [
-                    'Lecture quotidienne et compréhension',
-                    'Production d\'écrits guidés',
-                    'Étude de la langue (grammaire, orthographe)',
-                ],
-                'pdf': 'livret-francais-ce1.pdf',
-                'type_doc': 'livret',
-            },
-            'Mathématiques — Livret CE1': {
-                'objectifs': [
-                    'Maîtriser les nombres jusqu\'à 1000',
-                    'Mémoriser les tables d\'addition et amorcer la multiplication',
-                    'Résoudre des problèmes à une ou deux étapes',
-                ],
-                'competences': [
-                    'Calculer mentalement et en ligne',
-                    'Utiliser les unités de mesure usuelles',
-                    'Représenter un problème',
-                ],
-                'activites': [
-                    'Rituels de calcul mental',
-                    'Ateliers problèmes',
-                    'Mesures et géométrie plane',
-                ],
-                'pdf': 'livret-maths-ce1.pdf',
-                'type_doc': 'livret',
-            },
-            'Mathématiques — Calcul mental CP–CM2': {
-                'objectifs': [
-                    'Automatiser les tables d\'addition',
-                    'Mettre en place les premières tables de multiplication',
-                    'Varier les procédures de calcul mental',
-                ],
-                'competences': [
-                    'Connaître les doubles et moitiés',
-                    'Multiplier par 2, 5, 10',
-                ],
-                'activites': [
-                    'Flash cards et jeux de tables',
-                    'Défis calcul mental en classe',
-                ],
-                'pdf': 'guide-calcul-mental-cp-cm2.pdf',
-                'type_doc': 'guide',
-            },
-            'Grammaire — Guide et terminologie': {
-                'objectifs': [
-                    'Identifier sujet et verbe',
-                    'Accorder le verbe avec le sujet',
-                    'Utiliser la terminologie grammaticale du guide',
-                ],
-                'competences': [
-                    'Analyser une phrase simple',
-                    'Corriger des accords nom-adjectif',
-                ],
-                'activites': [
-                    'Exercices d\'analyse',
-                    'Dictées négociées',
-                    'Manipulation d\'étiquettes grammaticales',
-                ],
-                'pdf': 'guide-grammaire-terminologie.pdf',
-                'type_doc': 'guide',
-            },
-        },
-    },
-    '3ème année': {
-        'label': '3ème année (CE2)',
-        'cycle': 'Cycle 2',
-        'matieres': {
-            'Mathématiques — Livret CE2': {
-                'objectifs': [
-                    'Consolider la numération et le calcul',
-                    'Aborder les fractions simples et les nombres décimaux',
-                    'Résoudre des problèmes plus complexes',
-                ],
-                'competences': [
-                    'Maîtriser les quatre opérations en situations simples',
-                    'Utiliser les unités de longueur, masse, contenance',
-                ],
-                'activites': [
-                    'Calcul mental et posé',
-                    'Problèmes multi-étapes',
-                    'Géométrie et mesures',
-                ],
-                'pdf': 'livret-maths-ce2.pdf',
-                'type_doc': 'livret',
-            },
-            'Français — Programme et grammaire cycle 2': {
-                'objectifs': [
-                    'Lire et comprendre des textes variés',
-                    'Produire des écrits organisés',
-                    'Maîtriser les bases de la grammaire et de l\'orthographe',
-                ],
-                'competences': [
-                    'Identifier les classes de mots principales',
-                    'Conjuguer les verbes courants aux temps étudiés',
-                ],
-                'activites': [
-                    'Lecture documentaire et littéraire',
-                    'Production d\'écrits (récit, compte rendu)',
-                    'Étude de la langue quotidienne',
-                ],
-                'pdf': 'cycle2-francais.pdf',
-                'type_doc': 'programme',
-            },
-            'Mathématiques — Calcul mental CP–CM2': {
-                'objectifs': [
-                    'Automatiser les tables de multiplication',
-                    'Développer des stratégies de calcul réfléchi',
-                ],
-                'competences': [
-                    'Connaître les tables jusqu\'à 10',
-                    'Estimer un ordre de grandeur',
-                ],
-                'activites': [
-                    'Rituels de tables',
-                    'Jeux de calcul rapide',
-                ],
-                'pdf': 'guide-calcul-mental-cp-cm2.pdf',
-                'type_doc': 'guide',
-            },
-        },
-    },
-    '4ème année': {
-        'label': '4ème année (CM1)',
-        'cycle': 'Cycle 3',
-        'matieres': {
-            'Français — Exemples de mise en œuvre CM1': {
-                'objectifs': [
-                    'Lire et interpréter des textes littéraires et documentaires',
-                    'Produire des écrits élaborés (récit, argumentation simple)',
-                    'Enrichir le vocabulaire et la syntaxe',
-                ],
-                'competences': [
-                    'Justifier une interprétation à l\'aide du texte',
-                    'Organiser un texte en paragraphes',
-                    'Utiliser la ponctuation et les accords',
-                ],
-                'activites': [
-                    'Étude d\'œuvres littéraires proposées',
-                    'Prolongements artistiques et culturels',
-                    'Production d\'écrits guidés et autonomes',
-                ],
-                'pdf': 'exemples-francais-cm1.pdf',
-                'type_doc': 'exemples',
-            },
-            'Mathématiques — Exemples de réussite CM1': {
-                'objectifs': [
-                    'Maîtriser les nombres entiers et décimaux',
-                    'Utiliser fractions et proportionnalité simple',
-                    'Résoudre des problèmes riches',
-                ],
-                'competences': [
-                    'Calculer avec les quatre opérations',
-                    'Interpréter des données (tableaux, graphiques)',
-                ],
-                'activites': [
-                    'Situations-problèmes inspirées des exemples officiels',
-                    'Ateliers de calcul mental et posé',
-                    'Géométrie et mesures',
-                ],
-                'pdf': 'exemples-maths-cm1.pdf',
-                'type_doc': 'exemples',
-            },
-            'Grammaire — Guide CP à 6e': {
-                'objectifs': [
-                    'Analyser la phrase complexe',
-                    'Maîtriser accords et conjugaisons du cycle 3',
-                ],
-                'competences': [
-                    'Identifier nature et fonction',
-                    'Conjuguer aux temps du programme',
-                ],
-                'activites': [
-                    'Analyse grammaticale progressive',
-                    'Dictées et réécriture',
-                ],
-                'pdf': 'guide-grammaire-cp-6e.pdf',
-                'type_doc': 'guide',
-            },
-        },
-    },
-    '5ème année': {
-        'label': '5ème année (CM2)',
-        'cycle': 'Cycle 3',
-        'matieres': {
-            'Français — Exemples de mise en œuvre CM2': {
-                'objectifs': [
-                    'Préparer l\'entrée au collège en lecture et écriture',
-                    'Lire des œuvres complètes et en rendre compte',
-                    'Argumenter et justifier à l\'écrit et à l\'oral',
-                ],
-                'competences': [
-                    'Comprendre un texte long',
-                    'Rédiger un texte organisé et corrigé',
-                    'Utiliser un vocabulaire précis',
-                ],
-                'activites': [
-                    'Projets de lecture d\'œuvres',
-                    'Prolongements artistiques et culturels',
-                    'Écrits de restitution et d\'opinion',
-                ],
-                'pdf': 'exemples-francais-cm2.pdf',
-                'type_doc': 'exemples',
-            },
-            'Mathématiques — Exemples de réussite CM2': {
-                'objectifs': [
-                    'Consolider nombres, calcul et proportionnalité',
-                    'Résoudre des problèmes complexes multi-étapes',
-                    'Préparer le collège (fractions, décimaux, géométrie)',
-                ],
-                'competences': [
-                    'Maîtriser les techniques opératoires',
-                    'Utiliser grandeurs et mesures',
-                    'Argumenter une démarche de résolution',
-                ],
-                'activites': [
-                    'Problèmes issus des exemples officiels',
-                    'Calcul mental avancé',
-                    'Géométrie construite et raisonnée',
-                ],
-                'pdf': 'exemples-maths-cm2.pdf',
-                'type_doc': 'exemples',
-            },
-            'Mathématiques — Calcul mental CP–CM2': {
-                'objectifs': [
-                    'Automatiser les procédures utiles au collège',
-                    'Estimer et contrôler un résultat',
-                ],
-                'competences': [
-                    'Calculer mentalement avec décimaux simples',
-                    'Choisir une procédure adaptée',
-                ],
-                'activites': [
-                    'Rituels de calcul mental',
-                    'Défis et jeux de rapidité',
-                ],
-                'pdf': 'guide-calcul-mental-cp-cm2.pdf',
-                'type_doc': 'guide',
-            },
-            'Grammaire — Terminologie et guide': {
-                'objectifs': [
-                    'Utiliser la terminologie grammaticale du collège',
-                    'Analyser des phrases complexes',
-                ],
-                'competences': [
-                    'Identifier propositions et connecteurs',
-                    'Maîtriser les accords complexes',
-                ],
-                'activites': [
-                    'Analyse de textes',
-                    'Exercices de réécriture',
-                ],
-                'pdf': 'guide-grammaire-terminologie.pdf',
-                'type_doc': 'guide',
-            },
-        },
-    },
-}
 
-def _merge_docs_into_programmes():
-    """Fusionne DOCUMENTS_STRUCTURES dans PROGRAMMES_OFFICIELS (sans écraser)."""
-    for niv, data in DOCUMENTS_STRUCTURES.items():
-        if niv not in PROGRAMMES_OFFICIELS:
-            PROGRAMMES_OFFICIELS[niv] = {
-                'label': data.get('label', niv),
-                'cycle': data.get('cycle', ''),
-                'matieres': {},
-            }
-        base = PROGRAMMES_OFFICIELS[niv].setdefault('matieres', {})
-        for mat, cont in data.get('matieres', {}).items():
-            if mat not in base:
-                base[mat] = cont
-            else:
-                # enrichir listes existantes
-                for key in ('objectifs', 'competences', 'activites'):
-                    existing = base[mat].setdefault(key, [])
-                    for item in cont.get(key, []):
-                        if item not in existing:
-                            existing.append(item)
-                for key in ('pdf', 'type_doc'):
-                    if key in cont and key not in base[mat]:
-                        base[mat][key] = cont[key]
-
-_merge_docs_into_programmes()
 
 
 PROGRAMMES_OFFICIELS = {
@@ -4962,6 +4446,9 @@ PROGRAMMES_OFFICIELS = {
     },
 }
 
+# Fusion livrets/guides dans les programmes (après définition)
+
+
 # Alias rétrocompatibilité
 MATH_PROGRAMS = {
     niv: {
@@ -5161,7 +4648,7 @@ def programme_pdf(filename):
     if not os.path.isfile(path):
         flash('Document introuvable.', 'danger')
         return redirect(url_for('programmes'))
-    return send_from_directory(folder, safe, as_attachment=False)
+    return send_from_directory(folder, safe, as_attachment=False, mimetype='application/pdf')
 
 
 @app.route('/programmes')
@@ -5394,6 +4881,138 @@ def comptines_recharger():
     flash(f'{n} titre(s) programme ajouté(s) à la banque.', 'success')
     return redirect(url_for('comptines'))
 
+
+
+@app.route('/langues')
+@login_required
+def langues():
+    """Hub langues étrangères / locales."""
+    return render_template(
+        'langues.html',
+        n_ipunu=len(IPUNU_DICT),
+        n_hebreu=len(HEBREU_DICT),
+        n_lecons_ipunu=len(IPUNU_LECONS),
+        n_lecons_hebreu=len(HEBREU_LECONS),
+        has_ipunu_pdf=os.path.isfile(os.path.join(app.root_path, 'static', 'programmes', 'langue-ipunu.pdf')),
+        has_hebreu_pdf=os.path.isfile(os.path.join(app.root_path, 'static', 'programmes', 'langue-hebreu.pdf')),
+    )
+
+@app.route('/ipunu')
+@login_required
+def ipunu():
+    """Accueil apprentissage langue ipunu (Punu — Gabon)."""
+    return render_template(
+        'ipunu.html',
+        n_mots=len(IPUNU_DICT),
+        n_lecons=len(IPUNU_LECONS),
+        has_pdf=os.path.isfile(os.path.join(app.root_path, 'static', 'programmes', 'langue-ipunu.pdf')),
+    )
+
+@app.route('/ipunu/dictionnaire')
+@login_required
+def ipunu_dictionnaire():
+    q = (request.args.get('q') or '').strip().lower()
+    cat = (request.args.get('cat') or '').strip()
+    items = IPUNU_DICT
+    cats = sorted({x.get('cat', '') for x in items if x.get('cat')})
+    if cat:
+        items = [x for x in items if x.get('cat') == cat]
+    if q:
+        items = [x for x in items if q in (x.get('fr') or '').lower() or q in (x.get('ipunu') or '').lower()]
+    page = request.args.get('page', 1, type=int) or 1
+    per = 40
+    total_r = len(items)
+    pages = max(1, (total_r + per - 1) // per)
+    page = max(1, min(page, pages))
+    chunk = items[(page-1)*per:page*per]
+    return render_template(
+        'ipunu_dictionnaire.html', items=chunk, q=q, cat=cat, cats=cats,
+        total=len(IPUNU_DICT), total_r=total_r, page=page, pages=pages,
+    )
+
+@app.route('/ipunu/lecons')
+@login_required
+def ipunu_lecons():
+    return render_template('ipunu_lecons.html', lecons=IPUNU_LECONS)
+
+@app.route('/ipunu/lecons/<int:lid>')
+@login_required
+def ipunu_lecon_detail(lid):
+    lecon = next((l for l in IPUNU_LECONS if l.get('id') == lid), None)
+    if not lecon:
+        flash('Leçon introuvable.', 'danger')
+        return redirect(url_for('ipunu_lecons'))
+    return render_template('ipunu_lecon_detail.html', lecon=lecon, lecons=IPUNU_LECONS)
+
+@app.route('/ipunu/pdf')
+@login_required
+def ipunu_pdf():
+    folder = os.path.join(app.root_path, 'static', 'programmes')
+    fname = 'langue-ipunu.pdf'
+    path = os.path.join(folder, fname)
+    if not os.path.isfile(path):
+        flash('Le PDF ipunu n\'est pas encore déposé. Envoyez le fichier à intégrer (nom : langue-ipunu.pdf).', 'warning')
+        return redirect(url_for('ipunu'))
+    return send_from_directory(folder, fname, as_attachment=False, mimetype='application/pdf')
+
+
+@app.route('/hebreu')
+@login_required
+def hebreu():
+    return render_template(
+        'hebreu.html',
+        n_mots=len(HEBREU_DICT),
+        n_lecons=len(HEBREU_LECONS),
+        has_pdf=os.path.isfile(os.path.join(app.root_path, 'static', 'programmes', 'langue-hebreu.pdf')),
+    )
+
+@app.route('/hebreu/dictionnaire')
+@login_required
+def hebreu_dictionnaire():
+    q = (request.args.get('q') or '').strip().lower()
+    cat = (request.args.get('cat') or '').strip()
+    items = HEBREU_DICT
+    cats = sorted({x.get('cat', '') for x in items if x.get('cat')})
+    if cat:
+        items = [x for x in items if x.get('cat') == cat]
+    if q:
+        items = [x for x in items if q in (x.get('fr') or '').lower()
+                 or q in (x.get('he') or '').lower()
+                 or q in (x.get('he_script') or '')]
+    page = request.args.get('page', 1, type=int) or 1
+    per = 40
+    total_r = len(items)
+    pages = max(1, (total_r + per - 1) // per)
+    page = max(1, min(page, pages))
+    chunk = items[(page-1)*per:page*per]
+    return render_template(
+        'hebreu_dictionnaire.html', items=chunk, q=q, cat=cat, cats=cats,
+        total=len(HEBREU_DICT), total_r=total_r, page=page, pages=pages,
+    )
+
+@app.route('/hebreu/lecons')
+@login_required
+def hebreu_lecons():
+    return render_template('hebreu_lecons.html', lecons=HEBREU_LECONS)
+
+@app.route('/hebreu/lecons/<int:lid>')
+@login_required
+def hebreu_lecon_detail(lid):
+    lecon = next((l for l in HEBREU_LECONS if l.get('id') == lid), None)
+    if not lecon:
+        flash('Leçon introuvable.', 'danger')
+        return redirect(url_for('hebreu_lecons'))
+    return render_template('hebreu_lecon_detail.html', lecon=lecon, lecons=HEBREU_LECONS)
+
+@app.route('/hebreu/pdf')
+@login_required
+def hebreu_pdf():
+    folder = os.path.join(app.root_path, 'static', 'programmes')
+    fname = 'langue-hebreu.pdf'
+    if not os.path.isfile(os.path.join(folder, fname)):
+        flash('PDF hébreu introuvable.', 'warning')
+        return redirect(url_for('hebreu'))
+    return send_from_directory(folder, fname, as_attachment=False, mimetype='application/pdf')
 
 @app.route('/calendrier-scolaire')
 @login_required
