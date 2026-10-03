@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Dictionnaire ipunu{% endblock %}
+{% block content %}
+<div class="page-header" style="display:flex;flex-wrap:wrap;gap:0.75rem;justify-content:space-between;align-items:center">
+    <div>
+        <h2 style="margin:0">📖 Dictionnaire français ↔ ipunu</h2>
+        <p class="subtitle" style="margin:0.25rem 0 0">{{ total }} mots · filtre par catégorie</p>
+    </div>
+    <a class="btn btn-secondary" href="{{ url_for('ipunu') }}">← Ipunu</a>
+</div>
+
+<div class="card" style="margin-bottom:1rem;border-top:5px solid #059669">
+    <form method="GET" style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:end">
+        <div class="form-group" style="margin:0;flex:1;min-width:180px">
+            <label>Recherche</label>
+            <input type="text" name="q" class="form-control" value="{{ q }}" placeholder="français ou ipunu…">
+        </div>
+        <div class="form-group" style="margin:0;min-width:160px">
+            <label>Catégorie</label>
+            <select name="cat" class="form-control" onchange="this.form.submit()">
+                <option value="">Toutes</option>
+                {% for c in cats %}
+                <option value="{{ c }}" {% if cat==c %}selected{% endif %}>{{ c }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Chercher</button>
+    </form>
+    <p style="margin:0.75rem 0 0;font-size:0.85rem;color:#6b7280">{{ total_r }} résultat(s){% if pages>1 %} · page {{ page }}/{{ pages }}{% endif %}</p>
+</div>
+
+<div class="card">
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>Français</th><th>Ipunu</th><th>Catégorie</th></tr></thead>
+            <tbody>
+            {% for x in items %}
+                <tr>
+                    <td><strong style="color:#047857">{{ x.fr }}</strong></td>
+                    <td style="color:#0f766e;font-size:1.05rem">{{ x.ipunu }}</td>
+                    <td><span class="badge badge-info">{{ x.cat }}</span></td>
+                </tr>
+            {% else %}
+                <tr><td colspan="3" style="text-align:center;padding:1.5rem">Aucun mot trouvé</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% if pages > 1 %}
+    <div style="display:flex;gap:0.5rem;justify-content:center;margin-top:1rem">
+        {% if page > 1 %}<a class="btn btn-secondary btn-sm" href="{{ url_for('ipunu_dictionnaire', q=q, cat=cat, page=page-1) }}">←</a>{% endif %}
+        <span style="padding:0.4rem">{{ page }} / {{ pages }}</span>
+        {% if page < pages %}<a class="btn btn-secondary btn-sm" href="{{ url_for('ipunu_dictionnaire', q=q, cat=cat, page=page+1) }}">→</a>{% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

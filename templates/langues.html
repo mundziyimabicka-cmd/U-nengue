@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Langues — U nengue{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2 style="margin:0">🌍 Langues</h2>
+    <p class="subtitle">Ipunu (Yipunu) · Hébreu — dictionnaires, leçons et PDF</p>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.25rem">
+    <div class="card" style="border-top:6px solid #059669">
+        <h3 style="margin:0 0 0.5rem;color:#047857">🗣️ Ipunu (Yipunu)</h3>
+        <p style="font-size:0.9rem;color:#6b7280;margin:0 0 1rem">Langue et culture des Punu du Gabon-Congo</p>
+        <ul style="margin:0 0 1rem;padding-left:1.2rem;line-height:1.6">
+            <li>{{ n_ipunu }} mots dans le dictionnaire</li>
+            <li>{{ n_lecons_i }} leçons</li>
+            <li>PDF : {% if pdf_ipunu %}<strong style="color:#047857">disponible</strong>{% else %}à venir{% endif %}</li>
+        </ul>
+        <div style="display:flex;flex-wrap:wrap;gap:0.4rem">
+            <a class="btn btn-primary" href="{{ url_for('ipunu') }}">Ouvrir</a>
+            <a class="btn btn-secondary" href="{{ url_for('ipunu_dictionnaire') }}">Dictionnaire</a>
+            <a class="btn btn-secondary" href="{{ url_for('ipunu_lecons') }}">Leçons</a>
+            {% if pdf_ipunu %}<a class="btn btn-secondary" href="{{ url_for('ipunu_pdf') }}" target="_blank">📕 PDF</a>{% endif %}
+        </div>
+    </div>
+
+    <div class="card" style="border-top:6px solid #2563eb">
+        <h3 style="margin:0 0 0.5rem;color:#1d4ed8">✡️ Hébreu</h3>
+        <p style="font-size:0.9rem;color:#6b7280;margin:0 0 1rem">Découverte de l'hébreu — salutations, école, nombres</p>
+        <ul style="margin:0 0 1rem;padding-left:1.2rem;line-height:1.6">
+            <li>{{ n_hebreu }} mots dans le dictionnaire</li>
+            <li>{{ n_lecons_h }} leçons</li>
+            <li>PDF : {% if pdf_hebreu %}<strong style="color:#1d4ed8">disponible</strong>{% else %}à venir{% endif %}</li>
+        </ul>
+        <div style="display:flex;flex-wrap:wrap;gap:0.4rem">
+            <a class="btn btn-primary" href="{{ url_for('hebreu') }}">Ouvrir</a>
+            <a class="btn btn-secondary" href="{{ url_for('hebreu_dictionnaire') }}">Dictionnaire</a>
+            <a class="btn btn-secondary" href="{{ url_for('hebreu_lecons') }}">Leçons</a>
+            {% if pdf_hebreu %}<a class="btn btn-secondary" href="{{ url_for('hebreu_pdf') }}" target="_blank">📕 PDF</a>{% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

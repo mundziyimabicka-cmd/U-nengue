@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Hébreu — U nengue{% endblock %}
+{% block content %}
+<div class="page-header" style="display:flex;flex-wrap:wrap;gap:0.75rem;justify-content:space-between;align-items:center">
+    <div>
+        <h2 style="margin:0">✡️ Hébreu</h2>
+        <p class="subtitle">Dictionnaire, leçons et document PDF</p>
+    </div>
+    <a class="btn btn-secondary" href="{{ url_for('langues') }}">← Langues</a>
+</div>
+
+<div class="card" style="margin-bottom:1.25rem;background:linear-gradient(135deg,#eff6ff,#e0e7ff);border-top:5px solid #2563eb">
+    <p style="margin:0;line-height:1.55;color:#1e3a8a">
+        Section découverte de l’hébreu pour la classe : vocabulaire utile, leçons progressives
+        et le livre <strong>Parlons hébreu</strong> (PDF).
+    </p>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem">
+    <a href="{{ url_for('hebreu_dictionnaire') }}" class="card" style="text-decoration:none;border-top:5px solid #2563eb;text-align:center;padding:1.35rem">
+        <div style="font-size:2rem">📖</div>
+        <h3 style="margin:0.4rem 0;color:#1d4ed8">Dictionnaire</h3>
+        <p style="margin:0;color:#6b7280;font-size:0.9rem">{{ n_mots }} mots FR ↔ hébreu</p>
+    </a>
+    <a href="{{ url_for('hebreu_lecons') }}" class="card" style="text-decoration:none;border-top:5px solid #4f46e5;text-align:center;padding:1.35rem">
+        <div style="font-size:2rem">📚</div>
+        <h3 style="margin:0.4rem 0;color:#4338ca">Apprentissage</h3>
+        <p style="margin:0;color:#6b7280;font-size:0.9rem">{{ n_lecons }} leçons</p>
+    </a>
+    <a href="{{ url_for('hebreu_pdf') }}" target="_blank" class="card" style="text-decoration:none;border-top:5px solid #d97706;text-align:center;padding:1.35rem">
+        <div style="font-size:2rem">📕</div>
+        <h3 style="margin:0.4rem 0;color:#b45309">Document PDF</h3>
+        <p style="margin:0;color:#6b7280;font-size:0.9rem">{% if has_pdf %}Parlons hébreu{% else %}Indisponible{% endif %}</p>
+    </a>
+</div>
+{% endblock %}

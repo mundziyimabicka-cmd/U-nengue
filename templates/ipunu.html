@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Langue ipunu — U nengue{% endblock %}
+{% block content %}
+<div class="page-header" style="display:flex;flex-wrap:wrap;gap:0.75rem;justify-content:space-between;align-items:flex-start">
+    <div>
+    <h2 style="margin:0">🗣️ Langue ipunu (Punu)</h2>
+    <p class="subtitle">Langue du Gabon — dictionnaire, leçons et document PDF « Parlons yipunu »</p>
+    </div>
+    <a class="btn btn-secondary" href="{{ url_for('langues') }}">← Langues</a>
+</div>
+
+<div class="card" style="margin-bottom:1.25rem;background:linear-gradient(135deg,#ecfdf5,#f0fdfa,#fef3c7);border-top:5px solid #059669">
+    <p style="margin:0;font-size:1.05rem;line-height:1.55;color:#065f46">
+        L’<strong>ipunu</strong> (ou <strong>punu</strong>) est une langue bantoue parlée principalement au Gabon
+        (région de la Ngounié et alentours). Cette section aide les enseignants et les élèves à découvrir
+        le vocabulaire et des phrases utiles pour la classe et la vie quotidienne.
+    </p>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;margin-bottom:1.5rem">
+    <a href="{{ url_for('ipunu_dictionnaire') }}" class="card" style="text-decoration:none;border-top:5px solid #059669;text-align:center;padding:1.5rem">
+        <div style="font-size:2rem">📖</div>
+        <h3 style="margin:0.5rem 0;color:#047857">Dictionnaire</h3>
+        <p style="margin:0;color:#6b7280;font-size:0.9rem">{{ n_mots }} mots français ↔ ipunu</p>
+    </a>
+    <a href="{{ url_for('ipunu_lecons') }}" class="card" style="text-decoration:none;border-top:5px solid #0d9488;text-align:center;padding:1.5rem">
+        <div style="font-size:2rem">📚</div>
+        <h3 style="margin:0.5rem 0;color:#0f766e">Apprentissage</h3>
+        <p style="margin:0;color:#6b7280;font-size:0.9rem">{{ n_lecons }} leçons progressives</p>
+    </a>
+    <a href="{{ url_for('ipunu_pdf') }}" class="card" style="text-decoration:none;border-top:5px solid #d97706;text-align:center;padding:1.5rem">
+        <div style="font-size:2rem">📕</div>
+        <h3 style="margin:0.5rem 0;color:#b45309">Document PDF</h3>
+        <p style="margin:0;color:#6b7280;font-size:0.9rem">
+            {% if has_pdf %}Ouvrir / télécharger{% else %}À déposer (langue-ipunu.pdf){% endif %}
+        </p>
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-title" style="color:#047857">Exemples rapides</div>
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>Français</th><th>Ipunu</th></tr></thead>
+            <tbody>
+                <tr><td>Bonjour</td><td><strong>Mbote</strong></td></tr>
+                <tr><td>Merci</td><td><strong>Matondo</strong></td></tr>
+                <tr><td>École</td><td><strong>Kelasi</strong></td></tr>
+                <tr><td>Enseignant</td><td><strong>Molakisi</strong></td></tr>
+                <tr><td>Eau</td><td><strong>Mai</strong></td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

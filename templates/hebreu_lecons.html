@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Leçons hebreu{% endblock %}
+{% block content %}
+<div class="page-header" style="display:flex;flex-wrap:wrap;gap:0.75rem;justify-content:space-between;align-items:center">
+    <div>
+        <h2 style="margin:0">📚 Apprentissage de l'hebreu</h2>
+        <p class="subtitle" style="margin:0.25rem 0 0">Leçons progressives pour la classe</p>
+    </div>
+    <a class="btn btn-secondary" href="{{ url_for('hebreu') }}">← Hébreu</a>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1rem">
+{% for l in lecons %}
+<a href="{{ url_for('hebreu_lecon_detail', lid=l.id) }}" class="card" style="text-decoration:none;border-top:5px solid {% if l.niveau=='Débutant' %}#2563eb{% else %}#4f46e5{% endif %}">
+    <span class="badge {% if l.niveau=='Débutant' %}badge-success{% else %}badge-info{% endif %}">{{ l.niveau }}</span>
+    <h3 style="margin:0.5rem 0;color:#1e3a8a">{{ l.id }}. {{ l.titre }}</h3>
+    <p style="margin:0;font-size:0.9rem;color:#6b7280">{{ l.contenu }}</p>
+    <p style="margin:0.5rem 0 0;font-size:0.8rem;color:#1d4ed8">{{ l.phrases|length }} expression(s)</p>
+</a>
+{% endfor %}
+</div>
+{% endblock %}

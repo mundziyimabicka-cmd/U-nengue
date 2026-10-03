@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}{{ lecon.titre }} — Ipunu{% endblock %}
+{% block content %}
+<div class="page-header" style="display:flex;flex-wrap:wrap;gap:0.75rem;justify-content:space-between;align-items:center">
+    <div>
+        <span class="badge badge-success">{{ lecon.niveau }}</span>
+        <h2 style="margin:0.35rem 0 0">{{ lecon.id }}. {{ lecon.titre }}</h2>
+        <p class="subtitle">{{ lecon.contenu }}</p>
+    </div>
+    <a class="btn btn-secondary" href="{{ url_for('ipunu_lecons') }}">← Toutes les leçons</a>
+</div>
+
+<div class="card" style="border-top:5px solid #059669">
+    <div class="card-title" style="color:#047857">Phrases et vocabulaire</div>
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th style="width:45%">Français</th><th>Ipunu</th></tr></thead>
+            <tbody>
+            {% for fr, ip in lecon.phrases %}
+                <tr>
+                    <td>{{ fr }}</td>
+                    <td><strong style="color:#0f766e;font-size:1.1rem">{{ ip }}</strong></td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:1rem">
+    {% for l in lecons %}
+    <a href="{{ url_for('ipunu_lecon_detail', lid=l.id) }}"
+       class="btn btn-sm {% if l.id==lecon.id %}btn-primary{% else %}btn-secondary{% endif %}">{{ l.id }}</a>
+    {% endfor %}
+</div>
+{% endblock %}
