@@ -8,7 +8,7 @@
 </head>
 <body>
 <div class="login-page">
-    <div class="login-card" style="max-width:520px">
+    <div class="login-card" style="max-width:560px">
         <h1>U nengue</h1>
         <p class="subtitle">Espace parents — suivi de l'élève</p>
         {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
@@ -28,7 +28,17 @@
             Le PIN est indiqué sur la fiche élève par l'école.
         </p>
         {% else %}
-        <div class="alert alert-success">Dossier de <strong>{{ student.full_name }}</strong></div>
+        <div style="display:flex;gap:1rem;align-items:center;margin-bottom:1rem;flex-wrap:wrap">
+            {% if student.photo_path %}
+            <img src="{{ url_for('static', filename=student.photo_path) }}" alt="Photo"
+                 style="width:96px;height:96px;object-fit:cover;border-radius:16px;border:3px solid #e879f9;box-shadow:0 4px 14px rgba(217,70,239,0.25)">
+            {% else %}
+            <div style="width:96px;height:96px;border-radius:16px;background:linear-gradient(135deg,#f0abfc,#a5b4fc);display:flex;align-items:center;justify-content:center;font-size:2rem;color:#fff">👤</div>
+            {% endif %}
+            <div>
+                <div class="alert alert-success" style="margin:0">Dossier de <strong>{{ student.full_name }}</strong></div>
+            </div>
+        </div>
         <table style="width:100%;font-size:0.95rem">
             <tr><td style="padding:0.35rem 0;color:#6b7280">Matricule</td><td><strong>{{ student.matricule or '—' }}</strong></td></tr>
             <tr><td style="padding:0.35rem 0;color:#6b7280">Classe</td><td>{{ student.classroom.name if student.classroom else '—' }}</td></tr>
@@ -38,10 +48,12 @@
             <tr><td style="padding:0.35rem 0;color:#6b7280">Statut</td><td>{{ student.status or '—' }}</td></tr>
             <tr><td style="padding:0.35rem 0;color:#6b7280">Parent</td><td>{{ student.parent_name or '—' }}</td></tr>
         </table>
-        <p style="font-size:0.85rem;color:#6b7280;margin-top:1rem;background:#fdf4ff;padding:0.75rem;border-radius:10px">
-            Pour les bulletins et relevés détaillés, contactez l'enseignant ou le directeur de l'école.
-        </p>
-        <a class="btn btn-secondary" href="{{ url_for('espace_parents') }}">Autre élève</a>
+        <div style="margin-top:1.25rem;display:flex;flex-wrap:wrap;gap:0.5rem">
+            <a class="btn btn-pdf-dynamic" href="{{ url_for('bulletin_pdf', student_id=student.id) }}" target="_blank">
+                📄 Télécharger le bulletin (PDF)
+            </a>
+            <a class="btn btn-secondary" href="{{ url_for('espace_parents') }}">Autre élève</a>
+        </div>
         {% endif %}
         <p style="text-align:center;margin-top:1.25rem"><a href="{{ url_for('login') }}">← Connexion école</a></p>
     </div>

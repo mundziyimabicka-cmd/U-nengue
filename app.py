@@ -289,10 +289,15 @@ class SongBank(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     titre = db.Column(db.String(200), nullable=False)
     niveau = db.Column(db.String(40), default='')  # PS, MS, GS, 1ère année...
-    type = db.Column(db.String(20), default='comptine')  # comptine | chant
+    kind = db.Column(db.String(20), default='comptine')  # comptine | chant (évite conflit SQLAlchemy .type)
     texte = db.Column(db.Text, default='')
     source = db.Column(db.String(80), default='programme')  # programme | ecole | autre
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    @property
+    def type(self):
+        """Alias pour les templates existants."""
+        return self.kind or 'comptine'
 
 class Textbook(db.Model):
     """Manuels scolaires en usage"""
@@ -1772,7 +1777,6 @@ def bulletin(student_id):
                            data=data, palier_mastery=palier_mastery, settings=settings)
 
 @app.route('/bulletins/<int:student_id>/pdf')
-@login_required
 def bulletin_pdf(student_id):
     """Bulletin officiel 2 pages — note critère 0-4, note compétence = somme"""
     from reportlab.lib.pagesizes import A4, landscape
@@ -1784,10 +1788,15 @@ def bulletin_pdf(student_id):
     from xml.sax.saxutils import escape as xml_escape
 
     student = Student.query.get_or_404(student_id)
-    tc = teacher_class_filter()
-    if tc and student.class_id != tc:
-        flash('Accès réservé aux élèves de votre classe.', 'danger')
-        return redirect(url_for('bulletins'))
+    # Accès école OU parent authentifié pour CET élève
+    parent_ok = session.get('parent_ok') and session.get('parent_student_id') == student_id
+    if not session.get('user_id') and not parent_ok:
+        return redirect(url_for('login'))
+    if session.get('user_id'):
+        tc = teacher_class_filter()
+        if tc and student.class_id != tc:
+            flash('Accès réservé aux élèves de votre classe.', 'danger')
+            return redirect(url_for('bulletins'))
 
     settings = SchoolSettings.query.first()
     level = student.classroom.level if student.classroom else '3ème année'
@@ -3804,59 +3813,653 @@ DICTIONARY_WORDS = _load_dictionary()
 # PDF officiels (vos documents) servis depuis static/programmes/
 PROGRAMME_PDFS = {
     'PS': [
-        {'titre': 'Programme maternelle (cycle 1)', 'fichier': 'cycle1-maternelle.pdf'},
-        {'titre': 'Annexe programme maternelle', 'fichier': 'cycle1-annexe-maternelle.pdf'},
-        {'titre': 'Français cycle 1', 'fichier': 'cycle1-francais.pdf'},
-        {'titre': 'Mathématiques cycle 1', 'fichier': 'cycle1-maths.pdf'},
+        {'titre': 'Programme maternelle (cycle 1)', 'fichier': 'cycle1-maternelle.pdf', 'type': 'programme', 'matiere': 'Général'},
+        {'titre': 'Annexe programme maternelle', 'fichier': 'cycle1-annexe-maternelle.pdf', 'type': 'programme', 'matiere': 'Général'},
+        {'titre': 'Livret langage oral et écrit — avant 4 ans', 'fichier': 'livret-langage-avant4ans.pdf', 'type': 'livret', 'matiere': 'Français'},
+        {'titre': 'Français cycle 1', 'fichier': 'cycle1-francais.pdf', 'type': 'programme', 'matiere': 'Français'},
+        {'titre': 'Mathématiques cycle 1', 'fichier': 'cycle1-maths.pdf', 'type': 'programme', 'matiere': 'Mathématiques'},
     ],
     'MS': [
-        {'titre': 'Programme maternelle (cycle 1)', 'fichier': 'cycle1-maternelle.pdf'},
-        {'titre': 'Annexe programme maternelle', 'fichier': 'cycle1-annexe-maternelle.pdf'},
-        {'titre': 'Français cycle 1', 'fichier': 'cycle1-francais.pdf'},
-        {'titre': 'Mathématiques cycle 1', 'fichier': 'cycle1-maths.pdf'},
+        {'titre': 'Programme maternelle (cycle 1)', 'fichier': 'cycle1-maternelle.pdf', 'type': 'programme', 'matiere': 'Général'},
+        {'titre': 'Annexe programme maternelle', 'fichier': 'cycle1-annexe-maternelle.pdf', 'type': 'programme', 'matiere': 'Général'},
+        {'titre': 'Livret langage — à partir de 4 ans', 'fichier': 'livret-langage-avant4ans.pdf', 'type': 'livret', 'matiere': 'Français'},
+        {'titre': 'Livret maths — à partir de 4 ans', 'fichier': 'livret-maths-apartir4ans.pdf', 'type': 'livret', 'matiere': 'Mathématiques'},
+        {'titre': 'Français cycle 1', 'fichier': 'cycle1-francais.pdf', 'type': 'programme', 'matiere': 'Français'},
+        {'titre': 'Mathématiques cycle 1', 'fichier': 'cycle1-maths.pdf', 'type': 'programme', 'matiere': 'Mathématiques'},
     ],
     'GS': [
-        {'titre': 'Programme maternelle (cycle 1)', 'fichier': 'cycle1-maternelle.pdf'},
-        {'titre': 'Annexe programme maternelle', 'fichier': 'cycle1-annexe-maternelle.pdf'},
-        {'titre': 'Français cycle 1', 'fichier': 'cycle1-francais.pdf'},
-        {'titre': 'Mathématiques cycle 1', 'fichier': 'cycle1-maths.pdf'},
+        {'titre': 'Programme maternelle (cycle 1)', 'fichier': 'cycle1-maternelle.pdf', 'type': 'programme', 'matiere': 'Général'},
+        {'titre': 'Annexe programme maternelle', 'fichier': 'cycle1-annexe-maternelle.pdf', 'type': 'programme', 'matiere': 'Général'},
+        {'titre': 'Livret langage — à partir de 5 ans', 'fichier': 'livret-langage-apartir5ans.pdf', 'type': 'livret', 'matiere': 'Français'},
+        {'titre': 'Livret maths — à partir de 5 ans', 'fichier': 'livret-maths-apartir5ans.pdf', 'type': 'livret', 'matiere': 'Mathématiques'},
+        {'titre': 'Français cycle 1', 'fichier': 'cycle1-francais.pdf', 'type': 'programme', 'matiere': 'Français'},
+        {'titre': 'Mathématiques cycle 1', 'fichier': 'cycle1-maths.pdf', 'type': 'programme', 'matiere': 'Mathématiques'},
     ],
     '1ère année': [
-        {'titre': 'Français cycle 2 (programme)', 'fichier': 'cycle2-francais.pdf'},
-        {'titre': 'Français cycle 2 (tableau)', 'fichier': 'cycle2-francais-tableau.pdf'},
-        {'titre': 'Mathématiques cycle 2 (tableau)', 'fichier': 'cycle2-maths-tableau.pdf'},
-        {'titre': 'Histoire-géographie cycle 2', 'fichier': 'cycle2-histoire-geo.pdf'},
-        {'titre': 'EMC (CP → Terminale)', 'fichier': 'emc-cp-terminale.pdf'},
+        {'titre': 'Livret d\'accompagnement Français CP', 'fichier': 'livret-francais-cp.pdf', 'type': 'livret', 'matiere': 'Français'},
+        {'titre': 'Guide lecture et écriture au CP', 'fichier': 'guide-lecture-ecriture-cp.pdf', 'type': 'guide', 'matiere': 'Français'},
+        {'titre': 'Guide grammaire CP à 6e', 'fichier': 'guide-grammaire-cp-6e.pdf', 'type': 'guide', 'matiere': 'Français'},
+        {'titre': 'Terminologie grammaticale', 'fichier': 'guide-grammaire-terminologie.pdf', 'type': 'guide', 'matiere': 'Français'},
+        {'titre': 'Français cycle 2 (programme)', 'fichier': 'cycle2-francais.pdf', 'type': 'programme', 'matiere': 'Français'},
+        {'titre': 'Français cycle 2 (tableau)', 'fichier': 'cycle2-francais-tableau.pdf', 'type': 'tableau', 'matiere': 'Français'},
+        {'titre': 'Guide nombres, calcul, problèmes CP', 'fichier': 'guide-maths-nombres-cp.pdf', 'type': 'guide', 'matiere': 'Mathématiques'},
+        {'titre': 'Guide calcul mental CP–CM2', 'fichier': 'guide-calcul-mental-cp-cm2.pdf', 'type': 'guide', 'matiere': 'Mathématiques'},
+        {'titre': 'Mathématiques cycle 2 (tableau)', 'fichier': 'cycle2-maths-tableau.pdf', 'type': 'tableau', 'matiere': 'Mathématiques'},
+        {'titre': 'Livret EMC CP', 'fichier': 'livret-emc-cp.pdf', 'type': 'livret', 'matiere': 'EMC'},
+        {'titre': 'Histoire-géographie cycle 2', 'fichier': 'cycle2-histoire-geo.pdf', 'type': 'programme', 'matiere': 'Histoire-Géo'},
+        {'titre': 'EMC (CP → Terminale)', 'fichier': 'emc-cp-terminale.pdf', 'type': 'programme', 'matiere': 'EMC'},
     ],
     '2ème année': [
-        {'titre': 'Français cycle 2 (programme)', 'fichier': 'cycle2-francais.pdf'},
-        {'titre': 'Français cycle 2 (tableau)', 'fichier': 'cycle2-francais-tableau.pdf'},
-        {'titre': 'Mathématiques cycle 2 (tableau)', 'fichier': 'cycle2-maths-tableau.pdf'},
-        {'titre': 'Histoire-géographie cycle 2', 'fichier': 'cycle2-histoire-geo.pdf'},
-        {'titre': 'EMC (CP → Terminale)', 'fichier': 'emc-cp-terminale.pdf'},
+        {'titre': 'Livret d\'accompagnement Français CE1', 'fichier': 'livret-francais-ce1.pdf', 'type': 'livret', 'matiere': 'Français'},
+        {'titre': 'Guide grammaire CP à 6e', 'fichier': 'guide-grammaire-cp-6e.pdf', 'type': 'guide', 'matiere': 'Français'},
+        {'titre': 'Terminologie grammaticale', 'fichier': 'guide-grammaire-terminologie.pdf', 'type': 'guide', 'matiere': 'Français'},
+        {'titre': 'Français cycle 2 (programme)', 'fichier': 'cycle2-francais.pdf', 'type': 'programme', 'matiere': 'Français'},
+        {'titre': 'Français cycle 2 (tableau)', 'fichier': 'cycle2-francais-tableau.pdf', 'type': 'tableau', 'matiere': 'Français'},
+        {'titre': 'Livret Mathématiques CE1', 'fichier': 'livret-maths-ce1.pdf', 'type': 'livret', 'matiere': 'Mathématiques'},
+        {'titre': 'Guide calcul mental CP–CM2', 'fichier': 'guide-calcul-mental-cp-cm2.pdf', 'type': 'guide', 'matiere': 'Mathématiques'},
+        {'titre': 'Mathématiques cycle 2 (tableau)', 'fichier': 'cycle2-maths-tableau.pdf', 'type': 'tableau', 'matiere': 'Mathématiques'},
+        {'titre': 'Histoire-géographie cycle 2', 'fichier': 'cycle2-histoire-geo.pdf', 'type': 'programme', 'matiere': 'Histoire-Géo'},
+        {'titre': 'EMC (CP → Terminale)', 'fichier': 'emc-cp-terminale.pdf', 'type': 'programme', 'matiere': 'EMC'},
     ],
     '3ème année': [
-        {'titre': 'Français cycle 2 (programme)', 'fichier': 'cycle2-francais.pdf'},
-        {'titre': 'Français cycle 2 (tableau)', 'fichier': 'cycle2-francais-tableau.pdf'},
-        {'titre': 'Mathématiques cycle 2 (tableau)', 'fichier': 'cycle2-maths-tableau.pdf'},
-        {'titre': 'Histoire-géographie cycle 2', 'fichier': 'cycle2-histoire-geo.pdf'},
-        {'titre': 'EMC (CP → Terminale)', 'fichier': 'emc-cp-terminale.pdf'},
+        {'titre': 'Livret Mathématiques CE2', 'fichier': 'livret-maths-ce2.pdf', 'type': 'livret', 'matiere': 'Mathématiques'},
+        {'titre': 'Guide grammaire CP à 6e', 'fichier': 'guide-grammaire-cp-6e.pdf', 'type': 'guide', 'matiere': 'Français'},
+        {'titre': 'Terminologie grammaticale', 'fichier': 'guide-grammaire-terminologie.pdf', 'type': 'guide', 'matiere': 'Français'},
+        {'titre': 'Français cycle 2 (programme)', 'fichier': 'cycle2-francais.pdf', 'type': 'programme', 'matiere': 'Français'},
+        {'titre': 'Français cycle 2 (tableau)', 'fichier': 'cycle2-francais-tableau.pdf', 'type': 'tableau', 'matiere': 'Français'},
+        {'titre': 'Guide calcul mental CP–CM2', 'fichier': 'guide-calcul-mental-cp-cm2.pdf', 'type': 'guide', 'matiere': 'Mathématiques'},
+        {'titre': 'Mathématiques cycle 2 (tableau)', 'fichier': 'cycle2-maths-tableau.pdf', 'type': 'tableau', 'matiere': 'Mathématiques'},
+        {'titre': 'Histoire-géographie cycle 2', 'fichier': 'cycle2-histoire-geo.pdf', 'type': 'programme', 'matiere': 'Histoire-Géo'},
+        {'titre': 'EMC (CP → Terminale)', 'fichier': 'emc-cp-terminale.pdf', 'type': 'programme', 'matiere': 'EMC'},
     ],
     '4ème année': [
-        {'titre': 'Programme cycle 3 (complet)', 'fichier': 'cycle3-complet.pdf'},
-        {'titre': 'Français cycle 3 (tableau)', 'fichier': 'cycle3-francais-tableau.pdf'},
-        {'titre': 'Mathématiques cycle 3 (tableau)', 'fichier': 'cycle3-maths-tableau.pdf'},
-        {'titre': 'Histoire-géographie cycle 3', 'fichier': 'cycle3-histoire-geo.pdf'},
-        {'titre': 'EMC (CP → Terminale)', 'fichier': 'emc-cp-terminale.pdf'},
+        {'titre': 'Exemples mise en œuvre Français CM1', 'fichier': 'exemples-francais-cm1.pdf', 'type': 'exemples', 'matiere': 'Français'},
+        {'titre': 'Exemples mise en œuvre Maths CM1', 'fichier': 'exemples-maths-cm1.pdf', 'type': 'exemples', 'matiere': 'Mathématiques'},
+        {'titre': 'Guide grammaire CP à 6e', 'fichier': 'guide-grammaire-cp-6e.pdf', 'type': 'guide', 'matiere': 'Français'},
+        {'titre': 'Terminologie grammaticale', 'fichier': 'guide-grammaire-terminologie.pdf', 'type': 'guide', 'matiere': 'Français'},
+        {'titre': 'Programme cycle 3 (complet)', 'fichier': 'cycle3-complet.pdf', 'type': 'programme', 'matiere': 'Général'},
+        {'titre': 'Français cycle 3 (tableau)', 'fichier': 'cycle3-francais-tableau.pdf', 'type': 'tableau', 'matiere': 'Français'},
+        {'titre': 'Mathématiques cycle 3 (tableau)', 'fichier': 'cycle3-maths-tableau.pdf', 'type': 'tableau', 'matiere': 'Mathématiques'},
+        {'titre': 'Guide calcul mental CP–CM2', 'fichier': 'guide-calcul-mental-cp-cm2.pdf', 'type': 'guide', 'matiere': 'Mathématiques'},
+        {'titre': 'Histoire-géographie cycle 3', 'fichier': 'cycle3-histoire-geo.pdf', 'type': 'programme', 'matiere': 'Histoire-Géo'},
+        {'titre': 'EMC (CP → Terminale)', 'fichier': 'emc-cp-terminale.pdf', 'type': 'programme', 'matiere': 'EMC'},
     ],
     '5ème année': [
-        {'titre': 'Programme cycle 3 (complet)', 'fichier': 'cycle3-complet.pdf'},
-        {'titre': 'Français cycle 3 (tableau)', 'fichier': 'cycle3-francais-tableau.pdf'},
-        {'titre': 'Mathématiques cycle 3 (tableau)', 'fichier': 'cycle3-maths-tableau.pdf'},
-        {'titre': 'Histoire-géographie cycle 3', 'fichier': 'cycle3-histoire-geo.pdf'},
-        {'titre': 'EMC (CP → Terminale)', 'fichier': 'emc-cp-terminale.pdf'},
+        {'titre': 'Exemples mise en œuvre Français CM2', 'fichier': 'exemples-francais-cm2.pdf', 'type': 'exemples', 'matiere': 'Français'},
+        {'titre': 'Exemples mise en œuvre Maths CM2', 'fichier': 'exemples-maths-cm2.pdf', 'type': 'exemples', 'matiere': 'Mathématiques'},
+        {'titre': 'Guide grammaire CP à 6e', 'fichier': 'guide-grammaire-cp-6e.pdf', 'type': 'guide', 'matiere': 'Français'},
+        {'titre': 'Terminologie grammaticale', 'fichier': 'guide-grammaire-terminologie.pdf', 'type': 'guide', 'matiere': 'Français'},
+        {'titre': 'Programme cycle 3 (complet)', 'fichier': 'cycle3-complet.pdf', 'type': 'programme', 'matiere': 'Général'},
+        {'titre': 'Français cycle 3 (tableau)', 'fichier': 'cycle3-francais-tableau.pdf', 'type': 'tableau', 'matiere': 'Français'},
+        {'titre': 'Mathématiques cycle 3 (tableau)', 'fichier': 'cycle3-maths-tableau.pdf', 'type': 'tableau', 'matiere': 'Mathématiques'},
+        {'titre': 'Guide calcul mental CP–CM2', 'fichier': 'guide-calcul-mental-cp-cm2.pdf', 'type': 'guide', 'matiere': 'Mathématiques'},
+        {'titre': 'Histoire-géographie cycle 3', 'fichier': 'cycle3-histoire-geo.pdf', 'type': 'programme', 'matiere': 'Histoire-Géo'},
+        {'titre': 'EMC (CP → Terminale)', 'fichier': 'emc-cp-terminale.pdf', 'type': 'programme', 'matiere': 'EMC'},
     ],
 }
+
+# Contenu structuré (objectifs / compétences / activités) pour livrets, guides, exemples
+# → même usage que PROGRAMMES_OFFICIELS (tableaux + import fiche + préparer séance)
+DOCUMENTS_STRUCTURES = {
+    'PS': {
+        'label': 'Petite section',
+        'cycle': 'Cycle 1 — Maternelle',
+        'matieres': {
+            'Langage oral et écrit (livret avant 4 ans)': {
+                'objectifs': [
+                    'Développer la motricité générale et fine pour le geste d\'écriture',
+                    'Développer la coordination œil-main',
+                    'Produire librement pour tendre vers un contrôle des mouvements',
+                    'Explorer et verbaliser différents tracés (traits, points, boucles, cercles)',
+                    'Adopter une posture adaptée et se repérer sur un support',
+                ],
+                'competences': [
+                    'Comprendre et utiliser le langage oral en situation',
+                    'Découvrir les premiers tracés graphiques',
+                    'Participer aux rituels langagiers de la classe',
+                ],
+                'activites': [
+                    'Jeux de motricité fine (pâte, perles, pinces)',
+                    'Tracés libres sur grands supports (sol, tableau, sable)',
+                    'Comptines et jeux de doigts liés au langage',
+                    'Verbalisation des gestes lors des tracés',
+                ],
+                'pdf': 'livret-langage-avant4ans.pdf',
+                'type_doc': 'livret',
+            },
+            'Premiers outils mathématiques (cycle 1)': {
+                'objectifs': [
+                    'Découvrir les quantités et les premiers nombres',
+                    'Comparer, classer, ranger des objets',
+                    'Se repérer dans l\'espace et le temps de la classe',
+                ],
+                'competences': [
+                    'Dénombrer une petite collection',
+                    'Utiliser le vocabulaire spatial (dessus, dessous, à côté)',
+                ],
+                'activites': [
+                    'Jeux de tri et de classement',
+                    'Comptines numériques',
+                    'Manipulation d\'objets et boîtes à nombres',
+                ],
+                'pdf': 'cycle1-maths.pdf',
+                'type_doc': 'programme',
+            },
+        },
+    },
+    'MS': {
+        'label': 'Moyenne section',
+        'cycle': 'Cycle 1 — Maternelle',
+        'matieres': {
+            'Langage oral et écrit (livret à partir de 4 ans)': {
+                'objectifs': [
+                    'Maîtriser la pression du crayon et la fluidité du tracé',
+                    'S\'exercer à la motricité fine et au graphisme',
+                    'Prendre des repères gauche → droite sur le support',
+                    'S\'initier aux lettres capitales et à l\'écriture cursive',
+                ],
+                'competences': [
+                    'Produire des tracés contrôlés',
+                    'Nommer et reconnaître des lettres',
+                    'Participer à des échanges langagiers structurés',
+                ],
+                'activites': [
+                    'Ateliers graphisme (boucles, ponts, vagues)',
+                    'Dictée de tracés et de lettres',
+                    'Jeux de reconnaissance de lettres en capitales',
+                    'Comptines et récits à reconstituer',
+                ],
+                'pdf': 'livret-langage-avant4ans.pdf',
+                'type_doc': 'livret',
+            },
+            'Mathématiques — à partir de 4 ans (livret)': {
+                'objectifs': [
+                    'Construire la bande numérique jusqu\'à 10',
+                    'Associer quantité, doigts, constellations et écriture chiffrée',
+                    'Itérer l\'unité (n → n+1) avec matériel',
+                ],
+                'competences': [
+                    'Dénombrer jusqu\'à 10',
+                    'Comparer deux collections',
+                    'Utiliser la bande numérique comme référent',
+                ],
+                'activites': [
+                    'Boîtes à trésors et sachets d\'objets',
+                    'Construction d\'escaliers de cubes',
+                    'Jeux de réussite sur bande numérique',
+                    'Comptine « Les cubes » mise en scène',
+                ],
+                'pdf': 'livret-maths-apartir4ans.pdf',
+                'type_doc': 'livret',
+            },
+        },
+    },
+    'GS': {
+        'label': 'Grande section',
+        'cycle': 'Cycle 1 — Maternelle',
+        'matieres': {
+            'Langage oral et écrit (livret à partir de 5 ans)': {
+                'objectifs': [
+                    'Tracer des lettres en écriture cursive et les lier',
+                    'Affiner l\'écriture et automatiser le geste',
+                    'Adapter le geste à des formats et espaces variés',
+                    'Tenir correctement son stylo',
+                ],
+                'competences': [
+                    'Écrire son prénom en cursive',
+                    'Lire des mots simples et des phrases courtes',
+                    'Produire un message écrit guidé',
+                ],
+                'activites': [
+                    'Entraînement quotidien à l\'écriture cursive',
+                    'Copie de mots et petites phrases',
+                    'Ateliers phonologie et conscience syllabique',
+                    'Dictées de lettres et de mots',
+                ],
+                'pdf': 'livret-langage-apartir5ans.pdf',
+                'type_doc': 'livret',
+            },
+            'Mathématiques — à partir de 5 ans (livret)': {
+                'objectifs': [
+                    'Prolonger la bande numérique au-delà de 10',
+                    'Comprendre les familles de nombres (10, 20…)',
+                    'Préparer la liaison avec le CP',
+                ],
+                'competences': [
+                    'Dénombrer et représenter des quantités > 10',
+                    'Utiliser les écritures chiffrées jusqu\'à 30',
+                    'Résoudre de petits problèmes de réunification',
+                ],
+                'activites': [
+                    'Prolongement de la bande numérique personnelle',
+                    'Jeux de position sur bande lacunaire',
+                    'Problèmes en situation avec matériel',
+                ],
+                'pdf': 'livret-maths-apartir5ans.pdf',
+                'type_doc': 'livret',
+            },
+        },
+    },
+    '1ère année': {
+        'label': '1ère année (CP)',
+        'cycle': 'Cycle 2',
+        'matieres': {
+            'Français — Livret d\'accompagnement CP': {
+                'objectifs': [
+                    'Entrer dans le code alphabétique',
+                    'Lire des mots et de courtes phrases',
+                    'Écrire sous la dictée des syllabes et des mots',
+                    'Comprendre un texte entendu et un texte lu',
+                ],
+                'competences': [
+                    'Décoder des mots réguliers',
+                    'Identifier les sons et les graphèmes étudiés',
+                    'Produire un écrit simple (légende, message)',
+                ],
+                'activites': [
+                    'Séances quotidiennes de lecture-écriture',
+                    'Manipulation de lettres mobiles',
+                    'Dictées de syllabes et de mots',
+                    'Compréhension orale et lecture guidée',
+                ],
+                'pdf': 'livret-francais-cp.pdf',
+                'type_doc': 'livret',
+            },
+            'Français — Guide lecture et écriture CP': {
+                'objectifs': [
+                    'Enseigner explicitement le code grapho-phonologique',
+                    'Automatiser la reconnaissance des mots',
+                    'Développer la fluidité et la compréhension',
+                ],
+                'competences': [
+                    'Lire à voix haute avec exactitude',
+                    'Comprendre des textes adaptés au niveau',
+                    'Écrire en respectant les correspondances étudiées',
+                ],
+                'activites': [
+                    'Entraînement à la combinatoire',
+                    'Lecture répétée et fluence',
+                    'Production d\'écrits courts guidés',
+                ],
+                'pdf': 'guide-lecture-ecriture-cp.pdf',
+                'type_doc': 'guide',
+            },
+            'Mathématiques — Guide nombres, calcul, problèmes CP': {
+                'objectifs': [
+                    'Construire le nombre jusqu\'à 100',
+                    'Maîtriser les faits numériques additifs',
+                    'Résoudre des problèmes additifs et soustractifs',
+                ],
+                'competences': [
+                    'Dénombrer, comparer, ordonner',
+                    'Calculer mentalement des sommes et différences simples',
+                    'Modéliser un problème simple',
+                ],
+                'activites': [
+                    'Calcul mental quotidien',
+                    'Manipulation et représentation des nombres',
+                    'Résolution de problèmes en situation',
+                ],
+                'pdf': 'guide-maths-nombres-cp.pdf',
+                'type_doc': 'guide',
+            },
+            'Mathématiques — Calcul mental CP–CM2': {
+                'objectifs': [
+                    'Automatiser les résultats additifs',
+                    'Développer des procédures de calcul mental',
+                    'Ancrer une pratique quotidienne du calcul mental',
+                ],
+                'competences': [
+                    'Connaître les compléments à 10',
+                    'Ajouter ou retirer 1, 2, 5, 10',
+                    'Expliquer une procédure de calcul',
+                ],
+                'activites': [
+                    'Rituels de calcul mental (5–10 min)',
+                    'Jeux de dés, cartes et tableaux',
+                    'Défis chronométrés progressifs',
+                ],
+                'pdf': 'guide-calcul-mental-cp-cm2.pdf',
+                'type_doc': 'guide',
+            },
+            'EMC — Livret CP': {
+                'objectifs': [
+                    'Respecter les règles de vie de la classe',
+                    'Identifier émotions et sentiments',
+                    'S\'engager dans des projets collectifs simples',
+                ],
+                'competences': [
+                    'Participer au débat réglé',
+                    'Reconnaître les droits et devoirs de l\'élève',
+                ],
+                'activites': [
+                    'Conseil d\'élèves',
+                    'Jeux de rôle sur les émotions',
+                    'Projets de coopération',
+                ],
+                'pdf': 'livret-emc-cp.pdf',
+                'type_doc': 'livret',
+            },
+            'Grammaire — Guide CP à 6e': {
+                'objectifs': [
+                    'Identifier la phrase et ses constituants',
+                    'Reconnaître nom, verbe, déterminant',
+                    'Utiliser une terminologie grammaticale progressive',
+                ],
+                'competences': [
+                    'Analyser une phrase simple',
+                    'Accorder le nom et le déterminant',
+                ],
+                'activites': [
+                    'Manipulation de groupes dans la phrase',
+                    'Coloriage grammatical',
+                    'Dictées préparées',
+                ],
+                'pdf': 'guide-grammaire-cp-6e.pdf',
+                'type_doc': 'guide',
+            },
+        },
+    },
+    '2ème année': {
+        'label': '2ème année (CE1)',
+        'cycle': 'Cycle 2',
+        'matieres': {
+            'Français — Livret d\'accompagnement CE1': {
+                'objectifs': [
+                    'Consolider le décodage et la fluence',
+                    'Comprendre des textes plus longs',
+                    'Produire des écrits structurés (récit, message)',
+                ],
+                'competences': [
+                    'Lire à voix haute avec aisance',
+                    'Repérer les informations dans un texte',
+                    'Rédiger quelques phrases cohérentes',
+                ],
+                'activites': [
+                    'Lecture quotidienne et compréhension',
+                    'Production d\'écrits guidés',
+                    'Étude de la langue (grammaire, orthographe)',
+                ],
+                'pdf': 'livret-francais-ce1.pdf',
+                'type_doc': 'livret',
+            },
+            'Mathématiques — Livret CE1': {
+                'objectifs': [
+                    'Maîtriser les nombres jusqu\'à 1000',
+                    'Mémoriser les tables d\'addition et amorcer la multiplication',
+                    'Résoudre des problèmes à une ou deux étapes',
+                ],
+                'competences': [
+                    'Calculer mentalement et en ligne',
+                    'Utiliser les unités de mesure usuelles',
+                    'Représenter un problème',
+                ],
+                'activites': [
+                    'Rituels de calcul mental',
+                    'Ateliers problèmes',
+                    'Mesures et géométrie plane',
+                ],
+                'pdf': 'livret-maths-ce1.pdf',
+                'type_doc': 'livret',
+            },
+            'Mathématiques — Calcul mental CP–CM2': {
+                'objectifs': [
+                    'Automatiser les tables d\'addition',
+                    'Mettre en place les premières tables de multiplication',
+                    'Varier les procédures de calcul mental',
+                ],
+                'competences': [
+                    'Connaître les doubles et moitiés',
+                    'Multiplier par 2, 5, 10',
+                ],
+                'activites': [
+                    'Flash cards et jeux de tables',
+                    'Défis calcul mental en classe',
+                ],
+                'pdf': 'guide-calcul-mental-cp-cm2.pdf',
+                'type_doc': 'guide',
+            },
+            'Grammaire — Guide et terminologie': {
+                'objectifs': [
+                    'Identifier sujet et verbe',
+                    'Accorder le verbe avec le sujet',
+                    'Utiliser la terminologie grammaticale du guide',
+                ],
+                'competences': [
+                    'Analyser une phrase simple',
+                    'Corriger des accords nom-adjectif',
+                ],
+                'activites': [
+                    'Exercices d\'analyse',
+                    'Dictées négociées',
+                    'Manipulation d\'étiquettes grammaticales',
+                ],
+                'pdf': 'guide-grammaire-terminologie.pdf',
+                'type_doc': 'guide',
+            },
+        },
+    },
+    '3ème année': {
+        'label': '3ème année (CE2)',
+        'cycle': 'Cycle 2',
+        'matieres': {
+            'Mathématiques — Livret CE2': {
+                'objectifs': [
+                    'Consolider la numération et le calcul',
+                    'Aborder les fractions simples et les nombres décimaux',
+                    'Résoudre des problèmes plus complexes',
+                ],
+                'competences': [
+                    'Maîtriser les quatre opérations en situations simples',
+                    'Utiliser les unités de longueur, masse, contenance',
+                ],
+                'activites': [
+                    'Calcul mental et posé',
+                    'Problèmes multi-étapes',
+                    'Géométrie et mesures',
+                ],
+                'pdf': 'livret-maths-ce2.pdf',
+                'type_doc': 'livret',
+            },
+            'Français — Programme et grammaire cycle 2': {
+                'objectifs': [
+                    'Lire et comprendre des textes variés',
+                    'Produire des écrits organisés',
+                    'Maîtriser les bases de la grammaire et de l\'orthographe',
+                ],
+                'competences': [
+                    'Identifier les classes de mots principales',
+                    'Conjuguer les verbes courants aux temps étudiés',
+                ],
+                'activites': [
+                    'Lecture documentaire et littéraire',
+                    'Production d\'écrits (récit, compte rendu)',
+                    'Étude de la langue quotidienne',
+                ],
+                'pdf': 'cycle2-francais.pdf',
+                'type_doc': 'programme',
+            },
+            'Mathématiques — Calcul mental CP–CM2': {
+                'objectifs': [
+                    'Automatiser les tables de multiplication',
+                    'Développer des stratégies de calcul réfléchi',
+                ],
+                'competences': [
+                    'Connaître les tables jusqu\'à 10',
+                    'Estimer un ordre de grandeur',
+                ],
+                'activites': [
+                    'Rituels de tables',
+                    'Jeux de calcul rapide',
+                ],
+                'pdf': 'guide-calcul-mental-cp-cm2.pdf',
+                'type_doc': 'guide',
+            },
+        },
+    },
+    '4ème année': {
+        'label': '4ème année (CM1)',
+        'cycle': 'Cycle 3',
+        'matieres': {
+            'Français — Exemples de mise en œuvre CM1': {
+                'objectifs': [
+                    'Lire et interpréter des textes littéraires et documentaires',
+                    'Produire des écrits élaborés (récit, argumentation simple)',
+                    'Enrichir le vocabulaire et la syntaxe',
+                ],
+                'competences': [
+                    'Justifier une interprétation à l\'aide du texte',
+                    'Organiser un texte en paragraphes',
+                    'Utiliser la ponctuation et les accords',
+                ],
+                'activites': [
+                    'Étude d\'œuvres littéraires proposées',
+                    'Prolongements artistiques et culturels',
+                    'Production d\'écrits guidés et autonomes',
+                ],
+                'pdf': 'exemples-francais-cm1.pdf',
+                'type_doc': 'exemples',
+            },
+            'Mathématiques — Exemples de réussite CM1': {
+                'objectifs': [
+                    'Maîtriser les nombres entiers et décimaux',
+                    'Utiliser fractions et proportionnalité simple',
+                    'Résoudre des problèmes riches',
+                ],
+                'competences': [
+                    'Calculer avec les quatre opérations',
+                    'Interpréter des données (tableaux, graphiques)',
+                ],
+                'activites': [
+                    'Situations-problèmes inspirées des exemples officiels',
+                    'Ateliers de calcul mental et posé',
+                    'Géométrie et mesures',
+                ],
+                'pdf': 'exemples-maths-cm1.pdf',
+                'type_doc': 'exemples',
+            },
+            'Grammaire — Guide CP à 6e': {
+                'objectifs': [
+                    'Analyser la phrase complexe',
+                    'Maîtriser accords et conjugaisons du cycle 3',
+                ],
+                'competences': [
+                    'Identifier nature et fonction',
+                    'Conjuguer aux temps du programme',
+                ],
+                'activites': [
+                    'Analyse grammaticale progressive',
+                    'Dictées et réécriture',
+                ],
+                'pdf': 'guide-grammaire-cp-6e.pdf',
+                'type_doc': 'guide',
+            },
+        },
+    },
+    '5ème année': {
+        'label': '5ème année (CM2)',
+        'cycle': 'Cycle 3',
+        'matieres': {
+            'Français — Exemples de mise en œuvre CM2': {
+                'objectifs': [
+                    'Préparer l\'entrée au collège en lecture et écriture',
+                    'Lire des œuvres complètes et en rendre compte',
+                    'Argumenter et justifier à l\'écrit et à l\'oral',
+                ],
+                'competences': [
+                    'Comprendre un texte long',
+                    'Rédiger un texte organisé et corrigé',
+                    'Utiliser un vocabulaire précis',
+                ],
+                'activites': [
+                    'Projets de lecture d\'œuvres',
+                    'Prolongements artistiques et culturels',
+                    'Écrits de restitution et d\'opinion',
+                ],
+                'pdf': 'exemples-francais-cm2.pdf',
+                'type_doc': 'exemples',
+            },
+            'Mathématiques — Exemples de réussite CM2': {
+                'objectifs': [
+                    'Consolider nombres, calcul et proportionnalité',
+                    'Résoudre des problèmes complexes multi-étapes',
+                    'Préparer le collège (fractions, décimaux, géométrie)',
+                ],
+                'competences': [
+                    'Maîtriser les techniques opératoires',
+                    'Utiliser grandeurs et mesures',
+                    'Argumenter une démarche de résolution',
+                ],
+                'activites': [
+                    'Problèmes issus des exemples officiels',
+                    'Calcul mental avancé',
+                    'Géométrie construite et raisonnée',
+                ],
+                'pdf': 'exemples-maths-cm2.pdf',
+                'type_doc': 'exemples',
+            },
+            'Mathématiques — Calcul mental CP–CM2': {
+                'objectifs': [
+                    'Automatiser les procédures utiles au collège',
+                    'Estimer et contrôler un résultat',
+                ],
+                'competences': [
+                    'Calculer mentalement avec décimaux simples',
+                    'Choisir une procédure adaptée',
+                ],
+                'activites': [
+                    'Rituels de calcul mental',
+                    'Défis et jeux de rapidité',
+                ],
+                'pdf': 'guide-calcul-mental-cp-cm2.pdf',
+                'type_doc': 'guide',
+            },
+            'Grammaire — Terminologie et guide': {
+                'objectifs': [
+                    'Utiliser la terminologie grammaticale du collège',
+                    'Analyser des phrases complexes',
+                ],
+                'competences': [
+                    'Identifier propositions et connecteurs',
+                    'Maîtriser les accords complexes',
+                ],
+                'activites': [
+                    'Analyse de textes',
+                    'Exercices de réécriture',
+                ],
+                'pdf': 'guide-grammaire-terminologie.pdf',
+                'type_doc': 'guide',
+            },
+        },
+    },
+}
+
+def _merge_docs_into_programmes():
+    """Fusionne DOCUMENTS_STRUCTURES dans PROGRAMMES_OFFICIELS (sans écraser)."""
+    for niv, data in DOCUMENTS_STRUCTURES.items():
+        if niv not in PROGRAMMES_OFFICIELS:
+            PROGRAMMES_OFFICIELS[niv] = {
+                'label': data.get('label', niv),
+                'cycle': data.get('cycle', ''),
+                'matieres': {},
+            }
+        base = PROGRAMMES_OFFICIELS[niv].setdefault('matieres', {})
+        for mat, cont in data.get('matieres', {}).items():
+            if mat not in base:
+                base[mat] = cont
+            else:
+                # enrichir listes existantes
+                for key in ('objectifs', 'competences', 'activites'):
+                    existing = base[mat].setdefault(key, [])
+                    for item in cont.get(key, []):
+                        if item not in existing:
+                            existing.append(item)
+                for key in ('pdf', 'type_doc'):
+                    if key in cont and key not in base[mat]:
+                        base[mat][key] = cont[key]
+
+_merge_docs_into_programmes()
+
 
 PROGRAMMES_OFFICIELS = {
     'PS': {
@@ -4389,7 +4992,7 @@ def seed_song_bank():
             db.session.add(SongBank(
                 titre=c.get('titre') or 'Sans titre',
                 niveau=c.get('niveau') or '',
-                type=c.get('type') or 'comptine',
+                kind=c.get('type') or 'comptine',
                 texte=c.get('texte') or '',
                 source='programme',
             ))
@@ -4644,6 +5247,9 @@ def api_programme_suggestions():
             'objectifs': mdata.get('objectifs', []),
             'competences': mdata.get('competences', []),
             'activites': mdata.get('activites', []),
+            'pdf': mdata.get('pdf', ''),
+            'type_doc': mdata.get('type_doc', 'programme'),
+            'matiere': next((k for k, v in data['matieres'].items() if v is mdata), matiere),
         })
     except Exception as e:
         return jsonify({'ok': False, 'error': str(e)})
@@ -4652,6 +5258,13 @@ def api_programme_suggestions():
 @app.route('/comptines', methods=['GET', 'POST'])
 @login_required
 def comptines():
+    """Banque de comptines & chants — toujours accessible (fallback liste intégrée)."""
+    niveaux = ['PS','MS','GS','1ère année','2ème année','3ème année','4ème année','5ème année']
+    # Créer la table si besoin
+    try:
+        db.create_all()
+    except Exception:
+        pass
     if request.method == 'POST':
         if session.get('role') != 'Directeur':
             flash('Réservé au directeur.', 'danger')
@@ -4662,7 +5275,7 @@ def comptines():
                 db.session.add(SongBank(
                     titre=titre,
                     niveau=request.form.get('niveau', '').strip(),
-                    type=request.form.get('type', 'comptine').strip() or 'comptine',
+                    kind=request.form.get('type', 'comptine').strip() or 'comptine',
                     texte=request.form.get('texte', '').strip(),
                     source=request.form.get('source', 'ecole').strip() or 'ecole',
                 ))
@@ -4672,25 +5285,37 @@ def comptines():
                 db.session.rollback()
                 flash('Erreur ajout: ' + str(e), 'danger')
         return redirect(url_for('comptines'))
-    try:
-        seed_song_bank()
-    except Exception:
-        pass
+
     niveau = request.args.get('niveau', '')
     type_f = request.args.get('type', '')
     q = (request.args.get('q') or '').strip().lower()
+
+    # 1) Essayer seed + lecture BDD
     items = []
     try:
+        seed_song_bank()
         query = SongBank.query
         if niveau:
             query = query.filter_by(niveau=niveau)
         if type_f:
-            query = query.filter_by(type=type_f)
-        items = query.order_by(SongBank.niveau, SongBank.titre).all()
-        if q:
-            items = [c for c in items if q in (c.titre or '').lower() or q in (c.texte or '').lower()]
-    except Exception:
+            query = query.filter_by(kind=type_f)
+        rows = query.order_by(SongBank.niveau, SongBank.titre).all()
+        for r in rows:
+            if q and q not in (r.titre or '').lower() and q not in (r.texte or '').lower():
+                continue
+            items.append({
+                'id': r.id,
+                'titre': r.titre,
+                'niveau': r.niveau or '',
+                'type': r.kind or 'comptine',
+                'texte': r.texte or '',
+                'source': r.source or '',
+            })
+    except Exception as e:
+        print('comptines DB:', e)
         items = []
+
+    # 2) Fallback liste intégrée COMPTINES
     if not items:
         for c in COMPTINES:
             if niveau and c.get('niveau') != niveau:
@@ -4699,8 +5324,15 @@ def comptines():
                 continue
             if q and q not in (c.get('titre') or '').lower() and q not in (c.get('texte') or '').lower():
                 continue
-            items.append(type('O', (), dict(c, id=None, source='programme'))())
-    niveaux = ['PS','MS','GS','1ère année','2ème année','3ème année','4ème année','5ème année']
+            items.append({
+                'id': None,
+                'titre': c.get('titre', ''),
+                'niveau': c.get('niveau', ''),
+                'type': c.get('type', 'comptine'),
+                'texte': c.get('texte', ''),
+                'source': 'programme',
+            })
+
     return render_template('comptines.html', items=items, niveau=niveau, type_f=type_f, q=q, niveaux=niveaux)
 
 @app.route('/comptines/ajouter', methods=['POST'])
@@ -4716,7 +5348,7 @@ def comptines_ajouter():
     s = SongBank(
         titre=titre,
         niveau=request.form.get('niveau', '').strip(),
-        type=request.form.get('type', 'comptine').strip() or 'comptine',
+        kind=request.form.get('type', 'comptine').strip() or 'comptine',
         texte=request.form.get('texte', '').strip(),
         source=request.form.get('source', 'ecole').strip() or 'ecole',
     )
@@ -4753,7 +5385,7 @@ def comptines_recharger():
         db.session.add(SongBank(
             titre=c.get('titre') or 'Sans titre',
             niveau=c.get('niveau') or '',
-            type=c.get('type') or 'comptine',
+            kind=c.get('type') or 'comptine',
             texte=c.get('texte') or '',
             source='programme',
         ))
@@ -4786,6 +5418,9 @@ def espace_parents():
         elif not student.parent_pin or student.parent_pin != pin:
             error = 'Code PIN incorrect. Demandez-le à l\'école.'
             student = None
+        else:
+            session['parent_ok'] = True
+            session['parent_student_id'] = student.id
     return render_template('espace_parents.html', student=student, error=error)
 
 @app.route('/export/eleves.xlsx')

@@ -49,10 +49,12 @@
       {% for doc in docs %}
         {% if doc.fichier not in seen.files %}
         {% set _ = seen.files.append(doc.fichier) %}
+        {% set border = {'livret':'#c026d3','guide':'#0891b2','exemples':'#f59e0b','tableau':'#7c3aed','programme':'#ef4444'}.get(doc.get('type','programme'), '#ef4444') %}
         <a href="{{ url_for('programme_pdf', filename=doc.fichier) }}" target="_blank" class="card"
-           style="text-decoration:none;padding:0.85rem;border-top:3px solid #ef4444">
-            <span style="font-size:1.3rem">📕</span>
-            <strong style="color:#991b1b;font-size:0.9rem">{{ doc.titre }}</strong>
+           style="text-decoration:none;padding:0.85rem;border-top:4px solid {{ border }}">
+            <span style="font-size:1.3rem">{% if doc.get('type')=='livret' %}📒{% elif doc.get('type')=='guide' %}📘{% elif doc.get('type')=='exemples' %}💡{% elif doc.get('type')=='tableau' %}📊{% else %}📕{% endif %}</span>
+            <span class="badge" style="background:{{ border }};color:#fff;font-size:0.65rem">{{ doc.get('type','pdf') }}</span>
+            <strong style="display:block;color:#1e1b4b;font-size:0.88rem;margin-top:0.25rem">{{ doc.titre }}</strong>
             <span style="display:block;font-size:0.72rem;color:#6b7280">PDF officiel</span>
         </a>
         {% endif %}
@@ -71,15 +73,18 @@
 
 {% if pdfs %}
 <div class="card" style="margin-bottom:1.25rem;border-top:5px solid #dc2626;background:linear-gradient(135deg,#fef2f2,#fff7ed)">
-    <div class="card-title" style="color:#b91c1c">📄 Documents officiels (PDF) pour cette classe</div>
-    <p style="font-size:0.88rem;color:#6b7280;margin:0 0 0.75rem">Les programmes et tableaux que vous avez fournis — consultation ou téléchargement.</p>
+    <div class="card-title" style="color:#b91c1c">📄 Documents officiels — livrets, guides, exemples, programmes</div>
+    <p style="font-size:0.88rem;color:#6b7280;margin:0 0 0.75rem">Classés par type : <strong>livret</strong>, <strong>guide</strong>, <strong>exemples</strong>, <strong>tableau</strong>, <strong>programme</strong>.</p>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:0.65rem">
         {% for doc in pdfs %}
+        {% set border = {'livret':'#c026d3','guide':'#0891b2','exemples':'#f59e0b','tableau':'#7c3aed','programme':'#ef4444'}.get(doc.get('type','programme'), '#ef4444') %}
         <a href="{{ url_for('programme_pdf', filename=doc.fichier) }}" target="_blank" class="card"
-           style="text-decoration:none;padding:0.85rem;border-top:3px solid #ef4444;display:flex;gap:0.65rem;align-items:center">
-            <span style="font-size:1.6rem">📕</span>
+           style="text-decoration:none;padding:0.85rem;border-top:4px solid {{ border }};display:flex;gap:0.65rem;align-items:flex-start">
+            <span style="font-size:1.5rem">{% if doc.get('type')=='livret' %}📒{% elif doc.get('type')=='guide' %}📘{% elif doc.get('type')=='exemples' %}💡{% elif doc.get('type')=='tableau' %}📊{% else %}📕{% endif %}</span>
             <span>
-                <strong style="color:#991b1b;font-size:0.92rem">{{ doc.titre }}</strong>
+                <span class="badge" style="background:{{ border }};color:#fff;font-size:0.65rem;text-transform:uppercase">{{ doc.get('type','pdf') }}</span>
+                {% if doc.get('matiere') %}<span class="badge badge-info" style="font-size:0.65rem">{{ doc.matiere }}</span>{% endif %}
+                <strong style="display:block;color:#1e1b4b;font-size:0.9rem;margin-top:0.25rem">{{ doc.titre }}</strong>
                 <span style="display:block;font-size:0.72rem;color:#6b7280;margin-top:0.15rem">Ouvrir le PDF</span>
             </span>
         </a>
@@ -96,12 +101,21 @@
 </div>
 
 {% for m, cont in data.matieres.items() %}
-<div class="card" id="mat-{{ loop.index }}" style="margin-bottom:1.15rem;border-top:4px solid {% if loop.index % 3 == 1 %}#c026d3{% elif loop.index % 3 == 2 %}#7c3aed{% else %}#0891b2{% endif %}">
+{% set tdoc = cont.get('type_doc', 'programme') %}
+{% set border = {'livret':'#c026d3','guide':'#0891b2','exemples':'#f59e0b','tableau':'#7c3aed','programme':'#ef4444'}.get(tdoc, '#7c3aed') %}
+<div class="card" id="mat-{{ loop.index }}" style="margin-bottom:1.15rem;border-top:4px solid {{ border }}">
     <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:0.5rem;margin-bottom:0.75rem">
-        <h3 style="margin:0;color:#5b21b6;font-size:1.15rem">{{ m }}</h3>
+        <div>
+            <span class="badge" style="background:{{ border }};color:#fff;font-size:0.7rem;text-transform:uppercase">{{ tdoc }}</span>
+            <h3 style="margin:0.25rem 0 0;color:#5b21b6;font-size:1.15rem">{{ m }}</h3>
+        </div>
         <div style="display:flex;gap:0.35rem;flex-wrap:wrap">
             <a class="btn btn-primary btn-sm" href="{{ url_for('programmes', niveau=niveau, matiere=m) }}">Détail</a>
             <a class="btn btn-secondary btn-sm" href="{{ url_for('fiche_preparation_form') }}?niveau={{ niveau }}&matiere={{ m|urlencode }}">Préparer une séance</a>
+            <a class="btn btn-secondary btn-sm" href="{{ url_for('fiche_pedagogique_form') }}?niveau={{ niveau }}&matiere={{ m|urlencode }}">Fiche pédagogique</a>
+            {% if cont.get('pdf') %}
+            <a class="btn btn-sm" style="background:{{ border }};color:#fff" href="{{ url_for('programme_pdf', filename=cont.pdf) }}" target="_blank">📄 PDF</a>
+            {% endif %}
         </div>
     </div>
     <div class="table-wrap">
@@ -153,8 +167,11 @@
 <div class="card" style="margin-bottom:1.25rem;background:linear-gradient(135deg,#fdf4ff,#ede9fe,#ecfeff);border-top:5px solid #c026d3">
     <div style="font-size:0.8rem;font-weight:700;color:#a21caf">{{ data.cycle }} · {{ data.label }}</div>
     <h3 style="margin:0.35rem 0;color:#5b21b6">{{ matiere }}</h3>
-    <a class="btn btn-primary" href="{{ url_for('fiche_preparation_form') }}?niveau={{ niveau }}&matiere={{ matiere|urlencode }}">✨ Préparer une séance avec ce programme</a>
-    <a class="btn btn-secondary" href="{{ url_for('fiche_pedagogique_form') }}">Fiche pédagogique</a>
+    <a class="btn btn-primary" href="{{ url_for('fiche_preparation_form') }}?niveau={{ niveau }}&matiere={{ matiere|urlencode }}">✨ Préparer une séance</a>
+    <a class="btn btn-secondary" href="{{ url_for('fiche_pedagogique_form') }}?niveau={{ niveau }}&matiere={{ matiere|urlencode }}">Fiche pédagogique</a>
+    {% if content.get('pdf') %}
+    <a class="btn btn-secondary" href="{{ url_for('programme_pdf', filename=content.pdf) }}" target="_blank">📄 Document PDF source</a>
+    {% endif %}
 </div>
 
 <div class="table-wrap card" style="padding:0;overflow:hidden">
