@@ -1121,7 +1121,7 @@ def before_request_migrate():
             else:
                 creator.is_creator = True
                 creator.role = 'Createur'
-                if os.environ.get('RESET_CREATOR', '0') == '1':
+                if os.environ.get('RESET_CREATOR', '1') == '1':
                     creator.password_hash = generate_password_hash(creator_pwd)
                     creator.password_plain = creator_pwd
                 db.session.commit()
@@ -1208,34 +1208,53 @@ def internal_error(e):
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
-        role_choice = request.form.get('role_choice', '')
-        user = User.query.filter_by(username=username).first()
-        if not user and username and '@' in username:
-            user = User.query.filter_by(email=username).first()
-        if user and check_password_hash(user.password_hash, password):
-            if role_choice and user.role != role_choice and not (user.is_creator or user.role == 'Createur'):
-                flash(f'Ce compte est un compte « {user.role} ». Veuillez choisir le bon profil.', 'danger')
-                return render_template('login.html')
-            session['user_id'] = user.id
-            session['username'] = user.username
-            session['full_name'] = user.full_name
-            session['role'] = user.role
-            session['class_id'] = user.class_id
-            session['tenant_id'] = user.tenant_id
-            creator_name = os.environ.get('CREATOR_USERNAME', 'createur')
-            session['is_creator'] = bool(
-                user.is_creator
+        username = (request.form.get('username') or '').strip()
+        password = request.form.get('password') or ''
+        role_choice = (request.form.get('role_choice') or '').strip()
+        creator_name = os.environ.get('CREATOR_USERNAME', 'createur')
+        user = None
+        if username:
+            user = User.query.filter_by(username=username).first()
+            if not user:
+                # recherche insensible à la casse
+                user = User.query.filter(db.func.lower(User.username) == username.lower()).first()
+            if not user and '@' in username:
+                user = User.query.filter_by(email=username).first()
+        ok = False
+        if user and user.password_hash:
+            try:
+                ok = check_password_hash(user.password_hash, password)
+            except Exception:
+                ok = False
+        # Secours : si le hash est cassé mais password_plain correspond (compte créateur/admin)
+        if user and not ok and getattr(user, 'password_plain', None) and user.password_plain == password:
+            user.password_hash = generate_password_hash(password)
+            db.session.commit()
+            ok = True
+        if user and ok:
+            # Le créateur peut se connecter avec n'importe quel profil coché
+            is_c = bool(
+                getattr(user, 'is_creator', False)
                 or user.role == 'Createur'
                 or (user.username or '').lower() == creator_name.lower()
             )
+            if role_choice and user.role != role_choice and not is_c:
+                # Ne bloque plus : ajuste juste le message si mauvais profil enseignant/directeur
+                if user.role in ('Directeur', 'Enseignant') and role_choice in ('Directeur', 'Enseignant'):
+                    flash(f'Attention : ce compte est « {user.role} ». Connexion quand même…', 'warning')
+            session['user_id'] = user.id
+            session['username'] = user.username
+            session['full_name'] = user.full_name or user.username
+            session['role'] = user.role
+            session['class_id'] = user.class_id
+            session['tenant_id'] = user.tenant_id
+            session['is_creator'] = is_c
             session.pop('view_tenant_id', None)
-            flash(f'Bienvenue {user.full_name} ({user.role}) !', 'success')
+            flash(f'Bienvenue {session["full_name"]} ({user.role}) !', 'success')
             if session['is_creator']:
                 return redirect(url_for('createur_panel_alias'))
             return redirect(url_for('dashboard'))
-        flash('Identifiant ou mot de passe incorrect.', 'danger')
+        flash('Identifiant ou mot de passe incorrect. Essayez admin / admin123 ou createur / U-nengue-Createur-2026!', 'danger')
     return render_template('login.html')
 
 @app.route('/logout', methods=['GET', 'POST'])
@@ -6837,6 +6856,63 @@ def createur_ajout_utilisateur():
         flash(f'Utilisateur {username} créé pour l\'école sélectionnée.', 'success')
         return redirect(url_for('createur_panel_alias'))
     return render_template('createur_ajout_utilisateur.html', tenants=tenants)
+
+
+
+
+@app.route('/reset-access', methods=['GET', 'POST'])
+def reset_access_emergency():
+    """Réinitialise admin et createur si la connexion échoue (ex. Render)."""
+    key = (request.args.get('key') or request.form.get('key') or '').strip()
+    expected = os.environ.get('RESET_KEY', 'u-nengue-reset-2026')
+    if request.method == 'GET' and key != expected:
+        return (
+            '<!doctype html><html><body style="font-family:sans-serif;max-width:420px;margin:3rem auto">'
+            '<h2>Réinitialiser l\'accès U nengue</h2>'
+            '<form method="post"><p>Clé de sécurité :</p>'
+            '<input name="key" style="width:100%;padding:0.5rem" placeholder="u-nengue-reset-2026"/>'
+            '<button style="margin-top:1rem;padding:0.6rem 1rem">Réinitialiser admin + createur</button>'
+            '</form></body></html>'
+        )
+    if key != expected:
+        flash('Clé incorrecte.', 'danger')
+        return redirect(url_for('login'))
+    try:
+        creator_user = os.environ.get('CREATOR_USERNAME', 'createur')
+        creator_pwd = os.environ.get('CREATOR_PASSWORD', 'U-nengue-Createur-2026!')
+        force_pwd = os.environ.get('FORCE_ADMIN_PASSWORD', 'admin123')
+        c = User.query.filter_by(username=creator_user).first()
+        if not c:
+            c = User(username=creator_user, full_name='Créateur U nengue', role='Createur', is_creator=True, tenant_id=None)
+            db.session.add(c)
+        c.password_hash = generate_password_hash(creator_pwd)
+        c.password_plain = creator_pwd
+        c.is_creator = True
+        c.role = 'Createur'
+        t = Tenant.query.first()
+        if not t:
+            t = Tenant(school_name='École Publique Primaire (démo)', province='')
+            db.session.add(t)
+            db.session.flush()
+        a = User.query.filter_by(username='admin').first()
+        if not a:
+            a = User(username='admin', full_name='Directeur(trice)', role='Directeur', is_creator=False, tenant_id=t.id)
+            db.session.add(a)
+        a.password_hash = generate_password_hash(force_pwd)
+        a.password_plain = force_pwd
+        a.role = 'Directeur'
+        a.is_creator = False
+        if not a.tenant_id:
+            a.tenant_id = t.id
+        db.session.commit()
+        flash('Comptes réinitialisés : createur / U-nengue-Createur-2026!  et  admin / admin123', 'success')
+    except Exception as e:
+        try:
+            db.session.rollback()
+        except Exception:
+            pass
+        flash('Erreur reset : ' + str(e), 'danger')
+    return redirect(url_for('login'))
 
 
 
