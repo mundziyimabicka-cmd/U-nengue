@@ -1105,7 +1105,7 @@ def _restore_session_from_cookie():
     try:
         data = _auth_serializer().loads(token, max_age=7 * 24 * 3600)
         uid = data.get('uid')
-        user = User.query.get(uid) if uid else None
+        user = User.query.filter_by(id=uid).first() if uid else None
         if not user:
             return False
         session.permanent = True
@@ -1187,6 +1187,20 @@ def scoped_query(model):
     if tid is None:
         return q.filter(model.tenant_id == -1)  # rien
     return q.filter(model.tenant_id == tid)
+
+
+def scoped_get(model, id_value):
+    """Équivalent sûr de scoped_query(model).filter_by(id=id).first() (SQLAlchemy refuse .get() après filter)."""
+    if id_value is None:
+        return None
+    return scoped_query(model).filter_by(id=id_value).first()
+
+def scoped_get_or_404(model, id_value):
+    obj = scoped_get(model, id_value)
+    if obj is None:
+        from flask import abort
+        abort(404)
+    return obj
 
 def assign_tenant(obj):
     """Assigne le tenant_id à un nouvel objet."""
@@ -1837,7 +1851,7 @@ def modifier_eleve(id):
 @app.route('/eleves/<int:id>', methods=['GET', 'HEAD'])
 @login_required
 def fiche_eleve(id):
-    student = scoped_query(Student).get_or_404(id)
+    student = scoped_query(Student).filter_by(id=id).first_or_404()
     tc = teacher_class_filter()
     if tc and student.class_id != tc:
         flash('Accès réservé aux élèves de votre classe.', 'danger')
@@ -1855,7 +1869,7 @@ def fiche_pdf(id):
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     from reportlab.lib.enums import TA_CENTER, TA_LEFT
 
-    student = scoped_query(Student).get_or_404(id)
+    student = scoped_query(Student).filter_by(id=id).first_or_404()
     tc = teacher_class_filter()
     if tc and student.class_id != tc:
         flash('Accès réservé aux élèves de votre classe.', 'danger')
@@ -2052,7 +2066,7 @@ def cep():
 @app.route('/cep/toggle/<int:id>')
 @director_required
 def cep_toggle(id):
-    student = scoped_query(Student).get_or_404(id)
+    student = scoped_query(Student).filter_by(id=id).first_or_404()
     student.cep_selected = not student.cep_selected
     db.session.commit()
     flash(f"{student.full_name} {'sélectionné' if student.cep_selected else 'retiré'} pour le CEP.", 'success')
@@ -2192,7 +2206,7 @@ def ajouter_classe():
 @app.route('/classes/<int:id>/modifier', methods=['GET', 'POST'])
 @director_required
 def modifier_classe(id):
-    room = scoped_query(ClassRoom).get_or_404(id)
+    room = scoped_query(ClassRoom).filter_by(id=id).first_or_404()
     if request.method == 'POST':
         room.name = request.form.get('name')
         room.level = request.form.get('level')
@@ -2205,7 +2219,7 @@ def modifier_classe(id):
 @app.route('/classes/<int:id>/supprimer', methods=['GET', 'POST'])
 @director_required
 def supprimer_classe(id):
-    room = scoped_query(ClassRoom).get_or_404(id)
+    room = scoped_query(ClassRoom).filter_by(id=id).first_or_404()
     name = room.name
     # Supprimer tous les élèves de la classe d'abord
     for s in list(room.students):
@@ -2221,7 +2235,7 @@ def supprimer_classe(id):
 @app.route('/classes/<int:id>/vider', methods=['GET', 'POST'])
 @director_required
 def vider_classe(id):
-    room = scoped_query(ClassRoom).get_or_404(id)
+    room = scoped_query(ClassRoom).filter_by(id=id).first_or_404()
     n = 0
     for s in list(room.students):
         scoped_query(Evaluation).filter_by(student_id=s.id).delete()
@@ -2243,10 +2257,10 @@ def evaluations():
     tc = teacher_class_filter()
     if tc:
         rooms = scoped_query(ClassRoom).filter_by(id=tc).all()
-        selected = scoped_query(ClassRoom).get(tc)
+        selected = scoped_query(ClassRoom).filter_by(id=tc).first()
     else:
         rooms = scoped_query(ClassRoom).order_by(ClassRoom.level).all()
-        selected = scoped_query(ClassRoom).get(class_id) if class_id else (rooms[0] if rooms else None)
+        selected = scoped_query(ClassRoom).filter_by(id=class_id).first() if class_id else (rooms[0] if rooms else None)
     students = scoped_query(Student).filter_by(class_id=selected.id).order_by(Student.last_name).all() if selected else []
     return render_template('evaluations.html', rooms=rooms, selected=selected,
                            students=students, palier=palier)
@@ -2254,7 +2268,7 @@ def evaluations():
 @app.route('/evaluations/saisir/<int:student_id>', methods=['GET', 'POST'])
 @login_required
 def saisir_evaluation(student_id):
-    student = scoped_query(Student).get_or_404(student_id)
+    student = scoped_query(Student).filter_by(id=student_id).first_or_404()
     palier = request.args.get('palier', request.form.get('palier', 'Palier 1'))
     if request.method == 'POST':
         # Delete existing for this palier
@@ -2357,10 +2371,10 @@ def bulletins():
     tc = teacher_class_filter()
     if tc:
         rooms = scoped_query(ClassRoom).filter_by(id=tc).all()
-        selected = scoped_query(ClassRoom).get(tc)
+        selected = scoped_query(ClassRoom).filter_by(id=tc).first()
     else:
         rooms = scoped_query(ClassRoom).order_by(ClassRoom.level).all()
-        selected = scoped_query(ClassRoom).get(class_id) if class_id else (rooms[0] if rooms else None)
+        selected = scoped_query(ClassRoom).filter_by(id=class_id).first() if class_id else (rooms[0] if rooms else None)
     students = scoped_query(Student).filter_by(class_id=selected.id).order_by(Student.last_name).all() if selected else []
     return render_template('bulletins.html', rooms=rooms, selected=selected,
                            students=students, palier=palier)
@@ -2368,7 +2382,7 @@ def bulletins():
 @app.route('/bulletins/<int:student_id>')
 @login_required
 def bulletin(student_id):
-    student = scoped_query(Student).get_or_404(student_id)
+    student = scoped_query(Student).filter_by(id=student_id).first_or_404()
     tc = teacher_class_filter()
     if tc and student.class_id != tc:
         flash('Accès réservé aux élèves de votre classe.', 'danger')
@@ -2391,7 +2405,7 @@ def bulletin_pdf(student_id):
     from reportlab.lib.enums import TA_CENTER, TA_LEFT
     from xml.sax.saxutils import escape as xml_escape
 
-    student = scoped_query(Student).get_or_404(student_id)
+    student = scoped_query(Student).filter_by(id=student_id).first_or_404()
     # Accès école OU parent authentifié pour CET élève
     parent_ok = session.get('parent_ok') and session.get('parent_student_id') == student_id
     if not session.get('user_id') and not parent_ok:
@@ -2745,10 +2759,10 @@ def releves():
     tc = teacher_class_filter()
     if tc:
         rooms = scoped_query(ClassRoom).filter_by(id=tc).all()
-        selected = scoped_query(ClassRoom).get(tc)
+        selected = scoped_query(ClassRoom).filter_by(id=tc).first()
     else:
         rooms = scoped_query(ClassRoom).order_by(ClassRoom.level).all()
-        selected = scoped_query(ClassRoom).get(class_id) if class_id else (rooms[0] if rooms else None)
+        selected = scoped_query(ClassRoom).filter_by(id=class_id).first() if class_id else (rooms[0] if rooms else None)
     student_data = []
     report = None
     recap = None
@@ -2778,7 +2792,7 @@ def releves_pdf():
     if tc and class_id != tc:
         flash('Accès réservé à votre classe.', 'danger')
         return redirect(url_for('releves'))
-    room = scoped_query(ClassRoom).get_or_404(class_id)
+    room = scoped_query(ClassRoom).filter_by(id=class_id).first_or_404()
     report = compute_palier_report(class_id, palier)
     recap = compute_recap_reussite(class_id)
     settings = scoped_query(SchoolSettings).first()
@@ -3048,7 +3062,7 @@ def appliquer_reinscription():
     selected_ids = request.form.getlist('student_id')
     messages = []
     for sid in selected_ids:
-        s = scoped_query(Student).get(int(sid))
+        s = scoped_query(Student).filter_by(id=int(sid).first())
         if not s or not s.classroom:
             continue
         level = s.classroom.level
@@ -3148,7 +3162,7 @@ def ajouter_enseignant():
     db.session.add(u)
     # Mettre à jour le nom de l'enseignant sur la classe
     if class_id:
-        room = scoped_query(ClassRoom).get(int(class_id))
+        room = scoped_query(ClassRoom).filter_by(id=int(class_id).first())
         if room:
             room.teacher = full_name
     db.session.commit()
@@ -3207,7 +3221,7 @@ def envoyer_message():
 @app.route('/messages/<int:id>/lu')
 @login_required
 def message_lu(id):
-    msg = scoped_query(Message).get_or_404(id)
+    msg = scoped_query(Message).filter_by(id=id).first_or_404()
     if msg.to_user_id == session['user_id']:
         msg.is_read = True
         db.session.commit()
@@ -3239,7 +3253,7 @@ def whatsapp_preparer():
 
     targets = []
     if mode == 'individual' and student_id:
-        s = scoped_query(Student).get(int(student_id))
+        s = scoped_query(Student).filter_by(id=int(student_id).first())
         if s and (not tc or s.class_id == tc):
             targets = [s]
     elif mode == 'class' and class_id:
@@ -3304,7 +3318,7 @@ def sms_envoyer():
 
     targets = []
     if mode == 'individual' and student_id:
-        s = scoped_query(Student).get(int(student_id))
+        s = scoped_query(Student).filter_by(id=int(student_id).first())
         if s and (not tc or s.class_id == tc):
             targets = [s]
     elif mode == 'class' and class_id:
@@ -3399,7 +3413,7 @@ def appels():
             Attendance.student_id.in_([s.id for s in students] or [0])
         ).all():
             atts[a.student_id] = a
-    room = scoped_query(ClassRoom).get(class_id) if class_id else None
+    room = scoped_query(ClassRoom).filter_by(id=class_id).first() if class_id else None
     freq = compute_frequentation(class_id) if class_id else None
     return render_template('appels.html', rooms=rooms, room=room, students=students,
                            selected=selected, atts=atts, is_holiday=hol, holiday_label=hol_label,
@@ -3414,7 +3428,7 @@ def appels_marquer():
     date_str = request.form.get('date')
     status = request.form.get('status', 'Présent')
     selected = datetime.strptime(date_str, '%Y-%m-%d').date()
-    student = scoped_query(Student).get_or_404(student_id)
+    student = scoped_query(Student).filter_by(id=student_id).first_or_404()
     tc = teacher_class_filter()
     if tc and student.class_id != tc:
         flash('Accès réservé à votre classe.', 'danger')
@@ -3471,7 +3485,7 @@ def appels_stats():
     start = datetime.strptime(start_s, '%Y-%m-%d').date()
     end = datetime.strptime(end_s, '%Y-%m-%d').date()
     stats = attendance_stats(class_id, start, end) if class_id else None
-    room = scoped_query(ClassRoom).get(class_id) if class_id else None
+    room = scoped_query(ClassRoom).filter_by(id=class_id).first() if class_id else None
     freq = compute_frequentation(class_id) if class_id else None
     return render_template('appels_stats.html', rooms=rooms, room=room, stats=stats,
                            start=start, end=end, freq=freq)
@@ -3510,7 +3524,7 @@ def appels_pdf():
     if tc and class_id != tc:
         flash('Accès réservé à votre classe.', 'danger')
         return redirect(url_for('appels_stats'))
-    room = scoped_query(ClassRoom).get_or_404(class_id)
+    room = scoped_query(ClassRoom).filter_by(id=class_id).first_or_404()
     stats = attendance_stats(class_id, start, end)
     settings = scoped_query(SchoolSettings).first()
 
@@ -3568,7 +3582,7 @@ def jours_feries():
 @app.route('/jours-feries/<int:id>/supprimer', methods=['GET', 'POST'])
 @director_required
 def supprimer_ferie(id):
-    h = scoped_query(Holiday).get_or_404(id)
+    h = scoped_query(Holiday).filter_by(id=id).first_or_404()
     db.session.delete(h)
     db.session.commit()
     flash('Jour férié supprimé.', 'success')
@@ -3586,7 +3600,7 @@ def cahier_journal():
     else:
         rooms = scoped_query(ClassRoom).order_by(ClassRoom.level).all()
     class_id = request.args.get('class_id', type=int) or (tc or (rooms[0].id if rooms else None))
-    room = scoped_query(ClassRoom).get(class_id) if class_id else None
+    room = scoped_query(ClassRoom).filter_by(id=class_id).first() if class_id else None
     entries = []
     if class_id:
         entries = scoped_query(ClassJournal).filter_by(class_id=class_id).order_by(
@@ -3620,7 +3634,7 @@ def cahier_ajouter():
 @app.route('/cahier-journal/<int:id>/supprimer', methods=['GET', 'POST'])
 @login_required
 def cahier_supprimer(id):
-    entry = scoped_query(ClassJournal).get_or_404(id)
+    entry = scoped_query(ClassJournal).filter_by(id=id).first_or_404()
     tc = teacher_class_filter()
     if tc and entry.class_id != tc:
         flash('Accès refusé.', 'danger')
@@ -3646,7 +3660,7 @@ def cahier_pdf():
     if tc and class_id != tc:
         flash('Accès réservé à votre classe.', 'danger')
         return redirect(url_for('cahier_journal'))
-    room = scoped_query(ClassRoom).get_or_404(class_id)
+    room = scoped_query(ClassRoom).filter_by(id=class_id).first_or_404()
     entries = scoped_query(ClassJournal).filter_by(class_id=class_id).order_by(ClassJournal.date.desc()).limit(40).all()
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=A4, leftMargin=1.2*cm, rightMargin=1.2*cm,
@@ -3684,7 +3698,7 @@ def classe_pdf():
     if tc and class_id != tc:
         flash('Accès réservé à votre classe.', 'danger')
         return redirect(url_for('listes'))
-    room = scoped_query(ClassRoom).get_or_404(class_id)
+    room = scoped_query(ClassRoom).filter_by(id=class_id).first_or_404()
     students = scoped_query(Student).filter_by(class_id=class_id).order_by(Student.last_name).all()
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=A4, leftMargin=1.5*cm, rightMargin=1.5*cm)
@@ -3723,7 +3737,7 @@ def test_smtp():
         return redirect(url_for('dashboard'))
     settings = scoped_query(SchoolSettings).first()
     to = request.form.get('test_email') or (settings.email if settings else '') or session.get('username', '')
-    user = User.query.get(session.get('user_id'))
+    user = User.query.filter_by(id=session.get('user_id').first())
     if user and user.email:
         to = to or user.email
     if not to:
@@ -3745,12 +3759,12 @@ PEDAGO_SUBJECTS = ['Français', 'Mathématiques', 'Éveil']
 def fiches_pedagogiques():
     rooms = scoped_query(ClassRoom).order_by(ClassRoom.level, ClassRoom.name).all()
     if session.get('role') == 'Enseignant':
-        u = User.query.get(session.get('user_id'))
+        u = User.query.filter_by(id=session.get('user_id').first())
         if u and u.class_id:
             rooms = [r for r in rooms if r.id == u.class_id]
     class_id = request.args.get('class_id', type=int)
     subject = request.args.get('subject', '')
-    selected = scoped_query(ClassRoom).get(class_id) if class_id else (rooms[0] if rooms else None)
+    selected = scoped_query(ClassRoom).filter_by(id=class_id).first() if class_id else (rooms[0] if rooms else None)
     q = scoped_query(PedagogicalSheet)
     if selected:
         q = q.filter_by(class_id=selected.id)
@@ -3765,10 +3779,10 @@ def fiches_pedagogiques():
 @login_required
 def fiche_pedagogique_form(id=None):
     import json
-    sheet = scoped_query(PedagogicalSheet).get(id) if id else None
+    sheet = scoped_query(PedagogicalSheet).filter_by(id=id).first() if id else None
     rooms = scoped_query(ClassRoom).order_by(ClassRoom.level, ClassRoom.name).all()
     if session.get('role') == 'Enseignant':
-        u = User.query.get(session.get('user_id'))
+        u = User.query.filter_by(id=session.get('user_id').first())
         if u and u.class_id:
             rooms = [r for r in rooms if r.id == u.class_id]
             if sheet and sheet.class_id != u.class_id:
@@ -3777,7 +3791,7 @@ def fiche_pedagogique_form(id=None):
     if request.method == 'POST':
         class_id = request.form.get('class_id', type=int)
         if session.get('role') == 'Enseignant':
-            u = User.query.get(session.get('user_id'))
+            u = User.query.filter_by(id=session.get('user_id').first())
             if not u or u.class_id != class_id:
                 flash('Accès réservé à votre classe.', 'danger')
                 return redirect(url_for('fiches_pedagogiques'))
@@ -3831,9 +3845,9 @@ def fiche_pedagogique_form(id=None):
 @app.route('/fiches-pedagogiques/<int:id>')
 @login_required
 def fiche_pedagogique_detail(id):
-    sheet = scoped_query(PedagogicalSheet).get_or_404(id)
+    sheet = scoped_query(PedagogicalSheet).filter_by(id=id).first_or_404()
     if session.get('role') == 'Enseignant':
-        u = User.query.get(session.get('user_id'))
+        u = User.query.filter_by(id=session.get('user_id').first())
         if not u or u.class_id != sheet.class_id:
             flash('Accès refusé.', 'danger')
             return redirect(url_for('fiches_pedagogiques'))
@@ -3842,9 +3856,9 @@ def fiche_pedagogique_detail(id):
 @app.route('/fiches-pedagogiques/<int:id>/supprimer', methods=['POST'])
 @login_required
 def fiche_pedagogique_delete(id):
-    sheet = scoped_query(PedagogicalSheet).get_or_404(id)
+    sheet = scoped_query(PedagogicalSheet).filter_by(id=id).first_or_404()
     if session.get('role') == 'Enseignant':
-        u = User.query.get(session.get('user_id'))
+        u = User.query.filter_by(id=session.get('user_id').first())
         if not u or u.class_id != sheet.class_id:
             flash('Accès refusé.', 'danger')
             return redirect(url_for('fiches_pedagogiques'))
@@ -3864,9 +3878,9 @@ def fiche_pedagogique_pdf(id):
     from reportlab.lib.units import cm, mm
     from reportlab.lib.enums import TA_CENTER, TA_LEFT
 
-    sheet = scoped_query(PedagogicalSheet).get_or_404(id)
+    sheet = scoped_query(PedagogicalSheet).filter_by(id=id).first_or_404()
     if session.get('role') == 'Enseignant':
-        u = User.query.get(session.get('user_id'))
+        u = User.query.filter_by(id=session.get('user_id').first())
         if not u or u.class_id != sheet.class_id:
             flash('Accès refusé.', 'danger')
             return redirect(url_for('fiches_pedagogiques'))
@@ -4024,7 +4038,7 @@ def _build_timetable_rows(slots, days=None):
 def emploi_du_temps():
     rooms = scoped_query(ClassRoom).order_by(ClassRoom.level, ClassRoom.name).all()
     if session.get('role') == 'Enseignant':
-        u = User.query.get(session.get('user_id'))
+        u = User.query.filter_by(id=session.get('user_id').first())
         if u and u.class_id:
             rooms = [r for r in rooms if r.id == u.class_id]
     class_id = request.args.get('class_id', type=int)
@@ -4032,13 +4046,13 @@ def emploi_du_temps():
     slots = []
     rows = []
     if class_id:
-        selected = scoped_query(ClassRoom).get(class_id)
+        selected = scoped_query(ClassRoom).filter_by(id=class_id).first()
     elif rooms:
         selected = rooms[0]
         class_id = selected.id
     if selected:
         if session.get('role') == 'Enseignant':
-            u = User.query.get(session.get('user_id'))
+            u = User.query.filter_by(id=session.get('user_id').first())
             if u and u.class_id and selected.id != u.class_id:
                 flash('Accès réservé à votre classe.', 'danger')
                 return redirect(url_for('emploi_du_temps'))
@@ -4110,7 +4124,7 @@ def ajouter_creneau():
         flash('Jour(s), horaires et matière sont obligatoires.', 'danger')
         return redirect(url_for('emploi_du_temps', class_id=class_id))
     if session.get('role') == 'Enseignant':
-        u = User.query.get(session.get('user_id'))
+        u = User.query.filter_by(id=session.get('user_id').first())
         if not u or u.class_id != class_id:
             flash('Accès réservé à votre classe.', 'danger')
             return redirect(url_for('emploi_du_temps'))
@@ -4134,9 +4148,9 @@ def ajouter_creneau():
 def modifier_creneau(id):
     if request.method == 'GET':
         return redirect(url_for('emploi_du_temps'))
-    slot = scoped_query(ScheduleSlot).get_or_404(id)
+    slot = scoped_query(ScheduleSlot).filter_by(id=id).first_or_404()
     if session.get('role') == 'Enseignant':
-        u = User.query.get(session.get('user_id'))
+        u = User.query.filter_by(id=session.get('user_id').first())
         if not u or u.class_id != slot.class_id:
             flash('Accès refusé.', 'danger')
             return redirect(url_for('emploi_du_temps'))
@@ -4156,10 +4170,10 @@ def modifier_creneau(id):
 @app.route('/emploi-du-temps/<int:id>/supprimer', methods=['POST', 'GET'])
 @login_required
 def supprimer_creneau(id):
-    slot = scoped_query(ScheduleSlot).get_or_404(id)
+    slot = scoped_query(ScheduleSlot).filter_by(id=id).first_or_404()
     cid = slot.class_id
     if session.get('role') == 'Enseignant':
-        u = User.query.get(session.get('user_id'))
+        u = User.query.filter_by(id=session.get('user_id').first())
         if not u or u.class_id != cid:
             flash('Accès refusé.', 'danger')
             return redirect(url_for('emploi_du_temps'))
@@ -4172,7 +4186,7 @@ def supprimer_creneau(id):
 @login_required
 def vider_emploi(class_id):
     if session.get('role') == 'Enseignant':
-        u = User.query.get(session.get('user_id'))
+        u = User.query.filter_by(id=session.get('user_id').first())
         if not u or u.class_id != class_id:
             flash('Accès refusé.', 'danger')
             return redirect(url_for('emploi_du_temps'))
@@ -4263,9 +4277,9 @@ def emploi_pdf(class_id):
     from reportlab.lib.units import cm, mm
     from reportlab.lib.enums import TA_CENTER
 
-    room = scoped_query(ClassRoom).get_or_404(class_id)
+    room = scoped_query(ClassRoom).filter_by(id=class_id).first_or_404()
     if session.get('role') == 'Enseignant':
-        u = User.query.get(session.get('user_id'))
+        u = User.query.filter_by(id=session.get('user_id').first())
         if not u or u.class_id != class_id:
             flash('Accès refusé.', 'danger')
             return redirect(url_for('emploi_du_temps'))
@@ -5522,7 +5536,7 @@ def comptines_supprimer(id):
     if session.get('role') != 'Directeur':
         flash('Réservé au directeur.', 'danger')
         return redirect(url_for('comptines'))
-    s = scoped_query(SongBank).get_or_404(id)
+    s = scoped_query(SongBank).filter_by(id=id).first_or_404()
     db.session.delete(s)
     db.session.commit()
     flash('Supprimé de la banque.', 'success')
@@ -5792,7 +5806,7 @@ def export_eleves_xlsx():
         flash('openpyxl non installé. Ajoutez-le dans requirements.txt', 'danger')
         return redirect(url_for('eleves'))
     if session.get('role') == 'Enseignant':
-        u = User.query.get(session.get('user_id'))
+        u = User.query.filter_by(id=session.get('user_id').first())
         students = scoped_query(Student).filter_by(class_id=u.class_id).order_by(Student.last_name).all() if u else []
     else:
         students = scoped_query(Student).order_by(Student.last_name).all()
@@ -5855,7 +5869,7 @@ def export_classes_xlsx():
 def fiches_rituels():
     rooms = scoped_query(ClassRoom).order_by(ClassRoom.level, ClassRoom.name).all()
     if session.get('role') == 'Enseignant':
-        u = User.query.get(session.get('user_id'))
+        u = User.query.filter_by(id=session.get('user_id').first())
         if u and u.class_id:
             rooms = [r for r in rooms if r.id == u.class_id]
     class_id = request.args.get('class_id', type=int)
@@ -5863,7 +5877,7 @@ def fiches_rituels():
     if class_id:
         q = q.filter_by(class_id=class_id)
     elif session.get('role') == 'Enseignant':
-        u = User.query.get(session.get('user_id'))
+        u = User.query.filter_by(id=session.get('user_id').first())
         if u and u.class_id:
             q = q.filter_by(class_id=u.class_id)
     sheets = q.limit(100).all()
@@ -5874,10 +5888,10 @@ def fiches_rituels():
 @login_required
 def fiche_rituel_form(id=None):
     import json
-    sheet = scoped_query(RitualSheet).get(id) if id else None
+    sheet = scoped_query(RitualSheet).filter_by(id=id).first() if id else None
     rooms = scoped_query(ClassRoom).order_by(ClassRoom.level, ClassRoom.name).all()
     if session.get('role') == 'Enseignant':
-        u = User.query.get(session.get('user_id'))
+        u = User.query.filter_by(id=session.get('user_id').first())
         if u and u.class_id:
             rooms = [r for r in rooms if r.id == u.class_id]
     if request.method == 'POST':
@@ -5941,7 +5955,7 @@ def fiche_rituel_pdf(id):
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     from reportlab.lib.units import cm, mm
     from reportlab.lib.enums import TA_CENTER, TA_LEFT
-    sheet = scoped_query(RitualSheet).get_or_404(id)
+    sheet = scoped_query(RitualSheet).filter_by(id=id).first_or_404()
     settings = scoped_query(SchoolSettings).first()
     items = sheet.items()
     buffer = io.BytesIO()
@@ -6039,7 +6053,7 @@ def fiche_rituel_pdf(id):
 def fiches_preparation():
     rooms = scoped_query(ClassRoom).order_by(ClassRoom.level, ClassRoom.name).all()
     if session.get('role') == 'Enseignant':
-        u = User.query.get(session.get('user_id'))
+        u = User.query.filter_by(id=session.get('user_id').first())
         if u and u.class_id:
             rooms = [r for r in rooms if r.id == u.class_id]
     class_id = request.args.get('class_id', type=int)
@@ -6047,7 +6061,7 @@ def fiches_preparation():
     if class_id:
         q = q.filter_by(class_id=class_id)
     elif session.get('role') == 'Enseignant':
-        u = User.query.get(session.get('user_id'))
+        u = User.query.filter_by(id=session.get('user_id').first())
         if u and u.class_id:
             q = q.filter_by(class_id=u.class_id)
     sheets = q.limit(100).all()
@@ -6058,10 +6072,10 @@ def fiches_preparation():
 @login_required
 def fiche_preparation_form(id=None):
     import json
-    sheet = scoped_query(PrepSheet).get(id) if id else None
+    sheet = scoped_query(PrepSheet).filter_by(id=id).first() if id else None
     rooms = scoped_query(ClassRoom).order_by(ClassRoom.level, ClassRoom.name).all()
     if session.get('role') == 'Enseignant':
-        u = User.query.get(session.get('user_id'))
+        u = User.query.filter_by(id=session.get('user_id').first())
         if u and u.class_id:
             rooms = [r for r in rooms if r.id == u.class_id]
     if request.method == 'POST':
@@ -6126,7 +6140,7 @@ def fiche_preparation_pdf(id):
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     from reportlab.lib.units import cm, mm
     from reportlab.lib.enums import TA_CENTER, TA_LEFT
-    sheet = scoped_query(PrepSheet).get_or_404(id)
+    sheet = scoped_query(PrepSheet).filter_by(id=id).first_or_404()
     settings = scoped_query(SchoolSettings).first()
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=A4, leftMargin=1.2*cm, rightMargin=1.2*cm,
@@ -6484,7 +6498,7 @@ def set_theme(name):
 @app.route('/mon-compte', methods=['GET', 'POST'])
 @login_required
 def mon_compte():
-    user = User.query.get(session['user_id'])
+    user = User.query.filter_by(id=session['user_id']).first()
     if request.method == 'POST':
         user.full_name = request.form.get('full_name', user.full_name)
         user.email = request.form.get('email', '')
@@ -6611,7 +6625,7 @@ def actualite_ajouter():
 @app.route('/actualites/<int:id>/supprimer', methods=['GET', 'POST'])
 @director_required
 def actualite_supprimer(id):
-    pub = scoped_query(Publication).get_or_404(id)
+    pub = scoped_query(Publication).filter_by(id=id).first_or_404()
     db.session.delete(pub)
     db.session.commit()
     flash('Publication supprimée.', 'success')
@@ -6634,7 +6648,7 @@ def statistiques():
             rooms = scoped_query(ClassRoom).filter_by(id=tc).all()
         else:
             rooms = scoped_query(ClassRoom).order_by(ClassRoom.level).all()
-        room = scoped_query(ClassRoom).get(class_id) if class_id else None
+        room = scoped_query(ClassRoom).filter_by(id=class_id).first() if class_id else None
         stats = compute_class_stats(class_id)
         return render_template('statistiques.html', stats=stats, rooms=rooms, room=room, class_id=class_id)
     except Exception as e:
@@ -6655,7 +6669,7 @@ def statistiques_pdf():
     class_id = request.args.get('class_id', type=int)
     if tc:
         class_id = tc
-    room = scoped_query(ClassRoom).get(class_id) if class_id else None
+    room = scoped_query(ClassRoom).filter_by(id=class_id).first() if class_id else None
     stats = compute_class_stats(class_id)
     settings = scoped_query(SchoolSettings).first()
     scope = room.name if room else 'École entière'
@@ -6799,7 +6813,7 @@ def manuels():
 @app.route('/manuels/<int:id>/supprimer', methods=['GET', 'POST'])
 @director_required
 def manuels_supprimer(id):
-    b = scoped_query(Textbook).get_or_404(id)
+    b = scoped_query(Textbook).filter_by(id=id).first_or_404()
     db.session.delete(b)
     db.session.commit()
     flash('Manuel supprimé.', 'success')
