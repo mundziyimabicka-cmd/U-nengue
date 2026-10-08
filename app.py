@@ -907,29 +907,58 @@ def migrate_schema():
     try:
         insp = inspect(db.engine)
 
-        # Multi-tenant columns
-        for table, col in [
-            ('user', 'tenant_id'), ('user', 'is_creator'), ('user', 'password_plain'),
-            ('class_room', 'tenant_id'), ('student', 'tenant_id'), ('school_settings', 'tenant_id'),
-            ('publication', 'tenant_id'), ('message', 'tenant_id'), ('sms_log', 'tenant_id'),
-            ('song_bank', 'tenant_id'), ('textbook', 'tenant_id'), ('holiday', 'tenant_id'),
-            ('class_journal', 'tenant_id'), ('schedule_slot', 'tenant_id'),
-            ('ritual_sheet', 'tenant_id'), ('prep_sheet', 'tenant_id'), ('pedagogical_sheet', 'tenant_id'),
+        # Multi-tenant / colonnes manquantes (PostgreSQL : "user" est réservé → guillemets)
+        dialect = db.engine.dialect.name  # 'postgresql' | 'sqlite'
+        def qtable(t):
+            return f'"{t}"' if dialect == 'postgresql' else t
+        for table, col, coltype in [
+            ('user', 'tenant_id', 'INTEGER'),
+            ('user', 'is_creator', 'BOOLEAN DEFAULT FALSE'),
+            ('user', 'password_plain', "VARCHAR(120) DEFAULT ''"),
+            ('user', 'email', "VARCHAR(120) DEFAULT ''"),
+            ('user', 'reset_code', "VARCHAR(20) DEFAULT ''"),
+            ('class_room', 'tenant_id', 'INTEGER'),
+            ('student', 'tenant_id', 'INTEGER'),
+            ('school_settings', 'tenant_id', 'INTEGER'),
+            ('publication', 'tenant_id', 'INTEGER'),
+            ('message', 'tenant_id', 'INTEGER'),
+            ('sms_log', 'tenant_id', 'INTEGER'),
+            ('song_bank', 'tenant_id', 'INTEGER'),
+            ('textbook', 'tenant_id', 'INTEGER'),
+            ('holiday', 'tenant_id', 'INTEGER'),
+            ('class_journal', 'tenant_id', 'INTEGER'),
+            ('schedule_slot', 'tenant_id', 'INTEGER'),
+            ('ritual_sheet', 'tenant_id', 'INTEGER'),
+            ('prep_sheet', 'tenant_id', 'INTEGER'),
+            ('pedagogical_sheet', 'tenant_id', 'INTEGER'),
         ]:
             try:
-                if table in insp.get_table_names():
-                    cols = {c['name'] for c in insp.get_columns(table)}
-                    if col not in cols:
-                        if col in ('tenant_id',):
-                            sql = f"ALTER TABLE {table} ADD COLUMN {col} INTEGER"
-                        elif col == 'is_creator':
-                            sql = f"ALTER TABLE {table} ADD COLUMN {col} BOOLEAN DEFAULT 0"
-                        else:
-                            sql = f"ALTER TABLE {table} ADD COLUMN {col} VARCHAR(120) DEFAULT ''"
-                        with db.engine.begin() as conn:
-                            conn.execute(sa_text(sql))
-            except Exception:
-                pass
+                names = insp.get_table_names()
+                if table not in names:
+                    continue
+                cols = {c['name'] for c in insp.get_columns(table)}
+                if col in cols:
+                    continue
+                sql = f'ALTER TABLE {qtable(table)} ADD COLUMN {col} {coltype}'
+                with db.engine.begin() as conn:
+                    conn.execute(sa_text(sql))
+                print('migrate added', table, col)
+            except Exception as e:
+                print('migrate skip', table, col, e)
+        # Force PostgreSQL critical columns even if inspect failed
+        if dialect == 'postgresql':
+            for sql in [
+                'ALTER TABLE "user" ADD COLUMN IF NOT EXISTS password_plain VARCHAR(120) DEFAULT ''',
+                'ALTER TABLE "user" ADD COLUMN IF NOT EXISTS is_creator BOOLEAN DEFAULT FALSE',
+                'ALTER TABLE "user" ADD COLUMN IF NOT EXISTS tenant_id INTEGER',
+                'ALTER TABLE "user" ADD COLUMN IF NOT EXISTS email VARCHAR(120) DEFAULT ''',
+                'ALTER TABLE "user" ADD COLUMN IF NOT EXISTS reset_code VARCHAR(20) DEFAULT ''',
+            ]:
+                try:
+                    with db.engine.begin() as conn:
+                        conn.execute(sa_text(sql))
+                except Exception as e:
+                    print('pg force', e)
 
         if 'student' in insp.get_table_names():
             cols = {c['name'] for c in insp.get_columns('student')}
@@ -6863,6 +6892,11 @@ def createur_ajout_utilisateur():
 @app.route('/reset-access', methods=['GET', 'POST'])
 def reset_access_emergency():
     """Réinitialise admin et createur si la connexion échoue (ex. Render)."""
+    try:
+        migrate_schema()
+        db.create_all()
+    except Exception as e:
+        print("reset migrate", e)
     key = (request.args.get('key') or request.form.get('key') or '').strip()
     expected = os.environ.get('RESET_KEY', 'u-nengue-reset-2026')
     if request.method == 'GET' and key != expected:
