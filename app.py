@@ -35,7 +35,10 @@ app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(__file__), 'static', 
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16 MB
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-app.config['PERMANENT_SESSION_LIFETIME'] = 28800  # 8 heures
+app.config['SESSION_COOKIE_SECURE'] = os.environ.get('SESSION_COOKIE_SECURE', '0') == '1'
+app.config['PERMANENT_SESSION_LIFETIME'] = int(os.environ.get('SESSION_LIFETIME', '28800'))
+app.config['SESSION_REFRESH_EACH_REQUEST'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
 db = SQLAlchemy(app)
 
@@ -1058,7 +1061,9 @@ def login_required(f):
     def decorated(*args, **kwargs):
         if 'user_id' not in session:
             flash('Veuillez vous connecter.', 'warning')
-            return redirect(url_for('login'))
+            return redirect(url_for('login', next=request.path))
+        # Rafraîchir la session à chaque requête authentifiée
+        session.modified = True
         return f(*args, **kwargs)
     return decorated
 
@@ -1271,6 +1276,7 @@ def login():
                 # Ne bloque plus : ajuste juste le message si mauvais profil enseignant/directeur
                 if user.role in ('Directeur', 'Enseignant') and role_choice in ('Directeur', 'Enseignant'):
                     flash(f'Attention : ce compte est « {user.role} ». Connexion quand même…', 'warning')
+            session.permanent = True
             session['user_id'] = user.id
             session['username'] = user.username
             session['full_name'] = user.full_name or user.username
@@ -1282,6 +1288,9 @@ def login():
             flash(f'Bienvenue {session["full_name"]} ({user.role}) !', 'success')
             if session['is_creator']:
                 return redirect(url_for('createur_panel_alias'))
+            nxt = request.args.get('next') or request.form.get('next') or ''
+            if nxt.startswith('/') and not nxt.startswith('//'):
+                return redirect(nxt)
             return redirect(url_for('dashboard'))
         flash('Identifiant ou mot de passe incorrect. Essayez admin / admin123 ou createur / U-nengue-Createur-2026!', 'danger')
     return render_template('login.html')
@@ -1424,9 +1433,17 @@ def createur_quitter_ecole():
 
 @app.errorhandler(405)
 def method_not_allowed(e):
-    """Évite la page blanche 405 : renvoie vers l'accueil ou la banque."""
-    flash("Action non disponible sur cette page. Utilisez les boutons du menu.", "warning")
+    """Évite la page blanche 405."""
+    # Tente de rester sur une page proche
+    ref = request.path or ''
+    flash("Cette action n'est pas disponible ainsi. Utilisez les boutons de la page.", "warning")
     if session.get('user_id'):
+        if 'emploi' in ref:
+            return redirect(url_for('emploi_du_temps'))
+        if 'banque' in ref:
+            return redirect(url_for('banque_activites'))
+        if 'createur' in ref or 'panneau' in ref:
+            return redirect(url_for('createur_panel_alias'))
         return redirect(url_for('dashboard'))
     return redirect(url_for('login'))
 
@@ -1571,7 +1588,7 @@ def dashboard():
 
 # ==================== ÉLÈVES ====================
 
-@app.route('/eleves')
+@app.route('/eleves', methods=['GET', 'HEAD'])
 @login_required
 def eleves():
     q = request.args.get('q', '')
@@ -1688,7 +1705,10 @@ def ajouter_eleve():
 @app.route('/eleves/<int:id>/modifier', methods=['GET', 'POST'])
 @director_required
 def modifier_eleve(id):
-    student = scoped_query(Student).get_or_404(id)
+    student = scoped_query(Student).filter_by(id=id).first()
+    if not student:
+        flash('Élève introuvable ou hors de votre école.', 'danger')
+        return redirect(url_for('eleves'))
     classes = scoped_query(ClassRoom).order_by(ClassRoom.level).all()
     if request.method == 'POST':
         student.first_name = request.form.get('first_name')
@@ -1731,7 +1751,7 @@ def modifier_eleve(id):
         return redirect(url_for('fiche_eleve', id=student.id))
     return render_template('eleve_form.html', classes=classes, student=student)
 
-@app.route('/eleves/<int:id>')
+@app.route('/eleves/<int:id>', methods=['GET', 'HEAD'])
 @login_required
 def fiche_eleve(id):
     student = scoped_query(Student).get_or_404(id)
@@ -1845,17 +1865,36 @@ def fiche_pdf(id):
 @app.route('/eleves/<int:id>/supprimer')
 @director_required
 def supprimer_eleve(id):
-    student = scoped_query(Student).get_or_404(id)
-    name = student.full_name
-    scoped_query(Evaluation).filter_by(student_id=id).delete()
-    scoped_query(Attendance).filter_by(student_id=id).delete()
-    StudentDocument.query.filter_by(student_id=id).delete()
-    db.session.delete(student)
-    db.session.commit()
-    flash(f'Élève {name} supprimé.', 'success')
+    """Supprimer un élève (GET confirmé ou POST)."""
+    student = scoped_query(Student).filter_by(id=id).first()
+    if not student:
+        flash('Élève introuvable ou hors de votre école.', 'danger')
+        return redirect(url_for('eleves'))
+    tc = teacher_class_filter()
+    if tc and student.class_id != tc:
+        flash('Accès réservé aux élèves de votre classe.', 'danger')
+        return redirect(url_for('eleves'))
+    if session.get('role') == 'Enseignant':
+        flash('Seuls le directeur peut supprimer un élève.', 'danger')
+        return redirect(url_for('eleves'))
+    name = getattr(student, 'full_name', None) or f'{student.last_name} {student.first_name}'
+    try:
+        Evaluation.query.filter_by(student_id=id).delete()
+        Attendance.query.filter_by(student_id=id).delete()
+        try:
+            StudentDocument.query.filter_by(student_id=id).delete()
+        except Exception:
+            pass
+        db.session.delete(student)
+        db.session.commit()
+        flash(f'Élève {name} supprimé.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Erreur suppression : {e}', 'danger')
     return redirect(url_for('eleves'))
 
-@app.route('/eleves/supprimer-tous')
+
+@app.route('/eleves/supprimer-tous', methods=['GET', 'POST'])
 @director_required
 def supprimer_tous_eleves():
     scoped_query(Evaluation).delete()
@@ -1868,7 +1907,7 @@ def supprimer_tous_eleves():
 
 # ==================== LISTES NOMINATIVES ====================
 
-@app.route('/listes')
+@app.route('/listes', methods=['GET', 'HEAD'])
 @login_required
 def listes():
     tc = teacher_class_filter()
@@ -1880,15 +1919,24 @@ def listes():
         all_students = scoped_query(Student).order_by(Student.last_name).all()
     return render_template('listes.html', classes=classes, all_students=all_students)
 
-@app.route('/listes/classe/<int:id>')
+@app.route('/listes/classe/<int:id>', methods=['GET', 'HEAD'])
 @login_required
 def liste_classe(id):
-    room = scoped_query(ClassRoom).get_or_404(id)
+    """Liste nominative d'une classe (tri nom, accessible directeur / enseignant de la classe)."""
+    room = scoped_query(ClassRoom).filter_by(id=id).first()
+    if not room:
+        flash('Classe introuvable.', 'danger')
+        return redirect(url_for('listes'))
     tc = teacher_class_filter()
     if tc and tc != id:
         flash('Accès réservé à votre classe uniquement.', 'danger')
         return redirect(url_for('listes'))
-    students = scoped_query(Student).filter_by(class_id=id).order_by(Student.last_name).all()
+    students = (
+        scoped_query(Student)
+        .filter_by(class_id=id)
+        .order_by(Student.last_name.asc(), Student.first_name.asc())
+        .all()
+    )
     return render_template('liste_classe.html', room=room, students=students)
 
 # ==================== CEP ====================
@@ -2762,24 +2810,38 @@ def releves_pdf():
 
 # ==================== CARTES SCOLAIRES ====================
 
-@app.route('/cartes')
+@app.route('/cartes', methods=['GET', 'HEAD'])
 @login_required
 def cartes():
     classes = scoped_query(ClassRoom).order_by(ClassRoom.level).all()
     return render_template('cartes.html', classes=classes)
 
-@app.route('/cartes/classe/<int:id>')
+@app.route('/cartes/classe/<int:id>', methods=['GET', 'HEAD'])
 @login_required
 def cartes_classe(id):
-    room = scoped_query(ClassRoom).get_or_404(id)
-    students = scoped_query(Student).filter_by(class_id=id).order_by(Student.last_name).all()
+    room = scoped_query(ClassRoom).filter_by(id=id).first()
+    if not room:
+        flash('Classe introuvable.', 'danger')
+        return redirect(url_for('cartes'))
+    tc = teacher_class_filter()
+    if tc and tc != id:
+        flash('Accès réservé à votre classe.', 'danger')
+        return redirect(url_for('cartes'))
+    students = scoped_query(Student).filter_by(class_id=id).order_by(Student.last_name, Student.first_name).all()
     settings = scoped_query(SchoolSettings).first()
     return render_template('cartes_classe.html', room=room, students=students, settings=settings)
 
-@app.route('/cartes/eleve/<int:id>')
+@app.route('/cartes/eleve/<int:id>', methods=['GET', 'HEAD'])
 @login_required
 def carte_eleve(id):
-    student = scoped_query(Student).get_or_404(id)
+    student = scoped_query(Student).filter_by(id=id).first()
+    if not student:
+        flash('Élève introuvable.', 'danger')
+        return redirect(url_for('cartes'))
+    tc = teacher_class_filter()
+    if tc and student.class_id != tc:
+        flash('Accès réservé à votre classe.', 'danger')
+        return redirect(url_for('cartes'))
     settings = scoped_query(SchoolSettings).first()
     return render_template('carte_eleve.html', student=student, settings=settings)
 
@@ -3228,7 +3290,8 @@ def sms_envoyer():
 
 # ==================== APPELS / PRÉSENCES ====================
 
-@app.route('/appels')
+@app.route('/appels', methods=['GET', 'POST', 'HEAD'])
+@app.route('/appels/', methods=['GET', 'POST', 'HEAD'])
 @login_required
 def appels():
     tc = teacher_class_filter()
@@ -3258,9 +3321,11 @@ def appels():
                            selected=selected, atts=atts, is_holiday=hol, holiday_label=hol_label,
                            is_weekend=weekend, freq=freq)
 
-@app.route('/appels/marquer', methods=['POST'])
+@app.route('/appels/marquer', methods=['GET', 'POST'])
 @login_required
 def appels_marquer():
+    if request.method == 'GET':
+        return redirect(url_for('appels'))
     student_id = int(request.form.get('student_id'))
     date_str = request.form.get('date')
     status = request.form.get('status', 'Présent')
@@ -3281,9 +3346,11 @@ def appels_marquer():
     db.session.commit()
     return redirect(url_for('appels', class_id=student.class_id, date=date_str))
 
-@app.route('/appels/marquer-tous', methods=['POST'])
+@app.route('/appels/marquer-tous', methods=['GET', 'POST'])
 @login_required
 def appels_marquer_tous():
+    if request.method == 'GET':
+        return redirect(url_for('appels'))
     class_id = int(request.form.get('class_id'))
     date_str = request.form.get('date')
     status = request.form.get('status', 'Présent')
@@ -3306,7 +3373,7 @@ def appels_marquer_tous():
     flash(f'Tous marqués : {status}', 'success')
     return redirect(url_for('appels', class_id=class_id, date=date_str))
 
-@app.route('/appels/stats')
+@app.route('/appels/stats', methods=['GET', 'HEAD'])
 @login_required
 def appels_stats():
     tc = teacher_class_filter()
@@ -3325,7 +3392,7 @@ def appels_stats():
     return render_template('appels_stats.html', rooms=rooms, room=room, stats=stats,
                            start=start, end=end, freq=freq)
 
-@app.route('/appels/recap')
+@app.route('/appels/recap', methods=['GET', 'HEAD'])
 @director_required
 def appels_recap():
     """Tableau récapitulatif directeur — toutes les classes"""
@@ -3340,7 +3407,7 @@ def appels_recap():
         recap.append({'room': r, 'stats': st})
     return render_template('appels_recap.html', recap=recap, start=start, end=end)
 
-@app.route('/appels/pdf')
+@app.route('/appels/pdf', methods=['GET', 'HEAD'])
 @login_required
 def appels_pdf():
     from reportlab.lib.pagesizes import A4, landscape
@@ -3425,7 +3492,8 @@ def supprimer_ferie(id):
 
 # ==================== CAHIER JOURNAL ====================
 
-@app.route('/cahier-journal')
+@app.route('/cahier-journal', methods=['GET', 'POST', 'HEAD'])
+@app.route('/cahier-journal/', methods=['GET', 'POST', 'HEAD'])
 @login_required
 def cahier_journal():
     tc = teacher_class_filter()
@@ -3441,9 +3509,11 @@ def cahier_journal():
             ClassJournal.date.desc(), ClassJournal.id.desc()).limit(60).all()
     return render_template('cahier_journal.html', rooms=rooms, room=room, entries=entries, today=date.today().isoformat())
 
-@app.route('/cahier-journal/ajouter', methods=['POST'])
+@app.route('/cahier-journal/ajouter', methods=['GET', 'POST'])
 @login_required
 def cahier_ajouter():
+    if request.method == 'GET':
+        return redirect(url_for('cahier_journal'))
     class_id = int(request.form.get('class_id'))
     tc = teacher_class_filter()
     if tc and tc != class_id:
@@ -3463,7 +3533,7 @@ def cahier_ajouter():
     flash('Entrée du cahier journal enregistrée.', 'success')
     return redirect(url_for('cahier_journal', class_id=class_id))
 
-@app.route('/cahier-journal/<int:id>/supprimer')
+@app.route('/cahier-journal/<int:id>/supprimer', methods=['GET', 'POST'])
 @login_required
 def cahier_supprimer(id):
     entry = scoped_query(ClassJournal).get_or_404(id)
@@ -3477,7 +3547,7 @@ def cahier_supprimer(id):
     flash('Entrée supprimée.', 'success')
     return redirect(url_for('cahier_journal', class_id=cid))
 
-@app.route('/cahier-journal/pdf')
+@app.route('/cahier-journal/pdf', methods=['GET', 'HEAD'])
 @login_required
 def cahier_pdf():
     from reportlab.lib.pagesizes import A4
@@ -3864,7 +3934,8 @@ def _build_timetable_rows(slots, days=None):
         })
     return rows
 
-@app.route('/emploi-du-temps')
+@app.route('/emploi-du-temps', methods=['GET', 'POST', 'HEAD'])
+@app.route('/emploi-du-temps/', methods=['GET', 'POST', 'HEAD'])
 @login_required
 def emploi_du_temps():
     rooms = scoped_query(ClassRoom).order_by(ClassRoom.level, ClassRoom.name).all()
@@ -3932,9 +4003,11 @@ def _public_logo_urls(settings):
                     urls.append('logos/' + name)
     return urls
 
-@app.route('/emploi-du-temps/ajouter', methods=['POST'])
+@app.route('/emploi-du-temps/ajouter', methods=['GET', 'POST'])
 @login_required
 def ajouter_creneau():
+    if request.method == 'GET':
+        return redirect(url_for('emploi_du_temps'))
     class_id = request.form.get('class_id', type=int)
     days = request.form.getlist('days')
     if not days:
@@ -3972,9 +4045,11 @@ def ajouter_creneau():
     flash(f'{count} créneau(x) ajouté(s)' + (' — affiché(s) fusionné(s) sur la semaine.' if count > 1 else '.'), 'success')
     return redirect(url_for('emploi_du_temps', class_id=class_id))
 
-@app.route('/emploi-du-temps/<int:id>/modifier', methods=['POST'])
+@app.route('/emploi-du-temps/<int:id>/modifier', methods=['GET', 'POST'])
 @login_required
 def modifier_creneau(id):
+    if request.method == 'GET':
+        return redirect(url_for('emploi_du_temps'))
     slot = scoped_query(ScheduleSlot).get_or_404(id)
     if session.get('role') == 'Enseignant':
         u = User.query.get(session.get('user_id'))
@@ -4009,7 +4084,7 @@ def supprimer_creneau(id):
     flash('Créneau supprimé.', 'success')
     return redirect(url_for('emploi_du_temps', class_id=cid))
 
-@app.route('/emploi-du-temps/<int:class_id>/vider', methods=['POST'])
+@app.route('/emploi-du-temps/<int:class_id>/vider', methods=['GET', 'POST'])
 @login_required
 def vider_emploi(class_id):
     if session.get('role') == 'Enseignant':
@@ -4094,7 +4169,7 @@ def _schedule_logo_paths(settings):
                     paths.append(p)
     return paths[:6]
 
-@app.route('/emploi-du-temps/<int:class_id>/pdf')
+@app.route('/emploi-du-temps/<int:class_id>/pdf', methods=['GET', 'HEAD'])
 @login_required
 def emploi_pdf(class_id):
     from reportlab.lib.pagesizes import A4, landscape

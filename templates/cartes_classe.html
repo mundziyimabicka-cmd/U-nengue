@@ -1,6 +1,10 @@
 {% extends "base.html" %}
 {% block title %}Cartes — {{ room.name }}{% endblock %}
 {% block content %}
+<div style="margin-bottom:0.75rem">
+  <a href="{{ url_for('cartes') }}" class="btn btn-outline btn-sm">Retour cartes</a>
+</div>
+
 <div class="page-header">
     <h2>Cartes scolaires — {{ room.name }}</h2>
     <button onclick="window.print()" class="btn btn-primary">Imprimer</button>
@@ -19,6 +23,7 @@
         <div style="font-size:0.8rem">
             <strong style="font-size:0.9rem">{{ s.full_name }}</strong><br>
             Mat. : {{ s.matricule or '—' }}<br>
+            <a href="{{ url_for('carte_eleve', id=s.id) }}" style="font-size:0.75rem;color:#7c3aed">Carte individuelle</a><br>
             Né(e) : {{ s.birth_date.strftime('%d/%m/%Y') if s.birth_date else '—' }}<br>
             À : {{ s.birth_place or '—' }}<br>
             Classe : {{ room.name }}<br>

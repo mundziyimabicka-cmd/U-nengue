@@ -7,7 +7,7 @@
     <a href="{{ url_for('cahier_pdf', class_id=room.id) }}" class="btn btn-primary">📄 PDF</a>
     {% endif %}
 </div>
-<form method="GET" class="card" style="margin-bottom:1rem">
+<form method="GET" action="{{ url_for('cahier_journal') }}" class="card" style="margin-bottom:1rem">
     <div class="form-group" style="margin:0;max-width:280px">
         <label>Classe</label>
         <select name="class_id" class="form-control" onchange="this.form.submit()">

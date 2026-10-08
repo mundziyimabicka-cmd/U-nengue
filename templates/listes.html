@@ -1,48 +1,76 @@
 {% extends "base.html" %}
 {% block title %}Listes nominatives — U nengue{% endblock %}
 {% block content %}
-<div class="page-header">
-    <h2>📋 Listes nominatives</h2>
-    {% if session.get('role') == 'Directeur' and all_students %}
-    <a href="{{ url_for('supprimer_tous_eleves') }}" class="btn btn-danger"
-       onclick="return confirm('ATTENTION : Supprimer TOUS les élèves de l\'école ? Cette action est irréversible !')">
-        🗑️ Supprimer tout le fichier nominatif
-    </a>
-    {% endif %}
+<div class="page-header" style="display:flex;flex-wrap:wrap;gap:1rem;align-items:center;justify-content:space-between">
+    <div>
+        <h2 style="margin:0">Listes nominatives</h2>
+        <p class="subtitle" style="margin:0.25rem 0 0">Tous les eleves et listes par classe</p>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:0.5rem">
+        <a href="{{ url_for('eleves') }}" class="btn btn-secondary">Gestion eleves</a>
+        {% if session.get('role') == 'Directeur' and all_students %}
+        <a href="{{ url_for('supprimer_tous_eleves') }}" class="btn btn-danger"
+           onclick="return confirm('ATTENTION : supprimer TOUS les eleves de cette ecole ?');">
+            Vider le fichier nominatif
+        </a>
+        {% endif %}
+    </div>
 </div>
-<div class="card" style="margin-bottom:1.25rem">
-    <h3 style="color:#a21caf;margin-bottom:1rem">Liste de tous les élèves ({{ all_students|length }})</h3>
+
+<div class="card" style="border-top:5px solid #a21caf;margin-bottom:1.25rem">
+    <h3 style="color:#a21caf;margin:0 0 1rem">Liste de tous les eleves ({{ all_students|length }})</h3>
     <div class="table-wrap">
         <table>
-            <thead><tr><th>N°</th><th>Nom et Prénom</th><th>Matricule</th><th>Classe</th><th>Né(e) à</th><th>Statut</th>
-            {% if session.get('role') == 'Directeur' %}<th>Action</th>{% endif %}
-            </tr></thead>
+            <thead>
+                <tr>
+                    <th>N°</th>
+                    <th>Nom et prenom</th>
+                    <th>Matricule</th>
+                    <th>Classe</th>
+                    <th>Ne(e) a</th>
+                    <th>Statut</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
             <tbody>
             {% for s in all_students %}
             <tr>
                 <td>{{ loop.index }}</td>
-                <td><strong>{{ s.full_name }}</strong></td>
+                <td><strong>{{ s.last_name }} {{ s.first_name }}</strong></td>
                 <td>{{ s.matricule or '—' }}</td>
                 <td>{{ s.classroom.name if s.classroom else '—' }}</td>
                 <td>{{ s.birth_place or '—' }}</td>
-                <td><span class="badge badge-info">{{ s.status }}</span></td>
-                {% if session.get('role') == 'Directeur' %}
+                <td><span class="badge badge-info">{{ s.status or '—' }}</span></td>
                 <td>
-                    <a href="{{ url_for('supprimer_eleve', id=s.id) }}" class="btn btn-danger btn-sm"
-                       onclick="return confirm('Supprimer {{ s.full_name }} ?')">Supprimer</a>
+                    <div class="btn-group" style="flex-wrap:wrap">
+                        <a href="{{ url_for('fiche_eleve', id=s.id) }}" class="btn btn-info btn-sm">Fiche</a>
+                        {% if session.get('role') == 'Directeur' or session.get('is_creator') %}
+                        <a href="{{ url_for('modifier_eleve', id=s.id) }}" class="btn btn-outline btn-sm">Modifier</a>
+                        <a href="{{ url_for('supprimer_eleve', id=s.id) }}" class="btn btn-danger btn-sm"
+                           onclick="return confirm('Supprimer definitivement cet eleve ?');">Supprimer</a>
+                        {% endif %}
+                    </div>
                 </td>
-                {% endif %}
             </tr>
+            {% else %}
+            <tr><td colspan="7" style="text-align:center;padding:2rem;color:#6b7280">Aucun eleve inscrit</td></tr>
             {% endfor %}
             </tbody>
         </table>
     </div>
 </div>
-<div class="card">
-    <h3 style="color:#a21caf;margin-bottom:1rem">Listes par classe</h3>
-    <div style="display:flex;flex-wrap:wrap;gap:0.5rem">
+
+<div class="card" style="border-top:5px solid #7c3aed">
+    <h3 style="color:#7c3aed;margin:0 0 1rem">Listes par classe</h3>
+    <div style="display:flex;flex-wrap:wrap;gap:0.6rem">
     {% for c in classes %}
-    <a href="{{ url_for('liste_classe', id=c.id) }}" class="btn btn-outline">{{ c.name }} ({{ c.students|length }})</a>
+        {% set n = c.students|length if c.students else 0 %}
+        <a href="{{ url_for('liste_classe', id=c.id) }}" class="btn btn-outline" style="min-width:140px;text-align:center">
+            <strong>{{ c.name }}</strong><br>
+            <small>{{ c.level }} · {{ n }} eleve{{ 's' if n != 1 else '' }}</small>
+        </a>
+    {% else %}
+        <p style="color:#6b7280">Aucune classe. Creez des classes dans le menu Classes.</p>
     {% endfor %}
     </div>
 </div>

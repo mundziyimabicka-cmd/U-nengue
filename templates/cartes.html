@@ -1,13 +1,30 @@
 {% extends "base.html" %}
-{% block title %}Cartes scolaires{% endblock %}
+{% block title %}Cartes scolaires — U nengue{% endblock %}
 {% block content %}
-<div class="page-header"><h2>🪪 Cartes scolaires</h2></div>
-<div class="card">
-    <p style="margin-bottom:1rem">Choisissez une classe pour générer les cartes scolaires collectives, ou allez sur la fiche d'un élève pour sa carte individuelle.</p>
-    <div style="display:flex;flex-wrap:wrap;gap:0.5rem">
+<div class="page-header">
+    <h2>Cartes scolaires</h2>
+    <p class="subtitle">Cartes individuelles et collectives par classe</p>
+</div>
+<div class="card" style="border-top:5px solid #7c3aed;margin-bottom:1.25rem">
+    <h3 style="color:#7c3aed;margin:0 0 0.75rem">Cartes collectives par classe</h3>
+    <p style="color:#6b7280;margin:0 0 1rem">Choisissez une classe pour afficher et imprimer toutes les cartes.</p>
+    <div style="display:flex;flex-wrap:wrap;gap:0.6rem">
     {% for c in classes %}
-    <a href="{{ url_for('cartes_classe', id=c.id) }}" class="btn btn-purple">{{ c.name }} ({{ c.students|length }})</a>
+        {% set n = c.students|length if c.students else 0 %}
+        <a href="{{ url_for('cartes_classe', id=c.id) }}" class="btn btn-outline" style="min-width:150px;text-align:center">
+            <strong>{{ c.name }}</strong><br>
+            <small>{{ c.level }} · {{ n }} eleve{{ 's' if n != 1 else '' }}</small>
+        </a>
+    {% else %}
+        <p>Aucune classe disponible.</p>
     {% endfor %}
     </div>
+</div>
+<div class="card" style="border-top:5px solid #a21caf">
+    <h3 style="color:#a21caf;margin:0 0 0.75rem">Carte individuelle</h3>
+    <p style="margin:0;color:#6b7280">
+        Menu <strong>Eleves</strong> → bouton <strong>Carte</strong> sur la ligne de l eleve,
+        ou depuis sa fiche.
+    </p>
 </div>
 {% endblock %}

@@ -1,34 +1,70 @@
 {% extends "base.html" %}
 {% block title %}Liste — {{ room.name }}{% endblock %}
 {% block content %}
-<div class="page-header">
-    <h2>Liste nominative — {{ room.name }}</h2>
-    <div class="btn-group">
-        <a href="{{ url_for('cartes_classe', id=room.id) }}" class="btn btn-purple">Cartes scolaires</a>
-        <a href="{{ url_for('classe_pdf', class_id=room.id) }}" class="btn btn-primary">📄 PDF liste</a>
-        <a href="{{ url_for('appels_pdf', class_id=room.id) }}" class="btn btn-info">📄 PDF appels</a>
-        <a href="{{ url_for('cahier_pdf', class_id=room.id) }}" class="btn btn-fuchsia">📄 PDF journal</a>
-        <a href="{{ url_for('listes') }}" class="btn btn-outline">← Retour</a>
+<div class="page-header" style="display:flex;flex-wrap:wrap;gap:1rem;align-items:center;justify-content:space-between">
+    <div>
+        <h2 style="margin:0">Liste nominative — {{ room.name }}</h2>
+        <p class="subtitle" style="margin:0.25rem 0 0">
+            Niveau : <strong>{{ room.level }}</strong>
+            · Enseignant : <strong>{{ room.teacher or '—' }}</strong>
+            · Effectif : <strong>{{ students|length }}</strong>
+        </p>
+    </div>
+    <div class="btn-group" style="display:flex;flex-wrap:wrap;gap:0.4rem">
+        <a href="{{ url_for('listes') }}" class="btn btn-outline">Retour listes</a>
+        <a href="{{ url_for('eleves', class_id=room.id) }}" class="btn btn-secondary">Gestion eleves</a>
+        {% if session.get('role') == 'Directeur' or session.get('is_creator') %}
+        <a href="{{ url_for('ajouter_eleve') }}?class_id={{ room.id }}" class="btn btn-primary">+ Eleve</a>
+        {% endif %}
     </div>
 </div>
-<div class="card">
-    <p style="margin-bottom:1rem"><strong>Niveau :</strong> {{ room.level }} · <strong>Enseignant :</strong> {{ room.teacher or '—' }} · <strong>Effectif :</strong> {{ students|length }}</p>
+
+<div class="card" style="border-top:5px solid #a21caf">
     <div class="table-wrap">
         <table>
-            <thead><tr><th>N°</th><th>Photo</th><th>Nom et Prénom</th><th>Matricule</th><th>Date / Lieu de naissance</th><th>Sexe</th><th>Statut</th></tr></thead>
+            <thead>
+                <tr>
+                    <th>N°</th>
+                    <th>Photo</th>
+                    <th>Nom et prenom</th>
+                    <th>Matricule</th>
+                    <th>Date / lieu de naissance</th>
+                    <th>Sexe</th>
+                    <th>Statut</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
             <tbody>
             {% for s in students %}
             <tr>
                 <td>{{ loop.index }}</td>
-                <td>{% if s.photo_path %}<img src="{{ url_for('static', filename=s.photo_path) }}" style="width:36px;height:42px;object-fit:cover;border-radius:4px">{% else %}—{% endif %}</td>
-                <td><strong>{{ s.full_name }}</strong></td>
+                <td>
+                    {% if s.photo_path %}
+                    <img src="{{ url_for('static', filename=s.photo_path) }}"
+                         alt="" style="width:36px;height:42px;object-fit:cover;border-radius:4px">
+                    {% else %}—{% endif %}
+                </td>
+                <td><strong>{{ s.last_name }} {{ s.first_name }}</strong></td>
                 <td>{{ s.matricule or '—' }}</td>
-                <td>{{ s.birth_date.strftime('%d/%m/%Y') if s.birth_date else '—' }} — {{ s.birth_place or '' }}</td>
+                <td>
+                    {{ s.birth_date.strftime('%d/%m/%Y') if s.birth_date else '—' }}
+                    {% if s.birth_place %}<br><small>{{ s.birth_place }}</small>{% endif %}
+                </td>
                 <td>{{ s.gender or '—' }}</td>
-                <td><span class="badge badge-info">{{ s.status }}</span></td>
+                <td><span class="badge badge-info">{{ s.status or '—' }}</span></td>
+                <td>
+                    <div class="btn-group" style="flex-wrap:wrap">
+                        <a href="{{ url_for('fiche_eleve', id=s.id) }}" class="btn btn-info btn-sm">Fiche</a>
+                        {% if session.get('role') == 'Directeur' or session.get('is_creator') %}
+                        <a href="{{ url_for('modifier_eleve', id=s.id) }}" class="btn btn-outline btn-sm">Modifier</a>
+                        <a href="{{ url_for('supprimer_eleve', id=s.id) }}" class="btn btn-danger btn-sm"
+                           onclick="return confirm('Supprimer cet eleve ?');">Suppr.</a>
+                        {% endif %}
+                    </div>
+                </td>
             </tr>
             {% else %}
-            <tr><td colspan="7" style="text-align:center;padding:2rem">Aucun élève</td></tr>
+            <tr><td colspan="8" style="text-align:center;padding:2rem;color:#6b7280">Aucun eleve dans cette classe</td></tr>
             {% endfor %}
             </tbody>
         </table>

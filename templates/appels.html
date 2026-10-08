@@ -86,7 +86,7 @@
         {% endif %}
     </div>
 </div>
-<form method="GET" class="card" style="margin-bottom:1rem;display:flex;gap:0.75rem;flex-wrap:wrap;align-items:end">
+<form method="GET" action="{{ url_for('appels') }}" class="card" style="margin-bottom:1rem;display:flex;gap:0.75rem;flex-wrap:wrap;align-items:end">
     <div class="form-group" style="margin:0">
         <label>Classe</label>
         <select name="class_id" class="form-control" onchange="this.form.submit()">
