@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Alphabet yipunu{% endblock %}
+{% block content %}
+<div class="page-header" style="display:flex;flex-wrap:wrap;gap:0.75rem;justify-content:space-between;align-items:center">
+    <h2 style="margin:0">🔤 Alphabet & orthographe</h2>
+    <a class="btn btn-secondary" href="{{ url_for('ipunu') }}">← Ipunu</a>
+</div>
+<div class="card" style="border-top:5px solid #7c3aed;margin-bottom:1rem">
+    <div class="card-title">Lettres simples</div>
+    <p style="font-size:1.4rem;letter-spacing:0.25rem;font-weight:700;color:#5b21b6">{{ (alphabet.lettres_simples or [])|join(' ') }}</p>
+    <div class="card-title" style="margin-top:1rem">Lettres combinées</div>
+    <p style="font-size:1.3rem;letter-spacing:0.2rem;font-weight:700;color:#7c3aed">{{ (alphabet.lettres_combinees or [])|join(' · ') }}</p>
+    <div class="card-title" style="margin-top:1rem">Voyelles</div>
+    <p style="font-size:1.3rem;letter-spacing:0.25rem;font-weight:700;color:#059669">{{ (alphabet.voyelles or [])|join(' ') }}</p>
+</div>
+<div class="card" style="border-top:5px solid #059669;margin-bottom:1rem">
+    <div class="card-title" style="color:#047857">À retenir</div>
+    <ul style="line-height:1.7">{% for n in alphabet.notes or [] %}<li>{{ n }}</li>{% endfor %}</ul>
+</div>
+<div class="card" style="border-top:5px solid #2563eb">
+    <div class="card-title" style="color:#1d4ed8">Règles d'orthographe</div>
+    {% for r in orthographe or [] %}
+    <div style="margin-bottom:0.75rem;padding:0.65rem;background:#eff6ff;border-radius:8px">
+        <strong>{{ r.regle }}</strong>
+        <p style="margin:0.25rem 0 0">{{ r.detail }}</p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

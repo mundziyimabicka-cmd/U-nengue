@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Prononciation yipunu{% endblock %}
+{% block content %}
+<div class="page-header" style="display:flex;flex-wrap:wrap;gap:0.75rem;justify-content:space-between;align-items:center">
+    <div>
+        <h2 style="margin:0">🔊 Prononciation yipunu</h2>
+        <p class="subtitle">{{ pron.titre if pron.titre else 'Guide de prononciation' }}</p>
+    </div>
+    <a class="btn btn-secondary" href="{{ url_for('ipunu') }}">← Ipunu</a>
+</div>
+
+<div class="card" style="border-top:5px solid #7c3aed;margin-bottom:1rem">
+    <div class="card-title" style="color:#6d28d9">Règles essentielles</div>
+    {% for r in pron.regles or [] %}
+    <div style="margin-bottom:0.85rem;padding:0.75rem;background:#f5f3ff;border-radius:10px">
+        <strong style="color:#5b21b6">{{ r.titre }}</strong>
+        <p style="margin:0.35rem 0 0;line-height:1.5">{{ r.texte }}</p>
+    </div>
+    {% else %}
+    <p>Guide en cours de chargement.</p>
+    {% endfor %}
+</div>
+
+<div class="card" style="border-top:5px solid #059669">
+    <div class="card-title" style="color:#047857">Exemples à écouter</div>
+    <p style="font-size:0.9rem;color:#6b7280">La synthèse vocale lit le yipunu avec une voix française (approximation). Préférez un locuteur natif quand c’est possible.</p>
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>Yipunu</th><th>Approx. lecture</th><th>Français</th><th></th></tr></thead>
+            <tbody>
+            {% for yp, approx, fr in pron.exemples or [] %}
+                <tr>
+                    <td><strong style="color:#047857">{{ yp }}</strong></td>
+                    <td>{{ approx }}</td>
+                    <td>{{ fr }}</td>
+                    <td><button type="button" class="btn btn-sm btn-secondary" onclick="speakIpunu('{{ yp }}')">🔊</button></td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+<script>
+function speakIpunu(text) {
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'fr-FR'; u.rate = 0.8;
+  window.speechSynthesis.speak(u);
+}
+</script>
+{% endblock %}

@@ -11,15 +11,16 @@
 </div>
 
 <div class="card" style="border-top:5px solid #059669">
-    <div class="card-title" style="color:#047857">Phrases et vocabulaire</div>
+    <div class="card-title" style="color:#047857">Phrases et vocabulaire — cliquez 🔊 pour écouter</div>
     <div class="table-wrap">
         <table>
-            <thead><tr><th style="width:45%">Français</th><th>Ipunu</th></tr></thead>
+            <thead><tr><th style="width:40%">Français</th><th>Yipunu</th><th>🔊</th></tr></thead>
             <tbody>
-            {% for fr, ip in lecon.phrases %}
+            {% for pair in lecon.phrases %}
                 <tr>
-                    <td>{{ fr }}</td>
-                    <td><strong style="color:#0f766e;font-size:1.1rem">{{ ip }}</strong></td>
+                    <td>{{ pair[0] }}</td>
+                    <td><strong style="color:#0f766e;font-size:1.1rem">{{ pair[1] }}</strong></td>
+                    <td><button type="button" class="btn btn-sm btn-secondary" onclick="speakIpunu({{ pair[1]|tojson }})">🔊</button></td>
                 </tr>
             {% endfor %}
             </tbody>
@@ -33,4 +34,13 @@
        class="btn btn-sm {% if l.id==lecon.id %}btn-primary{% else %}btn-secondary{% endif %}">{{ l.id }}</a>
     {% endfor %}
 </div>
+<script>
+function speakIpunu(text) {
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(String(text));
+  u.lang = 'fr-FR'; u.rate = 0.85;
+  window.speechSynthesis.speak(u);
+}
+</script>
 {% endblock %}

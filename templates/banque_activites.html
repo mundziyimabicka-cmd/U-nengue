@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block title %}Banque d'activités & exercices{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h2 style="margin:0">📚 Banque pédagogique U nengue</h2>
+  <p class="subtitle">{{ total }} ressources · activités détaillées · exercices · évaluations · illustrations</p>
+</div>
+
+{# Onglets de séparation #}
+<div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:1rem">
+  {% set tabs = [
+    ('', 'Tout', total),
+    ('activite', 'Activités d\'apprentissage', counts.get('activite', 0)),
+    ('exercice', 'Exercices', counts.get('exercice', 0)),
+    ('evaluation', 'Évaluations', counts.get('evaluation', 0))
+  ] %}
+  {% for val, label, n in tabs %}
+  <a href="{{ url_for('banque_activites', type=val, niveau=niveau, matiere=matiere, q=q) }}"
+     class="btn {% if type_==val %}btn-primary{% else %}btn-secondary{% endif %}"
+     style="border-radius:999px">
+    {{ label }} <span class="badge" style="background:rgba(0,0,0,0.15)">{{ n }}</span>
+  </a>
+  {% endfor %}
+</div>
+
+<div class="card" style="margin-bottom:1rem;border-top:5px solid #a21caf">
+  <form method="GET" style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:end">
+    <input type="hidden" name="type" value="{{ type_ }}">
+    <div class="form-group" style="margin:0;min-width:140px">
+      <label>Niveau</label>
+      <select name="niveau" class="form-control" onchange="this.form.submit()">
+        <option value="">Tous</option>
+        {% for n in niveaux %}<option value="{{ n }}" {% if niveau==n %}selected{% endif %}>{{ n }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="form-group" style="margin:0;min-width:140px">
+      <label>Matière</label>
+      <select name="matiere" class="form-control" onchange="this.form.submit()">
+        <option value="">Toutes</option>
+        {% for m in matieres %}<option value="{{ m }}" {% if matiere==m %}selected{% endif %}>{{ m }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="form-group" style="margin:0;flex:1;min-width:160px">
+      <label>Recherche</label>
+      <input type="text" name="q" class="form-control" value="{{ q }}" placeholder="mot-clé…">
+    </div>
+    <button type="submit" class="btn btn-primary">Filtrer</button>
+  </form>
+</div>
+
+{% if type_ == 'activite' or type_ == '' %}
+{% if type_ == '' %}<h3 style="color:#059669;margin:1rem 0 0.5rem">🟢 Activités d'apprentissage (détaillées)</h3>{% endif %}
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem;margin-bottom:1.5rem">
+{% for a in items if a.type == 'activite' or type_ == 'activite' %}
+{% if a.type == 'activite' %}
+<a href="{{ url_for('banque_activite_detail', aid=a.id) }}" class="card" style="text-decoration:none;border-top:5px solid #059669">
+  <span class="badge badge-success">Activité</span>
+  <span class="badge badge-info">{{ a.niveau }}</span>
+  <span class="badge" style="background:#ede9fe;color:#6d28d9">{{ a.matiere }}</span>
+  <h3 style="margin:0.5rem 0;color:#14532d;font-size:1.05rem">{{ a.titre }}</h3>
+  <p style="margin:0;font-size:0.88rem;color:#6b7280">{{ a.objectif[:130] }}{% if a.objectif|length>130 %}…{% endif %}</p>
+  {% if a.situation %}<span class="badge" style="background:#fef3c7;color:#b45309">Situation-problème 🇬🇦</span>{% endif %}
+  <p style="margin:0.5rem 0 0;font-size:0.8rem;color:#047857">
+    {% if a.phases %}{{ a.phases|length }} phases · {% endif %}{{ a.duree_min or 20 }} min · détaillée
+  </p>
+</a>
+{% endif %}
+{% else %}
+{% if type_ == 'activite' %}<p>Aucune activité pour ces filtres.</p>{% endif %}
+{% endfor %}
+</div>
+{% endif %}
+
+{% if type_ == 'exercice' or type_ == '' %}
+{% if type_ == '' %}<h3 style="color:#ea580c;margin:1rem 0 0.5rem">🟠 Exercices d'entraînement</h3>{% endif %}
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1rem;margin-bottom:1.5rem">
+{% for a in items if a.type == 'exercice' or type_ == 'exercice' %}
+{% if a.type == 'exercice' %}
+<a href="{{ url_for('banque_activite_detail', aid=a.id) }}" class="card" style="text-decoration:none;border-top:5px solid #ea580c">
+  <span class="badge" style="background:#ffedd5;color:#c2410c">Exercice</span>
+  <span class="badge badge-info">{{ a.niveau }}</span>
+  <span class="badge" style="background:#ede9fe;color:#6d28d9">{{ a.matiere }}</span>
+  <h3 style="margin:0.5rem 0;color:#9a3412;font-size:1.02rem">{{ a.titre }}</h3>
+  {% if a.situation %}<span class="badge" style="background:#fef3c7;color:#b45309">Situation-problème 🇬🇦</span>{% endif %}
+  <p style="margin:0;font-size:0.88rem;color:#6b7280">{{ a.objectif[:110] }}{% if a.objectif|length>110 %}…{% endif %}</p>
+</a>
+{% endif %}
+{% else %}
+{% if type_ == 'exercice' %}<p>Aucun exercice pour ces filtres.</p>{% endif %}
+{% endfor %}
+</div>
+{% endif %}
+
+{% if type_ == 'evaluation' or type_ == '' %}
+{% if type_ == '' %}<h3 style="color:#dc2626;margin:1rem 0 0.5rem">🔴 Évaluations</h3>{% endif %}
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1rem">
+{% for a in items if a.type == 'evaluation' or type_ == 'evaluation' %}
+{% if a.type == 'evaluation' %}
+<a href="{{ url_for('banque_activite_detail', aid=a.id) }}" class="card" style="text-decoration:none;border-top:5px solid #dc2626">
+  <span class="badge badge-danger">Évaluation</span>
+  <span class="badge badge-info">{{ a.niveau }}</span>
+  <span class="badge" style="background:#ede9fe;color:#6d28d9">{{ a.matiere }}</span>
+  <h3 style="margin:0.5rem 0;color:#991b1b;font-size:1.02rem">{{ a.titre }}</h3>
+  <p style="margin:0;font-size:0.88rem;color:#6b7280">{{ a.objectif[:110] }}{% if a.objectif|length>110 %}…{% endif %}</p>
+</a>
+{% endif %}
+{% else %}
+{% if type_ == 'evaluation' %}<p>Aucune évaluation pour ces filtres.</p>{% endif %}
+{% endfor %}
+</div>
+{% endif %}
+{% endblock %}

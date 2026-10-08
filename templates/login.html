@@ -45,10 +45,19 @@
             </button>
         </form>
         <p style="text-align:center;margin-top:1rem"><a href="{{ url_for('mot_de_passe_oublie') }}">Mot de passe oublié ?</a></p>
-        <p style="text-align:center;margin-top:0.5rem;font-size:1.8rem;color:#9ca3af">
-          Merci beaucoup
+        <p style="text-align:center;margin-top:0.5rem;font-size:0.8rem;color:#9ca3af">
+            
         </p>
-    <p style="text-align:center;margin-top:0.75rem"><a href="{{ url_for('espace_parents') }}">👨‍👩‍👧 Espace parents</a></p>
+    <p style="text-align:center;margin-top:1rem">
+      <a href="{{ url_for('inscription') }}" style="font-weight:700;color:#a21caf">Créer un compte école U nengue</a></p>
+    <p style="text-align:center;margin-top:0.75rem;font-size:0.85rem;color:#6b7280">
+      Créateur de l'application : connectez-vous avec l'identifiant <strong>createur</strong>
+      (profil Directeur ou laissez vide), pas avec le compte directeur d'école.
+    </p><p style="display:none"><a href="#"></a>
+    </p>
+    <p style="text-align:center;margin-top:0.5rem">
+      <a href="{{ url_for('espace_parents') }}">👨‍👩‍👧 Espace parents</a>
+    </p>
     </div>
 </div>
 </body>

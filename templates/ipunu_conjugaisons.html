@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Conjugaisons yipunu{% endblock %}
+{% block content %}
+<div class="page-header" style="display:flex;flex-wrap:wrap;gap:0.75rem;justify-content:space-between;align-items:center">
+    <h2 style="margin:0">📝 Conjugaisons</h2>
+    <a class="btn btn-secondary" href="{{ url_for('ipunu') }}">← Ipunu</a>
+</div>
+{% if pronoms.sujets_affirmatifs %}
+<div class="card" style="border-top:5px solid #2563eb;margin-bottom:1rem">
+    <div class="card-title">Pronoms sujets</div>
+    <div class="table-wrap"><table>
+        <thead><tr><th>Yipunu</th><th>Français</th><th>🔊</th></tr></thead>
+        <tbody>
+        {% for yp, fr in pronoms.sujets_affirmatifs %}
+        <tr><td><strong>{{ yp }}</strong></td><td>{{ fr }}</td>
+        <td><button type="button" class="btn btn-sm btn-secondary" onclick="speakIpunu('{{ yp }}')">🔊</button></td></tr>
+        {% endfor %}
+        </tbody>
+    </table></div>
+</div>
+{% endif %}
+{% for c in conjugaisons %}
+<div class="card" style="border-top:5px solid {% if loop.index % 2 %}#059669{% else %}#0d9488{% endif %};margin-bottom:1rem">
+    <div class="card-title" style="color:#047857">{{ c.verbe }} — {{ c.temps }}</div>
+    <div class="table-wrap"><table>
+        <thead><tr><th>Yipunu</th><th>Français</th><th>🔊</th></tr></thead>
+        <tbody>
+        {% for yp, fr in c.formes %}
+        <tr><td><strong style="color:#0f766e">{{ yp }}</strong></td><td>{{ fr }}</td>
+        <td><button type="button" class="btn btn-sm btn-secondary" onclick="speakIpunu({{ yp|tojson }})">🔊</button></td></tr>
+        {% endfor %}
+        </tbody>
+    </table></div>
+    {% if c.negatif %}
+    <p style="margin:0.75rem 0 0.35rem;font-weight:600;color:#b91c1c">Forme négative</p>
+    <div class="table-wrap"><table>
+        <thead><tr><th>Yipunu</th><th>Français</th><th>🔊</th></tr></thead>
+        <tbody>
+        {% for yp, fr in c.negatif %}
+        <tr><td><strong>{{ yp }}</strong></td><td>{{ fr }}</td>
+        <td><button type="button" class="btn btn-sm btn-secondary" onclick="speakIpunu({{ yp|tojson }})">🔊</button></td></tr>
+        {% endfor %}
+        </tbody>
+    </table></div>
+    {% endif %}
+</div>
+{% endfor %}
+<script>
+function speakIpunu(text) {
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(String(text));
+  u.lang = 'fr-FR'; u.rate = 0.85;
+  window.speechSynthesis.speak(u);
+}
+</script>
+{% endblock %}

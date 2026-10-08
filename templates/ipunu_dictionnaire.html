@@ -1,10 +1,10 @@
 {% extends "base.html" %}
-{% block title %}Dictionnaire ipunu{% endblock %}
+{% block title %}Dictionnaire yipunu{% endblock %}
 {% block content %}
 <div class="page-header" style="display:flex;flex-wrap:wrap;gap:0.75rem;justify-content:space-between;align-items:center">
     <div>
-        <h2 style="margin:0">📖 Dictionnaire français ↔ ipunu</h2>
-        <p class="subtitle" style="margin:0.25rem 0 0">{{ total }} mots · filtre par catégorie</p>
+        <h2 style="margin:0">📖 Dictionnaire français ↔ yipunu</h2>
+        <p class="subtitle" style="margin:0.25rem 0 0">{{ total }} entrées (lexique Parlons Yipunu) · 🔊 pour écouter</p>
     </div>
     <a class="btn btn-secondary" href="{{ url_for('ipunu') }}">← Ipunu</a>
 </div>
@@ -13,7 +13,7 @@
     <form method="GET" style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:end">
         <div class="form-group" style="margin:0;flex:1;min-width:180px">
             <label>Recherche</label>
-            <input type="text" name="q" class="form-control" value="{{ q }}" placeholder="français ou ipunu…">
+            <input type="text" name="q" class="form-control" value="{{ q }}" placeholder="français ou yipunu…">
         </div>
         <div class="form-group" style="margin:0;min-width:160px">
             <label>Catégorie</label>
@@ -27,21 +27,23 @@
         <button type="submit" class="btn btn-primary">Chercher</button>
     </form>
     <p style="margin:0.75rem 0 0;font-size:0.85rem;color:#6b7280">{{ total_r }} résultat(s){% if pages>1 %} · page {{ page }}/{{ pages }}{% endif %}</p>
+    <p style="margin:0.35rem 0 0;font-size:0.8rem;color:#047857">Rappel : <strong>u</strong> se lit <strong>ou</strong> · toutes les lettres se prononcent · ñ = gn</p>
 </div>
 
 <div class="card">
     <div class="table-wrap">
         <table>
-            <thead><tr><th>Français</th><th>Ipunu</th><th>Catégorie</th></tr></thead>
+            <thead><tr><th>Français</th><th>Yipunu</th><th>Catégorie</th><th>🔊</th></tr></thead>
             <tbody>
             {% for x in items %}
                 <tr>
                     <td><strong style="color:#047857">{{ x.fr }}</strong></td>
                     <td style="color:#0f766e;font-size:1.05rem">{{ x.ipunu }}</td>
                     <td><span class="badge badge-info">{{ x.cat }}</span></td>
+                    <td><button type="button" class="btn btn-sm btn-secondary" onclick="speakIpunu({{ x.ipunu|tojson }})">🔊</button></td>
                 </tr>
             {% else %}
-                <tr><td colspan="3" style="text-align:center;padding:1.5rem">Aucun mot trouvé</td></tr>
+                <tr><td colspan="4" style="text-align:center;padding:1.5rem">Aucun mot trouvé</td></tr>
             {% endfor %}
             </tbody>
         </table>
@@ -54,4 +56,13 @@
     </div>
     {% endif %}
 </div>
+<script>
+function speakIpunu(text) {
+  if (!window.speechSynthesis) { alert('Synthèse vocale indisponible'); return; }
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(String(text).replace(/^-/, 'u '));
+  u.lang = 'fr-FR'; u.rate = 0.85;
+  window.speechSynthesis.speak(u);
+}
+</script>
 {% endblock %}

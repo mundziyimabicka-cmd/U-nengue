@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+{% block title %}Panneau créateur — U nengue{% endblock %}
+{% block content %}
+{% set s = stats or {} %}
+<div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:1rem;align-items:center;justify-content:space-between">
+  <div>
+    <h2 style="margin:0;background:linear-gradient(90deg,#a21caf,#db2777);-webkit-background-clip:text;-webkit-text-fill-color:transparent">Panneau créateur</h2>
+    <p class="subtitle" style="margin:0.25rem 0 0">Inscription des utilisateurs · pilotage national · statistiques</p>
+  </div>
+  <div style="display:flex;flex-wrap:wrap;gap:0.5rem">
+    <a class="btn btn-primary" href="{{ url_for('createur_nouvelle_ecole') }}">🏫 Nouvelle école + compte</a>
+    <a class="btn btn-secondary" href="{{ url_for('createur_ajout_utilisateur') }}">👤 Ajouter un utilisateur</a>
+    {% if session.get('view_tenant_id') %}
+    <a class="btn btn-secondary" href="{{ url_for('createur_quitter_ecole') }}">Quitter la vue école</a>
+    {% endif %}
+  </div>
+</div>
+
+{# ===== KPI CARDS ===== #}
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:0.75rem;margin-bottom:1.25rem">
+  <div class="card" style="margin:0;border-top:4px solid #a21caf;text-align:center">
+    <div style="font-size:0.75rem;color:#6b7280;text-transform:uppercase">Écoles</div>
+    <div style="font-size:2rem;font-weight:800;color:#a21caf">{{ s.get('nb_ecoles', tenants|length) }}</div>
+  </div>
+  <div class="card" style="margin:0;border-top:4px solid #2563eb;text-align:center">
+    <div style="font-size:0.75rem;color:#6b7280;text-transform:uppercase">Utilisateurs</div>
+    <div style="font-size:2rem;font-weight:800;color:#2563eb">{{ s.get('nb_users', users|length) }}</div>
+  </div>
+  <div class="card" style="margin:0;border-top:4px solid #059669;text-align:center">
+    <div style="font-size:0.75rem;color:#6b7280;text-transform:uppercase">Directeurs</div>
+    <div style="font-size:2rem;font-weight:800;color:#059669">{{ s.get('nb_directeurs', 0) }}</div>
+    <div style="font-size:0.85rem;color:#047857">{{ s.get('pct_directeurs', 0) }} %</div>
+  </div>
+  <div class="card" style="margin:0;border-top:4px solid #ea580c;text-align:center">
+    <div style="font-size:0.75rem;color:#6b7280;text-transform:uppercase">Enseignants</div>
+    <div style="font-size:2rem;font-weight:800;color:#ea580c">{{ s.get('nb_enseignants', 0) }}</div>
+    <div style="font-size:0.85rem;color:#c2410c">{{ s.get('pct_enseignants', 0) }} %</div>
+  </div>
+  <div class="card" style="margin:0;border-top:4px solid #7c3aed;text-align:center">
+    <div style="font-size:0.75rem;color:#6b7280;text-transform:uppercase">Élèves (toutes écoles)</div>
+    <div style="font-size:2rem;font-weight:800;color:#7c3aed">{{ s.get('nb_eleves_total', 0) }}</div>
+  </div>
+  <div class="card" style="margin:0;border-top:4px solid #0891b2;text-align:center">
+    <div style="font-size:0.75rem;color:#6b7280;text-transform:uppercase">Classes</div>
+    <div style="font-size:2rem;font-weight:800;color:#0891b2">{{ s.get('nb_classes_total', 0) }}</div>
+  </div>
+</div>
+
+{# ===== REPARTITION ROLES ===== #}
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.25rem">
+  <div class="card" style="margin:0;border-top:5px solid #059669">
+    <div class="card-title">Répartition des rôles</div>
+    {% set pd = s.get('pct_directeurs', 0) %}
+    {% set pe = s.get('pct_enseignants', 0) %}
+    <div style="margin-bottom:0.75rem">
+      <div style="display:flex;justify-content:space-between;font-size:0.9rem"><span>Directeurs</span><strong>{{ pd }} %</strong></div>
+      <div style="height:12px;background:#e5e7eb;border-radius:999px;overflow:hidden">
+        <div style="height:100%;width:{{ pd }}%;background:linear-gradient(90deg,#059669,#34d399);border-radius:999px"></div>
+      </div>
+    </div>
+    <div>
+      <div style="display:flex;justify-content:space-between;font-size:0.9rem"><span>Enseignants</span><strong>{{ pe }} %</strong></div>
+      <div style="height:12px;background:#e5e7eb;border-radius:999px;overflow:hidden">
+        <div style="height:100%;width:{{ pe }}%;background:linear-gradient(90deg,#ea580c,#fb923c);border-radius:999px"></div>
+      </div>
+    </div>
+  </div>
+  <div class="card" style="margin:0;border-top:5px solid #a21caf">
+    <div class="card-title">Part d'élèves par école</div>
+    {% for pe in s.get('par_ecole', []) %}
+    <div style="margin-bottom:0.65rem">
+      <div style="display:flex;justify-content:space-between;font-size:0.85rem;gap:0.5rem">
+        <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ pe.nom }}</span>
+        <strong>{{ pe.eleves }} <span style="color:#6b7280;font-weight:500">({{ pe.pct_eleves }} %)</span></strong>
+      </div>
+      <div style="height:10px;background:#f3e8ff;border-radius:999px;overflow:hidden">
+        <div style="height:100%;width:{{ pe.pct_eleves }}%;background:linear-gradient(90deg,#a21caf,#e879f9);border-radius:999px;min-width:{% if pe.eleves %}4px{% else %}0{% endif %}"></div>
+      </div>
+    </div>
+    {% else %}
+    <p style="color:#6b7280;margin:0">Aucune école inscrite pour l'instant.</p>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="card" style="border-top:5px solid #be185d;margin-bottom:1rem;background:#fdf2f8">
+  <p style="margin:0;color:#9d174d"><strong>Confidentialité :</strong> seuls vous voyez les mots de passe. Chaque école ne voit que ses données (base vide à la création).</p>
+</div>
+
+{# ===== ECOLES ===== #}
+<div class="card" style="border-top:5px solid #7c3aed;margin-bottom:1rem">
+  <div class="card-title">Écoles inscrites ({{ tenants|length }})</div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>École</th>
+          <th>Province</th>
+          <th>Créée le</th>
+          <th>Comptes</th>
+          <th>Élèves</th>
+          <th>Classes</th>
+          <th>% élèves</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for t in tenants %}
+        {% set pe = (s.get('par_ecole') or [])|selectattr('id','equalto',t.id)|list %}
+        {% set row = pe[0] if pe else none %}
+        <tr>
+          <td><strong>{{ t.school_name }}</strong></td>
+          <td>{{ t.province or '—' }}</td>
+          <td>{{ t.created_at.strftime('%d/%m/%Y') if t.created_at else '—' }}</td>
+          <td>{{ by_tenant.get(t.id, [])|length }}</td>
+          <td>{{ row.eleves if row else '—' }}</td>
+          <td>{{ row.classes if row else '—' }}</td>
+          <td>
+            {% if row %}
+            <span class="badge" style="background:#f3e8ff;color:#6d28d9">{{ row.pct_eleves }} %</span>
+            {% else %}—{% endif %}
+          </td>
+          <td>
+            <a class="btn btn-sm btn-primary" href="{{ url_for('createur_voir_ecole', tid=t.id) }}">Voir les données</a>
+          </td>
+        </tr>
+      {% else %}
+        <tr><td colspan="8">Aucune école. Cliquez sur « Nouvelle école + compte ».</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{# ===== IDENTIFIANTS ===== #}
+<div class="card" style="border-top:5px solid #059669">
+  <div class="card-title">Identifiants et mots de passe (tous les utilisateurs)</div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>École</th>
+          <th>Identifiant</th>
+          <th>Mot de passe</th>
+          <th>Nom</th>
+          <th>Rôle</th>
+          <th>E-mail</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for u in users %}
+        <tr>
+          <td>
+            {% set tlist = tenants|selectattr('id','equalto',u.tenant_id)|list %}
+            {{ tlist[0].school_name if tlist else '—' }}
+          </td>
+          <td><strong>{{ u.username }}</strong></td>
+          <td><code style="background:#fef3c7;padding:0.15rem 0.4rem;border-radius:4px">{{ u.password_plain or '(non enregistré)' }}</code></td>
+          <td>{{ u.full_name }}</td>
+          <td>
+            {% if u.role == 'Directeur' %}
+            <span class="badge badge-success">{{ u.role }}</span>
+            {% else %}
+            <span class="badge badge-info">{{ u.role }}</span>
+            {% endif %}
+          </td>
+          <td>{{ u.email or '—' }}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="6">Aucun utilisateur. Inscrivez une école pour commencer.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+<style>
+@media(max-width:800px){
+  div[style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr !important}
+}
+</style>
+{% endblock %}

@@ -1,22 +1,26 @@
 {% extends "base.html" %}
-{% block title %}Leçons ipunu{% endblock %}
+{% block title %}Leçons yipunu{% endblock %}
 {% block content %}
 <div class="page-header" style="display:flex;flex-wrap:wrap;gap:0.75rem;justify-content:space-between;align-items:center">
     <div>
-        <h2 style="margin:0">📚 Apprentissage de l'ipunu</h2>
-        <p class="subtitle" style="margin:0.25rem 0 0">Leçons progressives pour la classe</p>
+        <h2 style="margin:0">📚 Apprendre le yipunu par niveau</h2>
+        <p class="subtitle">Débutant → Intermédiaire → Avancé</p>
     </div>
     <a class="btn btn-secondary" href="{{ url_for('ipunu') }}">← Ipunu</a>
 </div>
 
-<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1rem">
-{% for l in lecons %}
-<a href="{{ url_for('ipunu_lecon_detail', lid=l.id) }}" class="card" style="text-decoration:none;border-top:5px solid {% if l.niveau=='Débutant' %}#059669{% else %}#0d9488{% endif %}">
-    <span class="badge {% if l.niveau=='Débutant' %}badge-success{% else %}badge-info{% endif %}">{{ l.niveau }}</span>
+{% set niveaux = ['Débutant', 'Intermédiaire', 'Avancé'] %}
+{% for niv in niveaux %}
+<h3 style="margin:1.25rem 0 0.75rem;color:{% if niv=='Débutant' %}#047857{% elif niv=='Intermédiaire' %}#0f766e{% else %}#6d28d9{% endif %}">{{ niv }}</h3>
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1rem;margin-bottom:0.5rem">
+{% for l in lecons if l.niveau == niv %}
+<a href="{{ url_for('ipunu_lecon_detail', lid=l.id) }}" class="card" style="text-decoration:none;border-top:5px solid {% if niv=='Débutant' %}#059669{% elif niv=='Intermédiaire' %}#0d9488{% else %}#7c3aed{% endif %}">
+    <span class="badge badge-success">{{ l.niveau }}</span>
     <h3 style="margin:0.5rem 0;color:#065f46">{{ l.id }}. {{ l.titre }}</h3>
     <p style="margin:0;font-size:0.9rem;color:#6b7280">{{ l.contenu }}</p>
     <p style="margin:0.5rem 0 0;font-size:0.8rem;color:#047857">{{ l.phrases|length }} expression(s)</p>
 </a>
 {% endfor %}
 </div>
+{% endfor %}
 {% endblock %}

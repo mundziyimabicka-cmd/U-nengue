@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+{% block title %}{{ act.titre }}{% endblock %}
+{% block content %}
+<div class="page-header" style="display:flex;flex-wrap:wrap;gap:0.75rem;justify-content:space-between;align-items:flex-start">
+  <div>
+    {% if act.type == 'activite' %}<span class="badge badge-success">Activité d'apprentissage</span>
+    {% elif act.type == 'exercice' %}<span class="badge" style="background:#ffedd5;color:#c2410c">Exercice</span>
+    {% else %}<span class="badge badge-danger">Évaluation</span>{% endif %}
+    <span class="badge badge-info">{{ act.niveau }}</span>
+    <span class="badge" style="background:#ede9fe;color:#6d28d9">{{ act.matiere }}</span>
+    {% if act.duree_min %}<span class="badge">⏱ {{ act.duree_min }} min</span>{% endif %}
+    <h2 style="margin:0.4rem 0 0">{{ act.titre }}</h2>
+    <p class="subtitle" style="max-width:40rem">{{ act.objectif }}</p>
+  </div>
+  <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+    <button type="button" class="btn btn-primary" onclick="copyForPrep()">📋 Copier pour fiche de préparation</button>
+    <a class="btn btn-secondary" href="{{ url_for('banque_activites', type=act.type) }}">← Retour</a>
+  </div>
+</div>
+
+
+{% if act.situation %}
+<div class="card" style="border-top:5px solid #b45309;margin-bottom:1rem;background:linear-gradient(135deg,#fffbeb,#fff7ed)">
+  <div class="card-title" style="color:#b45309">📖 Situation-problème (contexte gabonais)</div>
+  <p style="margin:0;line-height:1.65;font-size:1.05rem">{{ act.situation }}</p>
+</div>
+{% endif %}
+
+<div class="card" style="border-top:5px solid #a21caf;margin-bottom:1rem">
+  <div class="card-title" style="color:#86198f">🖼 Support visuel</div>
+  {% set v = act.visual or {} %}
+  {% if v.type == 'svg_bars' %}
+    <p style="font-weight:600">{{ v.title }}</p>
+    <svg viewBox="0 0 400 220" width="100%" style="max-width:480px;background:#faf5ff;border-radius:12px">
+      {% for b in v.bars or [] %}
+        {% set h = (b.value / (bar_max if bar_max else 1) * 150)|int %}
+        {% set x = 40 + loop.index0 * 90 %}
+        <rect x="{{ x }}" y="{{ 180 - h }}" width="50" height="{{ h }}" fill="{{ b.color or '#8b5cf6' }}" rx="6"/>
+        <text x="{{ x + 25 }}" y="200" text-anchor="middle" font-size="11" fill="#334155">{{ b.label }}</text>
+        <text x="{{ x + 25 }}" y="{{ 175 - h }}" text-anchor="middle" font-size="12" font-weight="bold">{{ b.value }}</text>
+      {% endfor %}
+    </svg>
+  {% elif v.type == 'svg_shapes' %}
+    <div style="display:flex;flex-wrap:wrap;gap:1rem">
+      {% for s in v.shapes or [] %}
+      <div style="text-align:center">
+        <svg width="80" height="80">
+          {% if s.form == 'circle' %}<circle cx="40" cy="40" r="32" fill="{{ s.color }}"/>
+          {% elif s.form == 'square' %}<rect x="10" y="10" width="60" height="60" fill="{{ s.color }}" rx="6"/>
+          {% else %}<polygon points="40,8 72,72 8,72" fill="{{ s.color }}"/>{% endif %}
+        </svg>
+        <div style="font-weight:600">{{ s.label }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  {% elif v.type == 'svg_numberline' %}
+    <svg viewBox="0 0 420 80" width="100%" style="max-width:520px;background:#ecfdf5;border-radius:12px">
+      <line x1="20" y1="40" x2="400" y2="40" stroke="#047857" stroke-width="3"/>
+      {% for m in v.marks or [] %}
+        {% set x = 20 + (m - v.min) / ((v.max - v.min) if v.max != v.min else 1) * 380 %}
+        <line x1="{{ x }}" y1="30" x2="{{ x }}" y2="50" stroke="#047857" stroke-width="2"/>
+        <text x="{{ x }}" y="68" text-anchor="middle" font-size="12">{{ m }}</text>
+      {% endfor %}
+      {% for h in v.highlight or [] %}
+        {% set x = 20 + (h - v.min) / ((v.max - v.min) if v.max != v.min else 1) * 380 %}
+        <circle cx="{{ x }}" cy="40" r="8" fill="#f59e0b"/>
+        <text x="{{ x }}" y="20" text-anchor="middle" font-size="11" fill="#b45309">{{ h }}</text>
+      {% endfor %}
+    </svg>
+  {% elif v.type == 'table' %}
+    <div class="table-wrap"><table>
+      <thead><tr>{% for h in v.headers or [] %}<th>{{ h }}</th>{% endfor %}</tr></thead>
+      <tbody>{% for row in v.rows or [] %}<tr>{% for cell in row %}<td>{{ cell }}</td>{% endfor %}</tr>{% endfor %}</tbody>
+    </table></div>
+  {% else %}
+    <div style="font-size:2.2rem;letter-spacing:0.15rem;padding:0.75rem;background:#fff7ed;border-radius:12px;text-align:center">
+      {% for it in v.items or [] %}{{ it }}{% endfor %}
+    </div>
+    {% if v.question %}<p style="text-align:center;font-weight:600;color:#c2410c">{{ v.question }}</p>{% endif %}
+  {% endif %}
+</div>
+
+{% if act.type == 'activite' %}
+{% if act.materiel %}
+<div class="card" style="border-top:5px solid #0891b2;margin-bottom:1rem">
+  <div class="card-title" style="color:#0e7490">🧰 Matériel</div>
+  <ul style="margin:0;columns:2">{% for m in act.materiel %}<li>{{ m }}</li>{% endfor %}</ul>
+</div>
+{% endif %}
+
+{% if act.phases %}
+<div class="card" style="border-top:5px solid #059669;margin-bottom:1rem">
+  <div class="card-title" style="color:#047857">📐 Déroulement détaillé par phases</div>
+  {% for p in act.phases %}
+  <div style="padding:0.75rem;margin-bottom:0.5rem;background:#f0fdf4;border-radius:10px;border-left:4px solid #16a34a">
+    <strong>{{ p.nom }}</strong>
+    {% if p.duree %}<span class="badge" style="margin-left:0.35rem">{{ p.duree }}</span>{% endif %}
+    <p style="margin:0.35rem 0 0;line-height:1.55">{{ p.description }}</p>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
+  <div class="card" style="border-top:5px solid #7c3aed;margin:0">
+    <div class="card-title" style="color:#6d28d9">👩‍🏫 Rôle de l'enseignant</div>
+    <ul>{% for r in act.role_enseignant or [] %}<li>{{ r }}</li>{% else %}<li>—</li>{% endfor %}</ul>
+  </div>
+  <div class="card" style="border-top:5px solid #db2777;margin:0">
+    <div class="card-title" style="color:#be185d">🧒 Rôle de l'élève</div>
+    <ul>{% for r in act.role_eleve or [] %}<li>{{ r }}</li>{% else %}<li>—</li>{% endfor %}</ul>
+  </div>
+</div>
+{% endif %}
+
+<div class="card" style="border-top:5px solid #ea580c;margin-bottom:1rem">
+  <div class="card-title" style="color:#c2410c">📌 Consignes élèves</div>
+  <ol style="line-height:1.7">{% for c in act.consignes or [] %}<li>{{ c }}</li>{% endfor %}</ol>
+</div>
+
+{% if act.type != 'activite' or not act.phases %}
+<div class="card" style="border-top:5px solid #059669;margin-bottom:1rem">
+  <div class="card-title" style="color:#047857">Déroulement</div>
+  <ol style="line-height:1.7">{% for d in act.deroule or [] %}<li>{{ d }}</li>{% endfor %}</ol>
+</div>
+{% endif %}
+
+<div class="card" style="border-top:5px solid #2563eb;margin-bottom:1rem">
+  <div class="card-title" style="color:#1d4ed8">✅ Correction / critères</div>
+  <p style="margin:0;line-height:1.6">{{ act.correction }}</p>
+</div>
+
+{% if act.type == 'activite' %}
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem">
+  <div class="card" style="margin:0;border-top:4px solid #ca8a04">
+    <div class="card-title">🔀 Différenciation</div>
+    <p style="margin:0;font-size:0.92rem">{{ act.differenciation or '—' }}</p>
+  </div>
+  <div class="card" style="margin:0;border-top:4px solid #0d9488">
+    <div class="card-title">📝 Trace écrite</div>
+    <p style="margin:0;font-size:0.92rem">{{ act.trace_ecrite or '—' }}</p>
+  </div>
+  <div class="card" style="margin:0;border-top:4px solid #4f46e5">
+    <div class="card-title">🔍 Éval. formative</div>
+    <p style="margin:0;font-size:0.92rem">{{ act.evaluation_formative or '—' }}</p>
+  </div>
+</div>
+{% endif %}
+
+{% if act.tags %}<p style="margin-top:1rem">{% for t in act.tags %}<span class="badge badge-info">{{ t }}</span> {% endfor %}</p>{% endif %}
+
+<textarea id="prepText" style="position:absolute;left:-9999px" aria-hidden="true"></textarea>
+<script>
+function copyForPrep(){
+  fetch('{{ url_for("api_activite_texte", aid=act.id) }}')
+    .then(r=>r.json()).then(data=>{
+      if(!data.ok){ alert('Erreur'); return; }
+      const ta=document.getElementById('prepText');
+      ta.value=(data.texte||'').replace(/\\n/g,'\n');
+      navigator.clipboard.writeText(ta.value).then(()=>alert('Texte copié ! Collez-le dans la fiche de préparation.')).catch(()=>{ta.select();document.execCommand('copy');alert('Texte copié.');});
+    });
+}
+</script>
+<style>
+@media(max-width:700px){
+  div[style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr !important}
+  div[style*="grid-template-columns:1fr 1fr 1fr"]{grid-template-columns:1fr !important}
+}
+</style>
+{% endblock %}

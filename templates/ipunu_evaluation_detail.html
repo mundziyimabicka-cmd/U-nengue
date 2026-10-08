@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}{{ ev.titre }}{% endblock %}
+{% block content %}
+<div class="page-header" style="display:flex;flex-wrap:wrap;gap:0.75rem;justify-content:space-between;align-items:center">
+    <div>
+        <span class="badge badge-danger">{{ ev.niveau }}</span>
+        <h2 style="margin:0.35rem 0 0">{{ ev.titre }}</h2>
+        <p class="subtitle">Durée indicative : {{ ev.duree }}</p>
+    </div>
+    <a class="btn btn-secondary" href="{{ url_for('ipunu_evaluations') }}">← Évaluations</a>
+</div>
+
+{% if result %}
+<div class="card" style="border-top:5px solid {% if result.pct >= 70 %}#059669{% else %}#dc2626{% endif %};margin-bottom:1rem">
+    <h3 style="margin:0;color:{% if result.pct >= 70 %}#047857{% else %}#b91c1c{% endif %}">
+        Score : {{ result.score }} / {{ result.total }} ({{ result.pct }} %)
+    </h3>
+    {% for d in result.details %}
+    <div style="margin-top:0.65rem;padding:0.55rem;background:{% if d.ok %}#ecfdf5{% else %}#fef2f2{% endif %};border-radius:8px">
+        <strong>{{ d.q }}</strong><br>
+        {% if d.ok %}✅ {{ d.correct }}
+        {% else %}❌ Votre réponse : {{ d.yours }} — Correct : <strong>{{ d.correct }}</strong>{% endif %}
+    </div>
+    {% endfor %}
+    <p style="margin-top:1rem"><a class="btn btn-primary" href="{{ url_for('ipunu_evaluation_detail', eid=ev.id) }}">Refaire</a></p>
+</div>
+{% else %}
+<form method="POST" class="card" style="border-top:5px solid #dc2626">
+    {% for q in ev.questions %}
+    <div style="margin-bottom:1.15rem;padding:0.85rem;background:#fef2f2;border-radius:10px">
+        <strong>{{ loop.index }}. {{ q.q }}</strong>
+        {% for ch in q.choices %}
+        <label style="display:block;margin:0.35rem 0 0 0.5rem;cursor:pointer">
+            <input type="radio" name="q{{ loop.index0 }}" value="{{ loop.index0 }}" required> {{ ch }}
+        </label>
+        {% endfor %}
+    </div>
+    {% endfor %}
+    <button type="submit" class="btn btn-primary">Valider l'évaluation</button>
+</form>
+{% endif %}
+{% endblock %}

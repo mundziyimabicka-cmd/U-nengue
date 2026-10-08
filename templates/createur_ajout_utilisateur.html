@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Ajouter un utilisateur — Créateur{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h2>👤 Ajouter un utilisateur à une école</h2>
+  <p class="subtitle">Directeur ou enseignant rattaché à une école déjà inscrite</p>
+</div>
+<div class="card" style="max-width:560px;border-top:5px solid #059669">
+  <form method="POST">
+    <div class="form-group"><label>École *</label>
+      <select class="form-control" name="tenant_id" required>
+        <option value="">— Choisir —</option>
+        {% for t in tenants %}
+        <option value="{{ t.id }}">{{ t.school_name }} {% if t.province %}({{ t.province }}){% endif %}</option>
+        {% endfor %}
+      </select></div>
+    <div class="form-group"><label>Nom complet *</label>
+      <input class="form-control" name="full_name" required></div>
+    <div class="form-group"><label>Rôle *</label>
+      <select class="form-control" name="role">
+        <option value="Enseignant">Enseignant</option>
+        <option value="Directeur">Directeur</option>
+      </select></div>
+    <div class="form-group"><label>Identifiant *</label>
+      <input class="form-control" name="username" required pattern="[a-zA-Z0-9._-]{3,40}"></div>
+    <div class="form-group"><label>Mot de passe * (min. 6)</label>
+      <input class="form-control" type="password" name="password" required minlength="6"></div>
+    <div class="form-group"><label>E-mail</label>
+      <input class="form-control" type="email" name="email"></div>
+    <button class="btn btn-primary" type="submit">Créer le compte</button>
+    <a class="btn btn-secondary" href="{{ url_for('createur_panel_alias') }}">Annuler</a>
+  </form>
+</div>
+{% endblock %}

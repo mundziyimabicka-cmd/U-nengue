@@ -43,6 +43,10 @@
     <h2>{{ 'Modifier' if sheet else 'Nouvelle' }} fiche de préparation</h2>
     <a class="btn btn-secondary" href="{{ url_for('fiches_preparation') }}">← Retour</a>
 </div>
+<div class="alert alert-success" style="margin-bottom:1rem">
+  💡 Besoin d'idées ? Consultez la <a href="{{ url_for('banque_activites') }}" target="_blank"><strong>banque d'activités illustrées</strong></a>
+  (exercices, évaluations, graphiques) et utilisez « Copier pour fiche de préparation ».
+</div>
 <form method="POST" class="card" style="max-width:960px;border-top:5px solid #7c3aed">
     <div class="form-row">
         <div class="form-group" style="flex:2">

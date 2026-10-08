@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Nouvelle école — Créateur{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h2>🏫 Inscrire une nouvelle école</h2>
+  <p class="subtitle">Le créateur crée le compte directeur — base vide prête à l'emploi</p>
+</div>
+<div class="card" style="max-width:560px;border-top:5px solid #a21caf">
+  <form method="POST">
+    <div class="form-group"><label>Nom de l'école *</label>
+      <input class="form-control" name="school_name" required placeholder="Ex. École Publique de Mouila"></div>
+    <div class="form-group"><label>Province</label>
+      <input class="form-control" name="province" placeholder="Ex. Ngounié"></div>
+    <div class="form-group"><label>Nom du responsable *</label>
+      <input class="form-control" name="full_name" required></div>
+    <div class="form-group"><label>Rôle</label>
+      <select class="form-control" name="role">
+        <option value="Directeur">Directeur</option>
+        <option value="Enseignant">Enseignant</option>
+      </select></div>
+    <div class="form-group"><label>Identifiant de connexion *</label>
+      <input class="form-control" name="username" required pattern="[a-zA-Z0-9._-]{3,40}"></div>
+    <div class="form-group"><label>Mot de passe * (min. 6)</label>
+      <input class="form-control" type="password" name="password" required minlength="6"></div>
+    <div class="form-group"><label>E-mail</label>
+      <input class="form-control" type="email" name="email"></div>
+    <div class="form-group"><label>Téléphone</label>
+      <input class="form-control" name="phone"></div>
+    <button class="btn btn-primary" type="submit">Créer l'école et le compte</button>
+    <a class="btn btn-secondary" href="{{ url_for('createur_panel_alias') }}">Annuler</a>
+  </form>
+</div>
+{% endblock %}
