@@ -6,7 +6,7 @@
         <h2 style="margin:0">📅 Emploi du temps</h2>
         <p class="subtitle" style="margin:0.25rem 0 0">Activités fusionnées sur plusieurs jours · Groupes · Logos · PDF</p>
     </div>
-    <form method="GET" style="display:flex;gap:0.5rem;align-items:center">
+    <form method="GET" action="{{ url_for('emploi_du_temps') }}" style="display:flex;gap:0.5rem;align-items:center">
         <select name="class_id" class="form-control" onchange="this.form.submit()" style="min-width:220px">
             {% for r in rooms %}
             <option value="{{ r.id }}" {% if selected and selected.id == r.id %}selected{% endif %}>
