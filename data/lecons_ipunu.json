@@ -1,0 +1,474 @@
+[
+  {
+    "id": 1,
+    "titre": "Écriture et prononciation",
+    "niveau": "Débutant",
+    "contenu": "Règles du livre Parlons Yipunu : on écrit comme on prononce. Le u se lit « ou ». Toutes les lettres se prononcent.",
+    "phrases": [
+      [
+        "Le u se lit ou",
+        "u → ou (route, boule)"
+      ],
+      [
+        "g gutturale",
+        "gome (la peur) — g comme en espagnol"
+      ],
+      [
+        "ñ comme gn",
+        "ñame (viande) → gn"
+      ],
+      [
+        "mb, nd, ng, nz, ts",
+        "mbome, ndagu, nzambi, tsande"
+      ],
+      [
+        "mwane",
+        "mwane — l'enfant (w comme dans moine)"
+      ],
+      [
+        "budilu",
+        "bu-di-lu — le fer"
+      ]
+    ]
+  },
+  {
+    "id": 2,
+    "titre": "Salutations — matinée",
+    "niveau": "Débutant",
+    "contenu": "Dire bonjour le matin selon la distance (près / loin), d'après Parlons Yipunu.",
+    "phrases": [
+      [
+        "Bonjour ! (près)",
+        "Wuma rambuge !"
+      ],
+      [
+        "Bonjour ! (loin)",
+        "Wuma rambuga !"
+      ],
+      [
+        "Bonjour à toi aussi",
+        "Yi na ndéju"
+      ],
+      [
+        "Bonjour à vous !",
+        "Du ma rambuge !"
+      ],
+      [
+        "Bonjour à vous aussi",
+        "Yi na jénu"
+      ],
+      [
+        "Merci",
+        "Diboti"
+      ]
+    ]
+  },
+  {
+    "id": 3,
+    "titre": "Salutations — journée et soir",
+    "niveau": "Débutant",
+    "contenu": "Salut de la journée (mbolwè) et bonsoir (wi mogi).",
+    "phrases": [
+      [
+        "Salut ! (près)",
+        "Mbolwè !"
+      ],
+      [
+        "Salut ! (loin)",
+        "Mbolwa !"
+      ],
+      [
+        "Salut à toi aussi",
+        "Yi mbolwè"
+      ],
+      [
+        "Bonsoir !",
+        "Wi mogi !"
+      ],
+      [
+        "Oui, bonsoir !",
+        "Yi ni mogi !"
+      ],
+      [
+        "Bonsoir à toi aussi",
+        "Yi na ndéwagu"
+      ]
+    ]
+  },
+  {
+    "id": 4,
+    "titre": "Se présenter et la famille",
+    "niveau": "Débutant",
+    "contenu": "Nom, père, mère, frère, sœur, enfant.",
+    "phrases": [
+      [
+        "Qui est-ce ?",
+        "Aguneñi ? / Agune ni ?"
+      ],
+      [
+        "C'est ma sœur",
+        "Agugu ibusi yami"
+      ],
+      [
+        "L'enfant",
+        "Mwane"
+      ],
+      [
+        "Le père",
+        "Tate"
+      ],
+      [
+        "La mère",
+        "Mama / mame"
+      ],
+      [
+        "La personne",
+        "Mutu"
+      ],
+      [
+        "Les personnes",
+        "Batu"
+      ],
+      [
+        "Comment t'appelles-tu ?",
+        "Dine di ndéju yi ?"
+      ]
+    ]
+  },
+  {
+    "id": 5,
+    "titre": "Pronoms et être / avoir",
+    "niveau": "Débutant",
+    "contenu": "Je, tu, il… et le verbe être (u be) au présent.",
+    "phrases": [
+      [
+        "Je",
+        "Ni / Ménu"
+      ],
+      [
+        "Tu",
+        "Wu / Ndéju"
+      ],
+      [
+        "Il / elle",
+        "A / Jandi"
+      ],
+      [
+        "Nous",
+        "Tu / Jétu"
+      ],
+      [
+        "Vous",
+        "Du / Jénu"
+      ],
+      [
+        "Ils / elles",
+        "Ba / Jogu"
+      ],
+      [
+        "Je suis",
+        "Ni ji"
+      ],
+      [
+        "Tu es",
+        "Wu ji"
+      ],
+      [
+        "Il/elle est",
+        "A ji"
+      ],
+      [
+        "Je ne suis pas",
+        "Nga tsi"
+      ]
+    ]
+  },
+  {
+    "id": 6,
+    "titre": "À l'école et au village",
+    "niveau": "Intermédiaire",
+    "contenu": "Vocabulaire utile pour la classe et le quotidien.",
+    "phrases": [
+      [
+        "L'école",
+        "Ikole"
+      ],
+      [
+        "Les écoles",
+        "Bikole"
+      ],
+      [
+        "Le livre",
+        "Dibuku"
+      ],
+      [
+        "Le village",
+        "Dimbu"
+      ],
+      [
+        "La maison",
+        "Ndagu"
+      ],
+      [
+        "Je vais à l'école",
+        "Ngo ikole"
+      ],
+      [
+        "Il est au village",
+        "A jo dimbu"
+      ],
+      [
+        "Parler yipunu",
+        "U vose yipunu"
+      ],
+      [
+        "Je parle yipunu",
+        "Ni vosi yipunu"
+      ]
+    ]
+  },
+  {
+    "id": 7,
+    "titre": "Nombres et temps",
+    "niveau": "Intermédiaire",
+    "contenu": "Compter et situer dans le temps (lexique du livre).",
+    "phrases": [
+      [
+        "Le jour",
+        "Ilumbu"
+      ],
+      [
+        "La semaine",
+        "Tsone"
+      ],
+      [
+        "Le mois",
+        "Muwéli"
+      ],
+      [
+        "L'année",
+        "Mupume / ilime"
+      ],
+      [
+        "L'eau",
+        "Mambe"
+      ],
+      [
+        "La pluie",
+        "Mfule"
+      ],
+      [
+        "Dieu",
+        "Nzambi"
+      ],
+      [
+        "Dix (proche bantu)",
+        "Kumi"
+      ]
+    ]
+  },
+  {
+    "id": 8,
+    "titre": "Bienvenue et nouvelles",
+    "niveau": "Intermédiaire",
+    "contenu": "Accueillir un visiteur et demander des nouvelles.",
+    "phrases": [
+      [
+        "Bienvenue",
+        "Samba"
+      ],
+      [
+        "Bienvenue à toi papa",
+        "Yélé tata… samba"
+      ],
+      [
+        "Les nouvelles ?",
+        "Ka misamu ? / Bikumbu ?"
+      ],
+      [
+        "Je suis là",
+        "Ni ji vave"
+      ],
+      [
+        "J'ai beaucoup de travail",
+        "Ni ne bisalu bi pwèle"
+      ],
+      [
+        "J'étais malade",
+        "Ni bétsi no bèle"
+      ],
+      [
+        "Allons !",
+        "Twèndi !"
+      ]
+    ]
+  },
+  {
+    "id": 9,
+    "titre": "Verbes utiles du quotidien",
+    "niveau": "Intermédiaire",
+    "contenu": "Infinitif en u- ; dans le lexique le tiret (-) remplace u.",
+    "phrases": [
+      [
+        "Parler",
+        "U vose"
+      ],
+      [
+        "Boire",
+        "U dure / -dure"
+      ],
+      [
+        "Manger",
+        "U ji"
+      ],
+      [
+        "Prendre",
+        "U bonge / -bonge"
+      ],
+      [
+        "Aller",
+        "U kende"
+      ],
+      [
+        "Voir",
+        "U mona"
+      ],
+      [
+        "Écouter / entendre",
+        "U gulu"
+      ],
+      [
+        "Ouvrir",
+        "U dibule"
+      ],
+      [
+        "Merci",
+        "Diboti"
+      ]
+    ]
+  },
+  {
+    "id": 10,
+    "titre": "Classes nominales (bases)",
+    "niveau": "Avancé",
+    "contenu": "Le yipunu classe les noms par préfixes (singulier / pluriel).",
+    "phrases": [
+      [
+        "Personne / personnes",
+        "Mutu / Batu"
+      ],
+      [
+        "Femme / femmes",
+        "Mugétu / Bagétu"
+      ],
+      [
+        "Tête / têtes",
+        "Muru / Miuru"
+      ],
+      [
+        "Maison / maisons",
+        "Ndagu / Bandagu"
+      ],
+      [
+        "Œil / yeux",
+        "Disu / Misu"
+      ],
+      [
+        "Main / mains",
+        "Dikàke / Makàke"
+      ],
+      [
+        "École / écoles",
+        "Ikole / Bikole"
+      ],
+      [
+        "Pirogue / pirogues",
+        "Bwatu / Matu"
+      ]
+    ]
+  },
+  {
+    "id": 11,
+    "titre": "Phrases pour enseigner en classe",
+    "niveau": "Avancé",
+    "contenu": "Expressions pour l'enseignant et les élèves.",
+    "phrases": [
+      [
+        "Écoutez !",
+        "Gulu ! / Du gulu !"
+      ],
+      [
+        "Parlez yipunu",
+        "Du vose yipunu"
+      ],
+      [
+        "Je parle yipunu",
+        "Ni vosi yipunu"
+      ],
+      [
+        "Parlons yipunu",
+        "Tu vosianu yipunu"
+      ],
+      [
+        "Silence",
+        "Lingi / dolo"
+      ],
+      [
+        "Oui",
+        "Yi / Ee"
+      ],
+      [
+        "Non",
+        "Ve / Aa"
+      ],
+      [
+        "Qui ?",
+        "Añi ?"
+      ],
+      [
+        "Où ?",
+        "Avéñi ?"
+      ]
+    ]
+  },
+  {
+    "id": 12,
+    "titre": "Culture et expressions",
+    "niveau": "Avancé",
+    "contenu": "Quelques termes culturels du livre.",
+    "phrases": [
+      [
+        "Conte, fable",
+        "Dusavu / tsavu"
+      ],
+      [
+        "Proverbe",
+        "Banongu"
+      ],
+      [
+        "Prière",
+        "Dusambu"
+      ],
+      [
+        "Tradition",
+        "Bukulu"
+      ],
+      [
+        "Assemblée",
+        "Dibundu"
+      ],
+      [
+        "Vin de palme",
+        "Dingibe"
+      ],
+      [
+        "Joie (interjection)",
+        "Yélélélé"
+      ],
+      [
+        "Les humains du Créateur",
+        "Batu ba tate nzambi"
+      ]
+    ]
+  }
+]

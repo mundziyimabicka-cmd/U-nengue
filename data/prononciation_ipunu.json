@@ -1,0 +1,83 @@
+{
+  "titre": "Prononciation yipunu (Parlons Yipunu — Mabik-ma-Kombil)",
+  "regles": [
+    {
+      "titre": "Principe",
+      "texte": "On écrit comme on prononce. Toutes les lettres écrites se prononcent."
+    },
+    {
+      "titre": "Voyelle u",
+      "texte": "Le u se lit toujours « ou » (comme dans route, boule). Exemple : mutu se lit « moutou »."
+    },
+    {
+      "titre": "Voyelles",
+      "texte": "a (arbre), e (je ou été), i (sisi), o (dos), u (ou)."
+    },
+    {
+      "titre": "Consonne g",
+      "texte": "G gutturale, roulée à la gorge (comme l'espagnol). Exemple : gome = la peur."
+    },
+    {
+      "titre": "Ñ",
+      "texte": "Ñ se lit « gn » comme dans igname."
+    },
+    {
+      "titre": "Combinaisons",
+      "texte": "MB (bombe), MF (mfule = pluie), ND (dindon), NG (mangue), NZ (nzambi = Dieu), TS (tsande = pagne)."
+    },
+    {
+      "titre": "W et Y",
+      "texte": "W comme dans moine (mwane = enfant). Y comme dans yeux."
+    },
+    {
+      "titre": "Tons",
+      "texte": "Langue à tons : ' ton montant, accents pour différencier les mots. Ex. pàge peut changer de sens selon le ton."
+    },
+    {
+      "titre": "Syllabes",
+      "texte": "Syllabes ouvertes. Lire en découpant : bu-di-lu (fer), i-du-ke, etc."
+    }
+  ],
+  "exemples": [
+    [
+      "mutu",
+      "moutou",
+      "la personne"
+    ],
+    [
+      "batu",
+      "batou",
+      "les personnes"
+    ],
+    [
+      "mwane",
+      "mwane",
+      "l'enfant"
+    ],
+    [
+      "mambe",
+      "mambe",
+      "l'eau"
+    ],
+    [
+      "nzambi",
+      "nzambi",
+      "Dieu"
+    ],
+    [
+      "diboti",
+      "diboti",
+      "merci"
+    ],
+    [
+      "ikole",
+      "ikole",
+      "l'école"
+    ],
+    [
+      "yipunu",
+      "yipounou",
+      "la langue yipunu"
+    ]
+  ]
+}

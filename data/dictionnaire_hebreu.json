@@ -1,0 +1,537 @@
+[
+{
+"fr": "bonjour",
+"he": "shalom / בוקר טוב (boker tov)",
+"cat": "Salutation"
+},
+{
+"fr": "bonsoir",
+"he": "erev tov / ערב טוב",
+"cat": "Salutation"
+},
+{
+"fr": "bonne nuit",
+"he": "layla tov / לילה טוב",
+"cat": "Salutation"
+},
+{
+"fr": "au revoir",
+"he": "lehitraot / להתראות",
+"cat": "Salutation"
+},
+{
+"fr": "merci",
+"he": "toda / תודה",
+"cat": "Politesse"
+},
+{
+"fr": "merci beaucoup",
+"he": "toda raba / תודה רבה",
+"cat": "Politesse"
+},
+{
+"fr": "s'il vous plaît",
+"he": "bevakasha / בבקשה",
+"cat": "Politesse"
+},
+{
+"fr": "oui",
+"he": "ken / כן",
+"cat": "Politesse"
+},
+{
+"fr": "non",
+"he": "lo / לא",
+"cat": "Politesse"
+},
+{
+"fr": "pardon",
+"he": "slikha / סליחה",
+"cat": "Politesse"
+},
+{
+"fr": "comment ça va ?",
+"he": "ma shlomkha ? / מה שלומך?",
+"cat": "Salutation"
+},
+{
+"fr": "ça va bien",
+"he": "beseder / בסדר",
+"cat": "Salutation"
+},
+{
+"fr": "bienvenue",
+"he": "brukhim habaim / ברוכים הבאים",
+"cat": "Salutation"
+},
+{
+"fr": "école",
+"he": "beit sefer / בית ספר",
+"cat": "École"
+},
+{
+"fr": "classe",
+"he": "kita / כיתה",
+"cat": "École"
+},
+{
+"fr": "enseignant",
+"he": "more / מורה (moreh) · mora / מורה (f)",
+"cat": "École"
+},
+{
+"fr": "élève",
+"he": "talmid / תלמיד · talmida / תלמידה",
+"cat": "École"
+},
+{
+"fr": "livre",
+"he": "sefer / ספר",
+"cat": "École"
+},
+{
+"fr": "cahier",
+"he": "makhberet / מחברת",
+"cat": "École"
+},
+{
+"fr": "crayon",
+"he": "iparon / עיפרון",
+"cat": "École"
+},
+{
+"fr": "lire",
+"he": "likro / לקרוא",
+"cat": "École"
+},
+{
+"fr": "écrire",
+"he": "likhtov / לכתוב",
+"cat": "École"
+},
+{
+"fr": "apprendre",
+"he": "lilmod / ללמוד",
+"cat": "École"
+},
+{
+"fr": "un",
+"he": "ekhad / אחד",
+"cat": "Nombres"
+},
+{
+"fr": "deux",
+"he": "shnayim / שניים",
+"cat": "Nombres"
+},
+{
+"fr": "trois",
+"he": "shloshua / שלושה",
+"cat": "Nombres"
+},
+{
+"fr": "quatre",
+"he": "arba'a / ארבעה",
+"cat": "Nombres"
+},
+{
+"fr": "cinq",
+"he": "khamisha / חמישה",
+"cat": "Nombres"
+},
+{
+"fr": "six",
+"he": "shisha / שישה",
+"cat": "Nombres"
+},
+{
+"fr": "sept",
+"he": "shiv'a / שבעה",
+"cat": "Nombres"
+},
+{
+"fr": "huit",
+"he": "shmona / שמונה",
+"cat": "Nombres"
+},
+{
+"fr": "neuf",
+"he": "tish'a / תשעה",
+"cat": "Nombres"
+},
+{
+"fr": "dix",
+"he": "asara / עשרה",
+"cat": "Nombres"
+},
+{
+"fr": "père",
+"he": "aba / אבא",
+"cat": "Famille"
+},
+{
+"fr": "mère",
+"he": "ima / אמא",
+"cat": "Famille"
+},
+{
+"fr": "enfant",
+"he": "yeled / ילד · yalda / ילדה",
+"cat": "Famille"
+},
+{
+"fr": "frère",
+"he": "akh / אח",
+"cat": "Famille"
+},
+{
+"fr": "sœur",
+"he": "akhot / אחות",
+"cat": "Famille"
+},
+{
+"fr": "ami",
+"he": "khaver / חבר",
+"cat": "Famille"
+},
+{
+"fr": "eau",
+"he": "mayim / מים",
+"cat": "Nature"
+},
+{
+"fr": "soleil",
+"he": "shemesh / שמש",
+"cat": "Nature"
+},
+{
+"fr": "lune",
+"he": "yareakh / ירח",
+"cat": "Nature"
+},
+{
+"fr": "maison",
+"he": "bayit / בית",
+"cat": "Lieux"
+},
+{
+"fr": "jour",
+"he": "yom / יום",
+"cat": "Temps"
+},
+{
+"fr": "nuit",
+"he": "layla / לילה",
+"cat": "Temps"
+},
+{
+"fr": "aujourd'hui",
+"he": "hayom / היום",
+"cat": "Temps"
+},
+{
+"fr": "demain",
+"he": "makhar / מחר",
+"cat": "Temps"
+},
+{
+"fr": "manger",
+"he": "le'ekhol / לאכול",
+"cat": "Actions"
+},
+{
+"fr": "boire",
+"he": "lishtot / לשתות",
+"cat": "Actions"
+},
+{
+"fr": "dormir",
+"he": "lishon / לישון",
+"cat": "Actions"
+},
+{
+"fr": "parler",
+"he": "ledaber / לדבר",
+"cat": "Actions"
+},
+{
+"fr": "grand",
+"he": "gadol / גדול",
+"cat": "Adjectifs"
+},
+{
+"fr": "petit",
+"he": "katan / קטן",
+"cat": "Adjectifs"
+},
+{
+"fr": "bon",
+"he": "tov / טוב",
+"cat": "Adjectifs"
+},
+{
+"fr": "paix",
+"he": "shalom / שלום",
+"cat": "Vie"
+},
+{
+"fr": "amour",
+"he": "ahava / אהבה",
+"cat": "Vie"
+},
+{
+"fr": "Gabon",
+"he": "Gabon / גבון",
+"cat": "Lieux"
+},
+{
+"fr": "directeur",
+"he": "menahel / מנהל",
+"cat": "École"
+},
+{
+"fr": "leçon",
+"he": "shiur / שיעור",
+"cat": "École"
+},
+{
+"fr": "devoir",
+"he": "shi'urim / שיעורים",
+"cat": "École"
+},
+{
+"fr": "tableau",
+"he": "luakh / לוח",
+"cat": "École"
+},
+{
+"fr": "stylo",
+"he": "et / עט",
+"cat": "École"
+},
+{
+"fr": "gomme",
+"he": "makhak / מחק",
+"cat": "École"
+},
+{
+"fr": "silence",
+"he": "sheket / שקט",
+"cat": "École"
+},
+{
+"fr": "écouter",
+"he": "lehakshiv / להקשיב",
+"cat": "École"
+},
+{
+"fr": "question",
+"he": "she'ela / שאלה",
+"cat": "École"
+},
+{
+"fr": "réponse",
+"he": "tshuva / תשובה",
+"cat": "École"
+},
+{
+"fr": "tête",
+"he": "rosh / ראש",
+"cat": "Corps"
+},
+{
+"fr": "main",
+"he": "yad / יד",
+"cat": "Corps"
+},
+{
+"fr": "pied",
+"he": "regel / רגל",
+"cat": "Corps"
+},
+{
+"fr": "œil",
+"he": "ayin / עין",
+"cat": "Corps"
+},
+{
+"fr": "rouge",
+"he": "adom / אדום",
+"cat": "Couleurs"
+},
+{
+"fr": "bleu",
+"he": "kakhol / כחול",
+"cat": "Couleurs"
+},
+{
+"fr": "vert",
+"he": "yarok / ירוק",
+"cat": "Couleurs"
+},
+{
+"fr": "blanc",
+"he": "lavan / לבן",
+"cat": "Couleurs"
+},
+{
+"fr": "noir",
+"he": "shakhor / שחור",
+"cat": "Couleurs"
+},
+{
+"fr": "pain",
+"he": "lekhem / לחם",
+"cat": "Aliments"
+},
+{
+"fr": "lait",
+"he": "khalav / חלב",
+"cat": "Aliments"
+},
+{
+"fr": "poisson",
+"he": "dag / דג",
+"cat": "Aliments"
+},
+{
+"fr": "matin",
+"he": "boker / בוקר",
+"cat": "Temps"
+},
+{
+"fr": "soir",
+"he": "erev / ערב",
+"cat": "Temps"
+},
+{
+"fr": "semaine",
+"he": "shavua / שבוע",
+"cat": "Temps"
+},
+{
+"fr": "année",
+"he": "shana / שנה",
+"cat": "Temps"
+},
+{
+"fr": "venir",
+"he": "lavo / לבוא",
+"cat": "Actions"
+},
+{
+"fr": "aller",
+"he": "lalekhet / ללכת",
+"cat": "Actions"
+},
+{
+"fr": "voir",
+"he": "lir'ot / לראות",
+"cat": "Actions"
+},
+{
+"fr": "comprendre",
+"he": "lehavin / להבין",
+"cat": "Actions"
+},
+{
+"he": "שלום",
+"fr": "bonjour / paix",
+"pron": "shalom"
+},
+{
+"he": "תודה",
+"fr": "merci",
+"pron": "toda"
+},
+{
+"he": "כן",
+"fr": "oui",
+"pron": "ken"
+},
+{
+"he": "לא",
+"fr": "non",
+"pron": "lo"
+},
+{
+"he": "ספר",
+"fr": "livre",
+"pron": "sefer"
+},
+{
+"he": "בית ספר",
+"fr": "école",
+"pron": "beit sefer"
+},
+{
+"he": "מורה",
+"fr": "enseignant",
+"pron": "moreh"
+},
+{
+"he": "תלמיד",
+"fr": "élève",
+"pron": "talmid"
+},
+{
+"he": "מים",
+"fr": "eau",
+"pron": "mayim"
+},
+{
+"he": "לחם",
+"fr": "pain",
+"pron": "lechem"
+},
+{
+"he": "אבא",
+"fr": "papa",
+"pron": "aba"
+},
+{
+"he": "אמא",
+"fr": "maman",
+"pron": "ima"
+},
+{
+"he": "ילד",
+"fr": "garçon",
+"pron": "yeled"
+},
+{
+"he": "ילדה",
+"fr": "fille",
+"pron": "yalda"
+},
+{
+"he": "יום",
+"fr": "jour",
+"pron": "yom"
+},
+{
+"he": "לילה",
+"fr": "nuit",
+"pron": "laila"
+},
+{
+"he": "שמש",
+"fr": "soleil",
+"pron": "shemesh"
+},
+{
+"he": "ירח",
+"fr": "lune",
+"pron": "yareach"
+},
+{
+"he": "אחד",
+"fr": "un",
+"pron": "echad"
+},
+{
+"he": "שניים",
+"fr": "deux",
+"pron": "shnayim"
+}
+]

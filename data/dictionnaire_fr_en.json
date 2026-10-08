@@ -1,1 +1,2692 @@
-[["école", "school"], ["élève", "pupil"], ["enseignant", "teacher"], ["classe", "class"], ["cahier", "notebook"], ["livre", "book"], ["tableau", "board"], ["crayon", "pencil"], ["stylo", "pen"], ["gomme", "eraser"], ["règle", "ruler"], ["cartable", "schoolbag"], ["devoir", "homework"], ["leçon", "lesson"], ["examen", "exam"], ["note", "grade"], ["bulletin", "report card"], ["récréation", "break"], ["directeur", "principal"], ["emploi du temps", "timetable"], ["salle", "room"], ["cour", "yard"], ["bibliothèque", "library"], ["carnet", "diary"], ["feuille", "sheet"], ["copie", "test"], ["exercice", "exercise"], ["exemple", "example"], ["réponse", "answer"], ["question", "question"], ["erreur", "mistake"], ["réussite", "success"], ["travail", "work"], ["silence", "silence"], ["attention", "attention"], ["lire", "to read"], ["écrire", "to write"], ["parler", "to speak"], ["écouter", "to listen"], ["compter", "to count"], ["apprendre", "to learn"], ["comprendre", "to understand"], ["réviser", "to revise"], ["expliquer", "to explain"], ["nombre", "number"], ["chiffre", "digit"], ["calcul", "calculation"], ["addition", "addition"], ["soustraction", "subtraction"], ["multiplication", "multiplication"], ["division", "division"], ["fraction", "fraction"], ["décimal", "decimal"], ["problème", "problem"], ["mesure", "measurement"], ["longueur", "length"], ["largeur", "width"], ["hauteur", "height"], ["masse", "mass"], ["poids", "weight"], ["aire", "area"], ["périmètre", "perimeter"], ["volume", "volume"], ["triangle", "triangle"], ["carré", "square"], ["rectangle", "rectangle"], ["cercle", "circle"], ["angle", "angle"], ["droite", "line"], ["demi", "half"], ["quart", "quarter"], ["entier", "integer"], ["pair", "even"], ["impair", "odd"], ["somme", "sum"], ["différence", "difference"], ["produit", "product"], ["quotient", "quotient"], ["reste", "remainder"], ["unité", "unit"], ["dizaine", "ten"], ["centaine", "hundred"], ["millier", "thousand"], ["monnaie", "money"], ["prix", "price"], ["heure", "hour"], ["minute", "minute"], ["seconde second lettre", "letter"], ["mot", "word"], ["phrase", "sentence"], ["texte", "text"], ["histoire", "story"], ["poésie", "poetry"], ["verbe", "verb"], ["nom", "noun"], ["adjectif", "adjective"], ["pronom", "pronoun"], ["orthographe", "spelling"], ["grammaire", "grammar"], ["vocabulaire", "vocabulary"], ["dictée", "dictation"], ["lecture", "reading"], ["écriture", "writing"], ["paragraphe", "paragraph"], ["titre", "title"], ["auteur", "author"], ["personnage", "character"], ["syllabe", "syllable"], ["alphabet", "alphabet"], ["consonne", "consonant"], ["voyelle", "vowel"], ["singulier", "singular"], ["pluriel", "plural"], ["présent", "present"], ["passé", "past"], ["futur future aujourd'hui", "today"], ["demain", "tomorrow"], ["hier", "yesterday"], ["matin", "morning"], ["soir", "evening"], ["nuit", "night"], ["semaine", "week"], ["mois", "month"], ["année", "year"], ["lundi", "Monday"], ["mardi", "Tuesday"], ["mercredi", "Wednesday"], ["jeudi", "Thursday"], ["vendredi", "Friday"], ["samedi", "Saturday"], ["dimanche", "Sunday"], ["janvier", "January"], ["février", "February"], ["mars", "March"], ["avril", "April"], ["mai", "May"], ["juin", "June"], ["juillet", "July"], ["août", "August"], ["septembre", "September"], ["octobre", "October"], ["novembre", "November"], ["décembre", "December"], ["printemps", "spring"], ["été", "summer"], ["automne", "autumn"], ["hiver winter rouge", "red"], ["bleu", "blue"], ["vert", "green"], ["jaune", "yellow"], ["noir", "black"], ["blanc", "white"], ["orange", "orange"], ["rose", "pink"], ["violet", "purple"], ["marron", "brown"], ["gris grey tête", "head"], ["cheveux", "hair"], ["œil", "eye"], ["oreille", "ear"], ["nez", "nose"], ["bouche", "mouth"], ["dent", "tooth"], ["main", "hand"], ["doigt", "finger"], ["pied", "foot"], ["jambe", "leg"], ["bras", "arm"], ["cœur", "heart"], ["santé health famille", "family"], ["père", "father"], ["mère", "mother"], ["frère", "brother"], ["sœur", "sister"], ["enfant", "child"], ["ami", "friend"], ["bébé", "baby"], ["homme", "man"], ["femme woman maison", "house"], ["porte", "door"], ["fenêtre", "window"], ["table", "table"], ["chaise", "chair"], ["lit", "bed"], ["cuisine", "kitchen"], ["chambre", "bedroom"], ["eau", "water"], ["pain", "bread"], ["lait", "milk"], ["fruit", "fruit"], ["légume vegetable arbre", "tree"], ["fleur", "flower"], ["animal", "animal"], ["chien", "dog"], ["chat", "cat"], ["oiseau", "bird"], ["soleil", "sun"], ["lune", "moon"], ["ciel", "sky"], ["pluie", "rain"], ["vent", "wind"], ["terre", "earth"], ["mer", "sea"], ["forêt forest être", "to be"], ["avoir", "to have"], ["faire", "to do"], ["aller", "to go"], ["venir", "to come"], ["voir", "to see"], ["dire", "to say"], ["pouvoir", "can"], ["vouloir", "to want"], ["savoir", "to know"], ["prendre", "to take"], ["donner", "to give"], ["manger", "to eat"], ["boire", "to drink"], ["dormir", "to sleep"], ["jouer", "to play"], ["courir", "to run"], ["chanter", "to sing"], ["dessiner", "to draw"], ["aider", "to help"], ["aimer to like grand", "big"], ["petit", "small"], ["bon", "good"], ["mauvais", "bad"], ["beau", "beautiful"], ["nouveau", "new"], ["vieux", "old"], ["jeune", "young"], ["chaud", "hot"], ["froid", "cold"], ["facile", "easy"], ["difficile", "difficult"], ["rapide", "fast"], ["lent", "slow"], ["heureux", "happy"], ["triste", "sad"], ["fort", "strong"], ["faible weak un", "one"], ["deux", "two"], ["trois", "three"], ["quatre", "four"], ["cinq", "five"], ["six", "six"], ["sept", "seven"], ["huit", "eight"], ["neuf", "nine"], ["dix", "ten"], ["vingt", "twenty"], ["cent", "hundred"], ["mille thousand bonjour", "hello"], ["merci", "thank you"], ["oui", "yes"], ["non", "no"], ["au revoir", "goodbye"], ["s'il vous plaît", "please"], ["pardon sorry Gabon", "Gabon"], ["Libreville", "Libreville"], ["Afrique", "Africa"], ["pays", "country"], ["drapeau", "flag"], ["village", "village"], ["ville", "city"], ["accepter", "to accepter"], ["refuse", "to refuse"], ["choisir", "to choisir"], ["décider", "to décider"], ["essayer", "to essayer"], ["continuer", "to continuer"], ["arrêter", "to arrêter"], ["changer", "to changer"], ["garder", "to garder"], ["oublier", "to oublier"], ["préparer", "to préparer"], ["organiser", "to organiser"], ["inviter", "to inviter"], ["visiter", "to visiter"], ["voyager", "to voyager"], ["habiter", "to habiter"], ["travailler", "to travailler"], ["étudier", "to étudier"], ["enseigner", "to enseigner"], ["protéger", "to protéger"], ["soigner", "to soigner"], ["pousser", "to pousser"], ["tirer", "to tirer"], ["remplir", "to remplir"], ["vider", "to vider"], ["mélanger", "to mélanger"], ["ajouter", "to ajouter"], ["enlever", "to enlever"], ["mesurer", "to mesurer"], ["peser", "to peser"], ["classer", "to classer"], ["ranger", "to ranger"], ["décrire", "to décrire"], ["raconter", "to raconter"], ["inventer", "to inventer"], ["imaginer", "to imaginer"], ["rêver", "to rêver"], ["souhaiter", "to souhaiter"], ["espérer", "to espérer"], ["croire", "to croire"], ["prouver", "to prouver"], ["vérifier", "to vérifier"], ["suivre", "to suivre"], ["guider", "to guider"], ["montrer", "to montrer"], ["fermer", "to fermer"], ["ouvrir", "to ouvrir"], ["commencer", "to commencer"], ["finir", "to finir"], ["sauter", "to sauter"], ["marcher", "to marcher"], ["danser", "to danser"], ["peindre", "to peindre"], ["couper", "to couper"], ["coller", "to coller"], ["jeter", "to jeter"], ["attraper", "to attraper"], ["sourire", "to sourire"], ["pleurer", "to pleurer"], ["rire", "to rire"], ["crier", "to crier"], ["chercher", "to chercher"], ["regarder", "to regarder"], ["toucher", "to toucher"], ["sentir", "to sentir"], ["goûter", "to goûter"], ["acheter", "to acheter"], ["vendre", "to vendre"], ["payer", "to payer"], ["coûter", "to coûter"], ["gagner", "to gagner"], ["perdre", "to perdre"], ["construire", "to construire"], ["casser", "to casser"], ["réparer", "to réparer"], ["nettoyer", "to nettoyer"], ["laver", "to laver"], ["nager", "to nager"], ["grimper", "to grimper"], ["tomber", "to tomber"], ["refuser", "to refuse"], ["ballon", "ball"], ["corde", "rope"], ["cerceau", "hoop"], ["banc", "bench"], ["bureau", "desk"], ["casier", "locker"], ["armoire", "cupboard"], ["étagère", "shelf"], ["craie", "chalk"], ["feutre", "marker"], ["ciseaux", "scissors"], ["colle", "glue"], ["papier", "paper"], ["carton", "cardboard"], ["ardoise", "slate"], ["affiche", "poster"], ["manuel", "textbook"], ["dictionnaire", "dictionary"], ["atlas", "atlas"], ["globe", "globe"], ["carte", "map"], ["microscopium", "microscope"], ["aimant", "magnet"], ["balance", "scales"], ["compas", "compass"], ["équerre", "set square"], ["rapporteur", "protractor"], ["calculatrice calculator informatique", "computing"], ["clavier", "keyboard"], ["souris", "mouse"], ["écran", "screen"], ["imprimante", "printer"], ["internet", "internet"], ["message message football", "football"], ["basket", "basketball"], ["course", "running"], ["natation", "swimming"], ["gymnastique", "gymnastics"], ["musique", "music"], ["piano", "piano"], ["guitare", "guitar"], ["tambour", "drum"], ["théâtre", "theatre"], ["spectacle show médecin", "doctor"], ["infirmier", "nurse"], ["policier", "police officer"], ["pompier", "firefighter"], ["agriculteur", "farmer"], ["commerçant shopkeeper pomme", "apple"], ["banane", "banana"], ["mangue", "mango"], ["tomate", "tomato"], ["carotte", "carrot"], ["riz", "rice"], ["manioc", "cassava"], ["igname", "yam"], ["poisson", "fish"], ["poulet chicken voiture", "car"], ["bus", "bus"], ["train", "train"], ["avion", "plane"], ["bateau", "boat"], ["vélo bicycle nord", "north"], ["sud", "south"], ["est", "east"], ["ouest", "west"], ["montagne", "mountain"], ["rivière", "river"], ["désert", "desert"], ["plage beach joie", "joy"], ["peur", "fear"], ["colère", "anger"], ["respect", "respect"], ["paix", "peace"], ["liberté", "freedom"], ["égalité", "equality"], ["courage courage très", "very"], ["trop", "too"], ["beaucoup", "a lot"], ["peu", "little"], ["toujours", "always"], ["jamais", "never"], ["souvent", "often"], ["parfois", "sometimes"], ["maintenant", "now"], ["avant", "before"], ["après", "after"], ["ici", "here"], ["là there activité", "activity"], ["projet", "project"], ["groupe", "group"], ["consigne", "instruction"], ["matériel", "material"], ["évaluation", "assessment"], ["compétence", "skill"], ["objectif", "objective"], ["méthode", "method"], ["résultat", "result"], ["brillant", "bright"], ["sombre", "dark"], ["clair", "clear"], ["utile", "useful"], ["important", "important"], ["calme", "calm"], ["bruyant", "noisy"], ["intéressant", "interesting"], ["ennuyeux", "boring"], ["amusant", "fun"], ["gentil", "kind"], ["méchant", "nasty"], ["poli", "polite"], ["courageux", "brave"], ["timide", "shy"], ["propre", "clean"], ["sale", "dirty"], ["plein", "full"], ["vide", "empty"], ["possible", "possible"], ["lourd", "heavy"], ["léger", "light"], ["doux", "soft"], ["dur", "hard"], ["long", "long"], ["court", "short"], ["bonjour", "hello"], ["bonsoir", "good evening"], ["bonne nuit", "good night"], ["salut", "hi"], ["à bientôt", "see you soon"], ["de rien", "you are welcome"], ["je m'appelle", "my name is"], ["comment ça va", "how are you"], ["ça va bien", "I am fine"], ["j'ai faim", "I am hungry"], ["j'ai soif", "I am thirsty"], ["j'ai froid", "I am cold"], ["j'ai chaud", "I am hot"], ["je suis fatigué", "I am tired"], ["je suis malade", "I am sick"], ["je ne comprends pas", "I do not understand"], ["répétez", "please repeat"], ["parlez lentement", "speak slowly"], ["aide moi", "help me"], ["c'est bien", "well done"], ["bravo", "well done"], ["écoutez", "listen"], ["regardez", "look"], ["ouvrez", "open"], ["fermez", "close"], ["asseyez vous", "sit down"], ["levez vous", "stand up"], ["venez ici", "come here"], ["allez y", "go ahead"], ["rangez", "tidy up"], ["sortez", "get out"], ["entrez", "come in"], ["vache", "cow"], ["mouton", "sheep"], ["chèvre", "goat"], ["cochon", "pig"], ["cheval", "horse"], ["poule", "hen"], ["canard", "duck"], ["lapin", "rabbit"], ["ours", "bear"], ["loup", "wolf"], ["renard", "fox"], ["girafe", "giraffe"], ["zèbre", "zebra"], ["lion", "lion"], ["éléphant", "elephant"], ["singe", "monkey"], ["serpent", "snake"], ["tortue", "turtle"], ["grenouille", "frog"], ["abeille", "bee"], ["fourmi", "ant"], ["papillon", "butterfly"], ["chemise", "shirt"], ["pantalon", "trousers"], ["jupe", "skirt"], ["robe", "dress"], ["manteau", "coat"], ["pull", "sweater"], ["chaussette", "sock"], ["chaussure", "shoe"], ["chapeau", "hat"], ["casquette", "cap"], ["turquoise", "turquoise"], ["beige", "beige"], ["indigo", "indigo"], ["magenta", "magenta"], ["cyan", "cyan"], ["pastèque", "watermelon"], ["pamplemousse", "grapefruit"], ["cerise", "cherry"], ["abricot", "apricot"], ["pêche", "peach"], ["prune", "plum"], ["figue", "fig"], ["noix de coco", "coconut"], ["chou", "cabbage"], ["épinard", "spinach"], ["courgette", "courgette"], ["aubergine", "aubergine"], ["concombre", "cucumber"], ["poivron", "pepper"], ["salade", "lettuce"], ["navet", "turnip"], ["boulanger", "baker"], ["boucher", "butcher"], ["coiffeur", "hairdresser"], ["couturier", "tailor"], ["mécanicien", "mechanic"], ["plombier", "plumber"], ["électricien", "electrician"], ["menuisier", "carpenter"], ["maçon", "builder"], ["peintre en bâtiment", "house painter"], ["absence", "absence"], ["absent", "absent"], ["retard", "late"], ["exclusion", "exclusion"], ["conseil", "council"], ["règlement", "rules"], ["sanction", "sanction"], ["félicitations", "congratulations"], ["diplôme", "diploma"], ["certificat", "certificate"], ["brevet", "certificate"], ["cep", "primary certificate"], ["collège", "secondary school"], ["université university crayon de couleur", "coloured pencil"], ["surligneur", "highlighter"], ["trousse", "pencil case"], ["pochette", "folder"], ["classeur", "binder"], ["intercalaire", "divider"], ["agrafeuse", "stapler"], ["perforatrice", "hole punch"], ["trombone", "paperclip"], ["élastique", "rubber band"], ["pince clip additionner", "to add"], ["soustraire", "to subtract"], ["multiplier", "to multiply"], ["diviser", "to divide"], ["résoudre", "to solve"], ["démontrer", "to demonstrate"], ["justifier", "to justify"], ["argumenter", "to argue"], ["débattre", "to debate"], ["exposer to present rivière", "river"], ["fleuve", "river"], ["lac", "lake"], ["océan", "ocean"], ["île", "island"], ["péninsule", "peninsula"], ["golfe", "gulf"], ["baie", "bay"], ["côte", "coast"], ["falaise", "cliff"], ["vallée", "valley"], ["colline", "hill"], ["volcan", "volcano"], ["plaine", "plain"], ["plateau plateau température", "temperature"], ["degré", "degree"], ["thermomètre", "thermometer"], ["baromètre", "barometer"], ["boussole", "compass"], ["longitude", "longitude"], ["latitude", "latitude"], ["équateur", "equator"], ["pôle", "pole"], ["hémisphère hemisphere solide", "solid"], ["liquide", "liquid"], ["gaz", "gas"], ["fusion", "melting"], ["ébullition", "boiling"], ["condensation", "condensation"], ["évaporation", "evaporation"], ["dissolution", "dissolving"], ["mélange", "mixture"], ["solution solution cellule", "cell"], ["organe", "organ"], ["muscle", "muscle"], ["nerf", "nerve"], ["cerveau", "brain"], ["poumon", "lung"], ["estomac", "stomach"], ["foie", "liver"], ["rein", "kidney"], ["digestion", "digestion"], ["respiration", "respiration"], ["circulation circulation graine", "seed"], ["germe", "shoot"], ["tige", "stem"], ["pétale", "petal"], ["pollen", "pollen"], ["photosynthèse", "photosynthesis"], ["chlorophylle", "chlorophyll"], ["oxygène", "oxygen"], ["dioxyde", "carbon dioxide"], ["écosystème", "ecosystem"], ["chaîne alimentaire", "food chain"], ["prédateur", "predator"], ["proie prey électricité", "electricity"], ["courant", "current"], ["circuit", "circuit"], ["pile", "battery"], ["ampoule", "bulb"], ["interrupteur", "switch"], ["conducteur", "conductor"], ["isolant", "insulator"], ["pôle nord", "north pole"], ["pôle sud", "south pole"], ["attraction", "attraction"], ["répulsion repulsion roi", "king"], ["reine", "queen"], ["prince", "prince"], ["château", "castle"], ["guerre", "war"], ["traité", "treaty"], ["indépendance", "independence"], ["colonie", "colony"], ["empire", "empire"], ["révolution", "revolution"], ["président", "president"], ["ministre", "minister"], ["loi", "law"], ["constitution", "constitution"], ["abandon", "abandonment"], ["accident", "accident"], ["accompagner", "to accompany"], ["accord", "agreement"], ["acier", "steel"], ["acteur", "actor"], ["activité", "activity"], ["admirer", "to admire"], ["adorer", "to adore"], ["adresse", "address"], ["adulte", "adult"], ["aéroport", "airport"], ["affaire", "business"], ["afficher", "to display"], ["âge", "age"], ["agneau", "lamb"], ["agréable", "pleasant"], ["aide", "help"], ["aigu", "sharp"], ["aiguille", "needle"], ["aile", "wing"], ["aimer", "to love"], ["aîné", "elder"], ["album", "album"], ["algèbre", "algebra"], ["aliment", "food"], ["allée", "path"], ["Allemagne", "Germany"], ["alléger", "to lighten"], ["allumer", "to light"], ["alors", "then"], ["amande", "almond"], ["ambulance", "ambulance"], ["améliorer", "to improve"], ["amer", "bitter"], ["amitié", "friendship"], ["amour", "love"], ["amuser", "to amuse"], ["ananas", "pineapple"], ["ancien", "ancient"], ["âne", "donkey"], ["ange", "angel"], ["anglais", "English"], ["anniversaire", "birthday"], ["annoncer", "to announce"], ["antenne", "antenna"], ["apercevoir", "to notice"], ["appartement", "apartment"], ["appartenir", "to belong"], ["appel", "call"], ["appeler", "to call"], ["appétit", "appetite"], ["applaudir", "to clap"], ["apporter", "to bring"], ["approche", "approach"], ["après-midi", "afternoon"], ["arbre", "tree"], ["arc", "bow"], ["arc-en-ciel", "rainbow"], ["argent", "money"], ["arme", "weapon"], ["armée", "army"], ["arracher", "to pull out"], ["arrière", "back"], ["arrivée", "arrival"], ["arriver", "to arrive"], ["art", "art"], ["article", "article"], ["ascenseur", "lift"], ["Asie", "Asia"], ["asseoir", "to sit"], ["assez", "enough"], ["assiette", "plate"], ["assister", "to attend"], ["assurer", "to insure"], ["atome", "atom"], ["attacher", "to attach"], ["attaquer", "to attack"], ["atteindre", "to reach"], ["attendre", "to wait"], ["attirer", "to attract"], ["au", "at the"], ["aube", "dawn"], ["aucun", "none"], ["aujourd'hui", "today"], ["aumône", "alms"], ["auprès", "near"], ["aurore", "dawn"], ["aussi", "also"], ["aussitôt", "immediately"], ["autant", "as much"], ["automobile", "car"], ["autoroute", "motorway"], ["autour", "around"], ["autre", "other"], ["avance", "advance"], ["avancer", "to advance"], ["avantage", "advantage"], ["avec", "with"], ["avenir", "future"], ["aventure", "adventure"], ["avis", "opinion"], ["avocat", "avocado"], ["avouer", "to admit"], ["azur", "azure"], ["bagage", "luggage"], ["bague", "ring"], ["baigner", "to bathe"], ["bain", "bath"], ["baiser", "kiss"], ["baisser", "to lower"], ["bal", "ball"], ["balai", "broom"], ["balcon", "balcony"], ["balle", "ball"], ["bande", "band"], ["bandeau", "headband"], ["banque", "bank"], ["barbe", "beard"], ["bas", "bottom"], ["base", "base"], ["bataille", "battle"], ["bâtiment", "building"], ["bâton", "stick"], ["batterie", "battery"], ["battre", "to beat"], ["beauté", "beauty"], ["bec", "beak"], ["belge", "Belgian"], ["Belgique", "Belgium"], ["bénédiction", "blessing"], ["berceau", "cradle"], ["besoin", "need"], ["bête", "animal"], ["beurre", "butter"], ["biberon", "bottle"], ["bicyclette", "bicycle"], ["bien", "good"], ["bientôt", "soon"], ["bière", "beer"], ["bijou", "jewel"], ["bille", "marble"], ["billet", "ticket"], ["blé", "wheat"], ["blesser", "to hurt"], ["blond", "blond"], ["blouse", "blouse"], ["bœuf", "beef"], ["bois", "wood"], ["boisson", "drink"], ["boîte", "box"], ["bol", "bowl"], ["bonbon", "sweet"], ["bond", "jump"], ["bonheur", "happiness"], ["bonne", "good"], ["bord", "edge"], ["bordure", "border"], ["borne", "boundary"], ["botte", "boot"], ["boue", "mud"], ["bouger", "to move"], ["bougie", "candle"], ["bouillir", "to boil"], ["boule", "ball"], ["bouquet", "bouquet"], ["bourdon", "bumblebee"], ["bourg", "town"], ["bourgeon", "bud"], ["bourse", "purse"], ["bout", "end"], ["bouteille", "bottle"], ["boutique", "shop"], ["bouton", "button"], ["boxe", "boxing"], ["branche", "branch"], ["briller", "to shine"], ["brin", "blade"], ["brique", "brick"], ["briser", "to break"], ["brochure", "brochure"], ["broder", "to embroider"], ["brouillard", "fog"], ["brouiller", "to scramble"], ["bruit", "noise"], ["brûler", "to burn"], ["brume", "mist"], ["brun", "brown"], ["brusque", "sudden"], ["budget", "budget"], ["but", "goal"], ["cabane", "hut"], ["cabinet", "office"], ["cacher", "to hide"], ["cadeau", "gift"], ["cadran", "dial"], ["cadre", "frame"], ["café", "coffee"], ["cage", "cage"], ["caillou", "pebble"], ["caisse", "case"], ["calculer", "to calculate"], ["calendrier", "calendar"], ["calmer", "to calm"], ["camarade", "classmate"], ["camion", "truck"], ["camp", "camp"], ["campagne", "countryside"], ["canal", "canal"], ["canine", "canine"], ["canon", "cannon"], ["capitaine", "captain"], ["capitale", "capital"], ["caprice", "whim"], ["car", "because"], ["caractère", "character"], ["carafe", "carafe"], ["cas", "case"], ["casserole", "saucepan"], ["catégorique", "categorical"], ["cause", "cause"], ["causer", "to cause"], ["cave", "cellar"], ["ce", "this"], ["ceci", "this"], ["céder", "to yield"], ["ceinture", "belt"], ["cela", "that"], ["célèbre", "famous"], ["céleri", "celery"], ["celle", "that one"], ["cellule", "cell"], ["celui", "that one"], ["cendre", "ash"], ["centime", "cent"], ["central", "central"], ["centre", "centre"], ["centrer", "to centre"], ["cependant", "however"], ["céréale", "cereal"], ["cerf", "deer"], ["certain", "certain"], ["cervelle", "brain"], ["cesse", "stop"], ["cesser", "to stop"], ["chacun", "each"], ["chagrin", "sorrow"], ["chaîne", "chain"], ["chair", "flesh"], ["chaleur", "heat"], ["chameau", "camel"], ["champ", "field"], ["chance", "luck"], ["change", "change"], ["chanson", "song"], ["chant", "song"], ["chanteur", "singer"], ["chantier", "site"], ["chapitre", "chapter"], ["chaque", "each"], ["charbon", "coal"], ["charge", "load"], ["charger", "to load"], ["charité", "charity"], ["charmant", "charming"], ["charme", "charm"], ["charpenter", "to build"], ["chasse", "hunting"], ["chasser", "to hunt"], ["chauffer", "to heat"], ["chef", "chief"], ["chemin", "path"], ["cheminée", "chimney"], ["chêne", "oak"], ["cher", "expensive"], ["chéri", "darling"], ["cheveu", "hair"], ["cheville", "ankle"], ["chiffon", "rag"], ["choc", "shock"], ["chocolat", "chocolate"], ["choix", "choice"], ["chômage", "unemployment"], ["chose", "thing"], ["chute", "fall"], ["cigare", "cigar"], ["cil", "eyelash"], ["cime", "peak"], ["cinéma", "cinema"], ["cinquante", "fifty"], ["cirque", "circus"], ["citron", "lemon"], ["citoyen", "citizen"], ["civil", "civil"], ["clé", "key"], ["client", "customer"], ["climat", "climate"], ["cloche", "bell"], ["clos", "closed"], ["clou", "nail"], ["club", "club"], ["code", "code"], ["coffre", "chest"], ["coiffer", "to style hair"], ["coin", "corner"], ["col", "collar"], ["collier", "necklace"], ["colonel", "colonel"], ["colorer", "to colour"], ["combat", "fight"], ["combien", "how much"], ["comble", "height"], ["comédie", "comedy"], ["comité", "committee"], ["commander", "to order"], ["comme", "like"], ["comment", "how"], ["commerçant", "shopkeeper"], ["commerce", "trade"], ["commettre", "to commit"], ["commun", "common"], ["commune", "town"], ["compagne", "companion"], ["compagnie", "company"], ["compagnon", "companion"], ["comparaison", "comparison"], ["comparer", "to compare"], ["compétent", "competent"], ["compétition", "competition"], ["compléter", "to complete"], ["complet", "complete"], ["complexe", "complex"], ["complice", "accomplice"], ["composer", "to compose"], ["composition", "composition"], ["compte", "account"], ["comte", "count"], ["concert", "concert"], ["concevoir", "to conceive"], ["conclure", "to conclude"], ["concours", "contest"], ["condamner", "to condemn"], ["condition", "condition"], ["conduire", "to drive"], ["conférence", "conference"], ["confesser", "to confess"], ["confiance", "trust"], ["confidence", "secret"], ["confirmer", "to confirm"], ["confiture", "jam"], ["conflit", "conflict"], ["confondre", "to confuse"], ["confort", "comfort"], ["congé", "holiday"], ["connaissance", "knowledge"], ["connaître", "to know"], ["conquérir", "to conquer"], ["conscience", "conscience"], ["consentir", "to consent"], ["conséquence", "consequence"], ["conserver", "to keep"], ["considérer", "to consider"], ["consister", "to consist"], ["consoler", "to comfort"], ["consommateur", "consumer"], ["constater", "to note"], ["consulter", "to consult"], ["contact", "contact"], ["conte", "tale"], ["contenir", "to contain"], ["content", "happy"], ["contenu", "content"], ["continent", "continent"], ["contour", "outline"], ["contracter", "to contract"], ["contraire", "opposite"], ["contraste", "contrast"], ["contre", "against"], ["contribuer", "to contribute"], ["contrôle", "control"], ["convaincre", "to convince"], ["convenable", "suitable"], ["convenir", "to suit"], ["conversation", "conversation"], ["convive", "guest"], ["convoi", "convoy"], ["coopérer", "to cooperate"], ["copain", "buddy"], ["coq", "rooster"], ["coque", "shell"], ["corbeau", "crow"], ["corbeille", "basket"], ["corne", "horn"], ["corps", "body"], ["correction", "correction"], ["corriger", "to correct"], ["côté", "side"], ["coton", "cotton"], ["cou", "neck"], ["coucher", "to lay down"], ["coude", "elbow"], ["coudre", "to sew"], ["couleur", "colour"], ["couloir", "corridor"], ["coup", "blow"], ["courage", "courage"], ["courbe", "curve"], ["couronne", "crown"], ["courrier", "mail"], ["cours", "lesson"], ["cousin", "cousin"], ["couteau", "knife"], ["coutume", "custom"], ["couvercle", "lid"], ["couvert", "covered"], ["couverture", "blanket"], ["couvrir", "to cover"], ["craindre", "to fear"], ["crainte", "fear"], ["craquer", "to crack"], ["créature", "creature"], ["crédit", "credit"], ["créer", "to create"], ["crème", "cream"], ["crêpe", "pancake"], ["creuser", "to dig"], ["creux", "hollow"], ["cri", "cry"], ["crime", "crime"], ["crise", "crisis"], ["cristal", "crystal"], ["critique", "criticism"], ["croiser", "to cross"], ["croissance", "growth"], ["croître", "to grow"], ["croix", "cross"], ["cruel", "cruel"], ["cuiller", "spoon"], ["cuir", "leather"], ["cuisinier", "cook"], ["cuisse", "thigh"], ["culotte", "pants"], ["culture", "culture"], ["curieux", "curious"], ["cuve", "tank"], ["cycle", "cycle"], ["danger", "danger"], ["dans", "in"], ["danse", "dance"], ["date", "date"], ["de", "of"], ["debout", "standing"], ["découper", "to cut out"], ["découvrir", "to discover"], ["defaut", "fault"], ["défendre", "to defend"], ["dehors", "outside"], ["déjà", "already"], ["déjeuner", "lunch"], ["demander", "to ask"], ["démarrer", "to start"], ["déménager", "to move house"], ["dentiste", "dentist"], ["départ", "departure"], ["dépasser", "to overtake"], ["dépenser", "to spend"], ["depuis", "since"], ["déranger", "to disturb"], ["dernier", "last"], ["derrière", "behind"], ["désigner", "to designate"], ["désirer", "to desire"], ["désolé", "sorry"], ["dessert", "dessert"], ["dessin", "drawing"], ["dessus", "above"], ["détail", "detail"], ["détester", "to hate"], ["détacher", "to detach"], ["deuxième", "second"], ["devant", "in front"], ["devenir", "to become"], ["deviner", "to guess"], ["diamant", "diamond"], ["différent", "different"], ["digérer", "to digest"], ["diminuer", "to decrease"], ["dîner", "dinner"], ["direction", "direction"], ["diriger", "to lead"], ["discours", "speech"], ["discuter", "to discuss"], ["disparaître", "to disappear"], ["disponible", "available"], ["distance", "distance"], ["distribuer", "to distribute"], ["domestique", "domestic"], ["dommage", "pity"], ["donc", "so"], ["dont", "whose"], ["dos", "back"], ["double", "double"], ["doucement", "gently"], ["douleur", "pain"], ["doute", "doubt"], ["douze", "twelve"], ["droit", "right"], ["drôle", "funny"], ["du", "of the"], ["durer", "to last"], ["échange", "exchange"], ["échantillon", "sample"], ["échapper", "to escape"], ["échec", "failure"], ["échelle", "ladder"], ["éclair", "lightning"], ["éclairer", "to light"], ["éclat", "burst"], ["écologiste", "environmentalist"], ["économie", "economy"], ["écrit", "writing"], ["écrivain", "writer"], ["écureuil", "squirrel"], ["édifice", "building"], ["édition", "edition"], ["éducation", "education"], ["effacer", "to erase"], ["effet", "effect"], ["effort", "effort"], ["égal", "equal"], ["église", "church"], ["élire", "to elect"], ["électrique", "electric"], ["électron", "electron"], ["élégance", "elegance"], ["élevé", "raised"], ["élever", "to raise"], ["elle", "she"], ["éloigner", "to move away"], ["embarquer", "to board"], ["embrasser", "to kiss"], ["émettre", "to emit"], ["émotion", "emotion"], ["empêcher", "to prevent"], ["employer", "to use"], ["emporter", "to take away"], ["en", "in"], ["encore", "again"], ["encourager", "to encourage"], ["encre", "ink"], ["endormir", "to fall asleep"], ["endroit", "place"], ["énergie", "energy"], ["enfer", "hell"], ["enfiler", "to put on"], ["enfin", "finally"], ["enfoncer", "to push in"], ["engager", "to engage"], ["ennemi", "enemy"], ["ennui", "boredom"], ["énorme", "huge"], ["enregistrer", "to record"], ["ensemble", "together"], ["ensuite", "then"], ["entendre", "to hear"], ["entourer", "to surround"], ["entraîner", "to train"], ["entre", "between"], ["entrée", "entrance"], ["entreprendre", "to undertake"], ["entrer", "to enter"], ["entretenir", "to maintain"], ["enveloppe", "envelope"], ["envie", "desire"], ["environ", "about"], ["envoyer", "to send"], ["épais", "thick"], ["épaule", "shoulder"], ["épée", "sword"], ["épicier", "grocer"], ["époque", "era"], ["épouser", "to marry"], ["épreuve", "test"], ["éprouver", "to feel"], ["épuiser", "to exhaust"], ["équilibre", "balance"], ["équipe", "team"], ["escalier", "stairs"], ["esclave", "slave"], ["espace", "space"], ["espèce", "species"], ["esprit", "mind"], ["essai", "try"], ["essence", "petrol"], ["essuyer", "to wipe"], ["et", "and"], ["établir", "to establish"], ["étage", "floor"], ["étant", "being"], ["état", "state"], ["éteindre", "to switch off"], ["étendre", "to stretch"], ["éternel", "eternal"], ["étoile", "star"], ["étonner", "to surprise"], ["étouffer", "to smother"], ["étrange", "strange"], ["étranger", "foreigner"], ["être", "to be"], ["étroit", "narrow"], ["étude", "study"], ["étudiant", "student"], ["européen", "European"], ["eux", "them"], ["événement", "event"], ["évident", "obvious"], ["éviter", "to avoid"], ["exact", "exact"], ["examiner", "to examine"], ["exercer", "to exercise"], ["exiger", "to demand"], ["exister", "to exist"], ["expérience", "experience"], ["explorer", "to explore"], ["exposer", "to exhibit"], ["exprimer", "to express"], ["extérieur", "outside"], ["extraordinaire", "extraordinary"], ["fabriquer", "to manufacture"], ["face", "face"], ["fâcher", "to anger"], ["façon", "way"], ["facteur", "postman"], ["fade", "bland"], ["faible", "weak"], ["faim", "hunger"], ["fait", "fact"], ["falloir", "to be necessary"], ["famille", "family"], ["faner", "to fade"], ["farine", "flour"], ["fatigue", "tiredness"], ["fatiguer", "to tire"], ["faute", "fault"], ["fauteuil", "armchair"], ["fauve", "wild animal"], ["faux", "false"], ["faveur", "favour"], ["favori", "favourite"], ["fée", "fairy"], ["feindre", "to pretend"], ["fêter", "to celebrate"], ["feu", "fire"], ["ficelle", "string"], ["fier", "proud"], ["fièvre", "fever"], ["figure", "face"], ["fil", "thread"], ["filet", "net"], ["fille", "girl"], ["fils", "son"], ["fin", "end"], ["finalement", "finally"], ["firm", "firm"], ["fixe", "fixed"], ["flamme", "flame"], ["flanc", "side"], ["flaque", "puddle"], ["flatter", "to flatter"], ["flèche", "arrow"], ["flot", "wave"], ["flûte", "flute"], ["foi", "faith"], ["fois", "time"], ["folie", "madness"], ["foncé", "dark"], ["fonction", "function"], ["fond", "bottom"], ["fonder", "to found"], ["fontaine", "fountain"], ["force", "strength"], ["forêt", "forest"], ["forme", "shape"], ["fortune", "fortune"], ["foule", "crowd"], ["four", "oven"], ["fourchette", "fork"], ["frais", "fresh"], ["fraise", "strawberry"], ["franc", "frank"], ["français", "French"], ["France", "France"], ["frapper", "to hit"], ["fromage", "cheese"], ["front", "forehead"], ["fuir", "to flee"], ["fumée", "smoke"], ["fumer", "to smoke"], ["fureur", "fury"], ["fusée", "rocket"], ["futur", "future"], ["gai", "cheerful"], ["galop", "gallop"], ["garage", "garage"], ["garçon", "boy"], ["gare", "station"], ["garnir", "to garnish"], ["gâteau", "cake"], ["gauche", "left"], ["geler", "to freeze"], ["gémir", "to moan"], ["gendarme", "policeman"], ["gêner", "to bother"], ["général", "general"], ["généreux", "generous"], ["génie", "genius"], ["genou", "knee"], ["genre", "kind"], ["gens", "people"], ["géographie", "geography"], ["geste", "gesture"], ["glace", "ice"], ["glisser", "to slide"], ["gloire", "glory"], ["goût", "taste"], ["goutte", "drop"], ["gouvernement", "government"], ["grâce", "grace"], ["grain", "grain"], ["graisse", "fat"], ["grand", "big"], ["grandir", "to grow"], ["gras", "fat"], ["gratter", "to scratch"], ["grave", "serious"], ["gré", "thanks"], ["grec", "Greek"], ["grenier", "attic"], ["grève", "strike"], ["griffe", "claw"], ["grille", "grate"], ["grippe", "flu"], ["gris", "grey"], ["gronder", "to scold"], ["gros", "big"], ["guérir", "to cure"], ["guetter", "to watch"], ["guide", "guide"], ["habile", "skilful"], ["habiller", "to dress"], ["habitude", "habit"], ["haine", "hatred"], ["haïr", "to hate"], ["haleter", "to pant"], ["halle", "hall"], ["hasard", "chance"], ["hâte", "haste"], ["haut", "high"], ["herbe", "grass"], ["hésiter", "to hesitate"], ["hiver", "winter"], ["hommage", "tribute"], ["honnête", "honest"], ["honneur", "honour"], ["honte", "shame"], ["hôpital", "hospital"], ["horizon", "horizon"], ["horloge", "clock"], ["horreur", "horror"], ["hôte", "host"], ["huile", "oil"], ["humain", "human"], ["humeur", "mood"], ["humide", "damp"], ["hygiène", "hygiene"], ["idée", "idea"], ["ignorer", "to ignore"], ["il", "he"], ["illusion", "illusion"], ["image", "image"], ["imiter", "to imitate"], ["immense", "huge"], ["immobile", "still"], ["impatient", "impatient"], ["importer", "to matter"], ["imposer", "to impose"], ["impossible", "impossible"], ["impression", "impression"], ["imprimer", "to print"], ["incapable", "unable"], ["inconnu", "unknown"], ["indiquer", "to indicate"], ["infini", "infinite"], ["influence", "influence"], ["information", "information"], ["informer", "to inform"], ["ingrat", "ungrateful"], ["injure", "insult"], ["innocent", "innocent"], ["inonder", "to flood"], ["inscription", "registration"], ["insecte", "insect"], ["insister", "to insist"], ["inspirer", "to inspire"], ["installer", "to install"], ["instant", "moment"], ["instrument", "instrument"], ["intelligent", "intelligent"], ["interdire", "to forbid"], ["intéresser", "to interest"], ["intérieur", "interior"], ["interroger", "to question"], ["introduire", "to introduce"], ["inutile", "useless"], ["irriter", "to irritate"], ["isolé", "isolated"], ["italien", "Italian"], ["ivoire", "ivory"], ["ivre", "drunk"], ["jade", "jade"], ["jadis", "formerly"], ["jaloux", "jealous"], ["jardin", "garden"], ["je", "I"], ["jeu", "game"], ["joie", "joy"], ["joli", "pretty"], ["jouet", "toy"], ["jour", "day"], ["journal", "newspaper"], ["journée", "day"], ["joyeux", "joyful"], ["juge", "judge"], ["juger", "to judge"], ["jumeau", "twin"], ["jusque", "until"], ["juste", "fair"], ["justice", "justice"], ["kilo", "kilo"], ["kilomètre", "kilometre"], ["là", "there"], ["laboratoire", "laboratory"], ["lacer", "to lace"], ["lâche", "cowardly"], ["laid", "ugly"], ["laine", "wool"], ["laisser", "to leave"], ["lampe", "lamp"], ["lance", "spear"], ["lancer", "to throw"], ["langue", "language"], ["large", "wide"], ["larme", "tear"], ["le", "the"], ["légume", "vegetable"], ["lendemain", "next day"], ["lequel", "which"], ["lettre", "letter"], ["leur", "their"], ["lever", "to lift"], ["lèvre", "lip"], ["libre", "free"], ["lien", "link"], ["lier", "to tie"], ["lieu", "place"], ["lièvre", "hare"], ["ligne", "line"], ["lilas", "lilac"], ["limite", "limit"], ["liste", "list"], ["local", "local"], ["locomotive", "locomotive"], ["logement", "housing"], ["logiciel", "software"], ["loin", "far"], ["longtemps", "long time"], ["lors", "when"], ["lorsque", "when"], ["louer", "to rent"], ["loyal", "loyal"], ["lueur", "glow"], ["lui", "him"], ["lumière", "light"], ["lunch", "lunch"], ["lutte", "struggle"], ["luxe", "luxury"], ["machine", "machine"], ["madame", "madam"], ["magasin", "shop"], ["magazine", "magazine"], ["magicien", "magician"], ["magie", "magic"], ["magnifique", "magnificent"], ["maigre", "thin"], ["maire", "mayor"], ["maison", "house"], ["maître", "teacher"], ["majesté", "majesty"], ["mal", "bad"], ["malade", "sick"], ["maladie", "illness"], ["malgré", "despite"], ["malheur", "misfortune"], ["manière", "manner"], ["manquer", "to miss"], ["marbre", "marble"], ["marchand", "merchant"], ["marche", "walk"], ["marché", "market"], ["marge", "margin"], ["mari", "husband"], ["mariage", "marriage"], ["marier", "to marry"], ["marquer", "to mark"], ["marteau", "hammer"], ["me", "me"], ["mécanique", "mechanical"], ["médaille", "medal"], ["médecin", "doctor"], ["médecine", "medicine"], ["médicament", "medicine"], ["meilleur", "better"], ["méler", "to mix"], ["membre", "member"], ["même", "same"], ["mémoire", "memory"], ["menacer", "to threaten"], ["ménage", "housework"], ["mener", "to lead"], ["mensonge", "lie"], ["mentir", "to lie"], ["menton", "chin"], ["menu", "menu"], ["mépriser", "to despise"], ["mérite", "merit"], ["merveille", "wonder"], ["message", "message"], ["métal", "metal"], ["métier", "job"], ["mètre", "metre"], ["métro", "underground"], ["mettre", "to put"], ["meuble", "furniture"], ["midi", "noon"], ["miel", "honey"], ["mieux", "better"], ["milieu", "middle"], ["militaire", "military"], ["mille", "thousand"], ["million", "million"], ["mince", "thin"], ["mine", "mine"], ["mirroir", "mirror"], ["mise", "putting"], ["misère", "misery"], ["mode", "fashion"], ["modèle", "model"], ["moderne", "modern"], ["moi", "me"], ["moins", "less"], ["moitié", "half"], ["moment", "moment"], ["mon", "my"], ["monde", "world"], ["monsieur", "sir"], ["monter", "to go up"], ["montre", "watch"], ["se", "moquer to mock"], ["morale", "moral"], ["morceau", "piece"], ["mordre", "to bite"], ["mort", "death"], ["moteur", "engine"], ["moto", "motorcycle"], ["mou", "soft"], ["mouche", "fly"], ["mouchoir", "handkerchief"], ["mouiller", "to wet"], ["moule", "mould"], ["mourir", "to die"], ["mousse", "foam"], ["mouvement", "movement"], ["moyen", "means"], ["muet", "mute"], ["mugir", "to moo"], ["multiple", "multiple"], ["mur", "wall"], ["mûr", "ripe"], ["murmure", "murmur"], ["musée", "museum"], ["musicien", "musician"], ["mutuel", "mutual"], ["naissance", "birth"], ["nappe", "tablecloth"], ["national", "national"], ["nature", "nature"], ["naturel", "natural"], ["navire", "ship"], ["ne", "not"], ["nécessaire", "necessary"], ["neige", "snow"], ["niche", "kennel"], ["nid", "nest"], ["nier", "to deny"], ["niveau", "level"], ["noble", "noble"], ["noce", "wedding"], ["nommer", "to name"], ["nord", "north"], ["normal", "normal"], ["noter", "to note"], ["notre", "our"], ["nourrir", "to feed"], ["nourriture", "food"], ["nous", "we"], ["noyer", "to drown"], ["nu", "naked"], ["nuage", "cloud"], ["nuire", "to harm"], ["nul", "none"], ["numéro", "number"], ["obéir", "to obey"], ["objet", "object"], ["obliger", "to oblige"], ["obscur", "dark"], ["observer", "to observe"], ["obtenir", "to obtain"], ["occasion", "opportunity"], ["occuper", "to occupy"], ["odeur", "smell"], ["œuf", "egg"], ["offrir", "to offer"], ["ombre", "shadow"], ["on", "one"], ["oncle", "uncle"], ["or", "gold"], ["orage", "storm"], ["orchestre", "orchestra"], ["ordinaire", "ordinary"], ["ordre", "order"], ["orge", "barley"], ["orgueil", "pride"], ["orient", "east"], ["orner", "to decorate"], ["os", "bone"], ["oser", "to dare"], ["ôter", "to remove"], ["ou", "or"], ["où", "where"], ["outil", "tool"], ["ouverture", "opening"], ["ouvrage", "work"], ["page", "page"], ["paille", "straw"], ["paire", "pair"], ["palais", "palace"], ["pâle", "pale"], ["panneau", "panel"], ["papa", "dad"], ["pâquerette", "daisy"], ["paquet", "parcel"], ["par", "by"], ["paradis", "paradise"], ["paraître", "to appear"], ["parc", "park"], ["parce", "because"], ["parcourir", "to travel"], ["pardessus", "overcoat"], ["pardon", "pardon"], ["pareil", "similar"], ["parent", "parent"], ["paresseux", "lazy"], ["parfait", "perfect"], ["parfum", "perfume"], ["parier", "to bet"], ["paris", "Paris"], ["parlement", "parliament"], ["parmi", "among"], ["parole", "word"], ["part", "share"], ["partager", "to share"], ["parti", "party"], ["participer", "to participate"], ["particulier", "particular"], ["partie", "part"], ["partir", "to leave"], ["partout", "everywhere"], ["parvenir", "to reach"], ["pas", "step"], ["passage", "passage"], ["passer", "to pass"], ["passion", "passion"], ["patauger", "to paddle"], ["pâte", "paste"], ["pâté", "pâté"], ["patience", "patience"], ["patron", "boss"], ["patte", "paw"], ["pauvre", "poor"], ["paysage", "landscape"], ["paysan", "peasant"], ["peau", "skin"], ["pêcher", "to fish"], ["peine", "trouble"], ["peintre", "painter"], ["pelouse", "lawn"], ["pencher", "to lean"], ["pendant", "during"], ["pendre", "to hang"], ["pénétrer", "to enter"], ["pénible", "painful"], ["pensée", "thought"], ["penser", "to think"], ["pension", "boarding"], ["percer", "to pierce"], ["perche", "pole"], ["perfection", "perfection"], ["péril", "peril"], ["période", "period"], ["perle", "pearl"], ["permettre", "to allow"], ["perroquet", "parrot"], ["personne", "person"], ["persuader", "to persuade"], ["perte", "loss"], ["pétrole", "oil"], ["peuple", "people"], ["peut-être", "maybe"], ["photo", "photo"], ["physique", "physical"], ["pic", "peak"], ["pièce", "room"], ["pierre", "stone"], ["piétiner", "to trample"], ["pieuvre", "octopus"], ["pigeon", "pigeon"], ["pilote", "pilot"], ["pin", "pine"], ["pince", "tweezers"], ["piquer", "to sting"], ["pire", "worse"], ["piscine", "swimming pool"], ["piste", "track"], ["place", "place"], ["placer", "to place"], ["plage", "beach"], ["plaie", "wound"], ["plaire", "to please"], ["plaisir", "pleasure"], ["plan", "plan"], ["planche", "board"], ["planer", "to glide"], ["plante", "plant"], ["planteur", "planter"], ["plaque", "plate"], ["plat", "flat"], ["pleuvoir", "to rain"], ["pli", "fold"], ["plier", "to fold"], ["plomb", "lead"], ["plumer", "to pluck"], ["plupart", "most"], ["plus", "more"], ["plusieurs", "several"], ["poche", "pocket"], ["poème", "poem"], ["poignée", "handful"], ["poignet", "wrist"], ["poil", "hair"], ["point", "point"], ["pointe", "tip"], ["poire", "pear"], ["poison", "poison"], ["poitrine", "chest"], ["poivre", "pepper"], ["police", "police"], ["politesse", "politeness"], ["politique", "politics"], ["pomme", "apple"], ["pont", "bridge"], ["population", "population"], ["porc", "pork"], ["port", "port"], ["porter", "to carry"], ["portion", "portion"], ["portrait", "portrait"], ["poser", "to put"], ["position", "position"], ["posséder", "to own"], ["postal", "postal"], ["poste", "post"], ["pot", "pot"], ["pouce", "thumb"], ["poudre", "powder"], ["poulet", "chicken"], ["pour", "for"], ["pourquoi", "why"], ["poursuivre", "to pursue"], ["pourtant", "however"], ["poussière", "dust"], ["prairie", "meadow"], ["pratique", "practical"], ["pré", "meadow"], ["précédent", "previous"], ["précieux", "precious"], ["précipiter", "to rush"], ["précis", "precise"], ["préférer", "to prefer"], ["premier", "first"], ["près", "near"], ["présence", "presence"], ["présenter", "to present"], ["presque", "almost"], ["presser", "to press"], ["prêt", "ready"], ["prêter", "to lend"], ["preuve", "proof"], ["prévenir", "to warn"], ["prévoir", "to foresee"], ["prier", "to pray"], ["prière", "prayer"], ["principe", "principle"], ["prise", "grip"], ["prison", "prison"], ["priver", "to deprive"], ["prochain", "next"], ["proche", "near"], ["produire", "to produce"], ["professeur", "teacher"], ["profit", "profit"], ["profond", "deep"], ["programme", "programme"], ["progrès", "progress"], ["promener", "to walk"], ["promesse", "promise"], ["promettre", "to promise"], ["prompt", "quick"], ["prononcer", "to pronounce"], ["propos", "remark"], ["proposer", "to propose"], ["public", "public"], ["puce", "flea"], ["puis", "then"], ["puisque", "since"], ["puissant", "powerful"], ["punir", "to punish"], ["pupille", "pupil of eye"], ["pur", "pure"], ["quai", "platform"], ["qualité", "quality"], ["quand", "when"], ["quantité", "quantity"], ["quartier", "district"], ["que", "that"], ["quel", "which"], ["quelque", "some"], ["queue", "tail"], ["qui", "who"], ["quinze", "fifteen"], ["quitter", "to leave"], ["quoi", "what"], ["quotidien", "daily"], ["race", "race"], ["radio", "radio"], ["rage", "rage"], ["raide", "stiff"], ["raisin", "grape"], ["raison", "reason"], ["ralentir", "to slow down"], ["ramasser", "to pick up"], ["rame", "row"], ["ramener", "to bring back"], ["rang", "rank"], ["rappeler", "to recall"], ["rapport", "report"], ["rare", "rare"], ["rassurer", "to reassure"], ["rat", "rat"], ["rater", "to miss"], ["ravir", "to delight"], ["rayon", "ray"], ["réaliser", "to achieve"], ["réalité", "reality"], ["recevoir", "to receive"], ["réchauffer", "to warm up"], ["recherche", "research"], ["récit", "story"], ["réclamer", "to claim"], ["récolte", "harvest"], ["recommander", "to recommend"], ["recommencer", "to start again"], ["récompenser", "to reward"], ["reconnaître", "to recognize"], ["recourir", "to resort"], ["recouvert", "covered"], ["récréer", "to recreate"], ["redouter", "to dread"], ["réduire", "to reduce"], ["réel", "real"], ["refaire", "to redo"], ["regard", "look"], ["région", "region"], ["régler", "to settle"], ["rejeter", "to reject"], ["rejoindre", "to join"], ["relatif", "relative"], ["relation", "relationship"], ["relevé", "statement"], ["relever", "to raise"], ["remarque", "remark"], ["remarquer", "to notice"], ["remercier", "to thank"], ["remettre", "to put back"], ["remonter", "to go back up"], ["remplacer", "to replace"], ["rencontre", "meeting"], ["rencontrer", "to meet"], ["rendez-vous", "appointment"], ["rendre", "to give back"], ["renoncer", "to give up"], ["renseignement", "information"], ["renseigner", "to inform"], ["rentrer", "to go home"], ["renverser", "to spill"], ["renvoyer", "to send back"], ["répandre", "to spread"], ["repartir", "to leave again"], ["repas", "meal"], ["repasser", "to iron"], ["répéter", "to repeat"], ["répondre", "to answer"], ["repos", "rest"], ["reposer", "to rest"], ["repousser", "to push back"], ["reprendre", "to take back"], ["représentant", "representative"], ["représenter", "to represent"], ["république", "republic"], ["réserver", "to reserve"], ["résister", "to resist"], ["respecter", "to respect"], ["respirer", "to breathe"], ["resplendir", "to shine"], ["ressembler", "to resemble"], ["ressource", "resource"], ["rester", "to stay"], ["rétablir", "to restore"], ["retenir", "to retain"], ["retirer", "to withdraw"], ["retour", "return"], ["retourner", "to return"], ["retraite", "retreat"], ["retrouver", "to find again"], ["réunir", "to gather"], ["réussir", "to succeed"], ["rêve", "dream"], ["réveil", "alarm clock"], ["réveiller", "to wake"], ["révéler", "to reveal"], ["revenir", "to come back"], ["revoir", "to see again"], ["revue", "review"], ["rez-de-chaussée", "ground floor"], ["rhume", "cold"], ["riant", "laughing"], ["riche", "rich"], ["rideau", "curtain"], ["rien", "nothing"], ["risque", "risk"], ["robinet", "tap"], ["roche", "rock"], ["roi", "king"], ["rôle", "role"], ["roman", "novel"], ["rompre", "to break"], ["rond", "round"], ["roue", "wheel"], ["rouge", "red"], ["rougir", "to blush"], ["rouleau", "roll"], ["rouler", "to roll"], ["route", "road"], ["roux", "red-haired"], ["royal", "royal"], ["ruban", "ribbon"], ["ruche", "hive"], ["rude", "rough"], ["rue", "street"], ["ruine", "ruin"], ["ruse", "trick"], ["russe", "Russian"], ["sable", "sand"], ["sabot", "hoof"], ["sac", "bag"], ["sacré", "sacred"], ["sage", "wise"], ["saigner", "to bleed"], ["sain", "healthy"], ["saint", "saint"], ["saisir", "to seize"], ["saison", "season"], ["salaire", "salary"], ["salir", "to dirty"], ["salon", "lounge"], ["saluer", "to greet"], ["sandale", "sandal"], ["sang", "blood"], ["sanglier", "boar"], ["sans", "without"], ["santé", "health"], ["sapin", "fir"], ["satisfaire", "to satisfy"], ["sauce", "sauce"], ["sauf", "except"], ["sauvage", "wild"], ["sauver", "to save"], ["savon", "soap"], ["scène", "stage"], ["science", "science"], ["sculpture", "sculpture"], ["seau", "bucket"], ["sec", "dry"], ["sécher", "to dry"], ["second", "second"], ["seconde", "second"], ["secours", "help"], ["secret", "secret"], ["secrétaire", "secretary"], ["sécurité", "security"], ["sein", "breast"], ["séjour", "stay"], ["sel", "salt"], ["selon", "according to"], ["semblable", "similar"], ["sembler", "to seem"], ["semer", "to sow"], ["sens", "meaning"], ["sentier", "path"], ["sentiment", "feeling"], ["séparer", "to separate"], ["sérieux", "serious"], ["serrer", "to tighten"], ["serrure", "lock"], ["service", "service"], ["serviette", "towel"], ["servir", "to serve"], ["seul", "alone"], ["seulement", "only"], ["sévère", "severe"], ["si", "if"], ["siècle", "century"], ["siège", "seat"], ["sien", "his"], ["siffler", "to whistle"], ["signal", "signal"], ["signe", "sign"], ["signer", "to sign"], ["sillon", "furrow"], ["simple", "simple"], ["sinistre", "disaster"], ["sinon", "otherwise"], ["situation", "situation"], ["société", "society"], ["soi", "oneself"], ["soie", "silk"], ["soif", "thirst"], ["soin", "care"], ["soirée", "evening"], ["soit", "either"], ["soixante", "sixty"], ["sol", "ground"], ["soldat", "soldier"], ["solide", "solid"], ["solitaire", "lonely"], ["solution", "solution"], ["sommeil", "sleep"], ["sommet", "summit"], ["son", "his"], ["songer", "to think"], ["sonner", "to ring"], ["sorte", "kind"], ["sortie", "exit"], ["sortir", "to go out"], ["sot", "foolish"], ["souci", "worry"], ["soudain", "sudden"], ["souffler", "to blow"], ["souffrance", "suffering"], ["souffrir", "to suffer"], ["souhait", "wish"], ["souiller", "to soil"], ["soulager", "to relieve"], ["soulever", "to lift"], ["soulier", "shoe"], ["soumettre", "to submit"], ["soupçon", "suspicion"], ["soupe", "soup"], ["soupir", "sigh"], ["souple", "flexible"], ["source", "source"], ["sourd", "deaf"], ["sous", "under"], ["soutenir", "to support"], ["souvenir", "memory"], ["spécial", "special"], ["spectacle", "show"], ["sport", "sport"], ["station", "station"], ["statue", "statue"], ["style", "style"], ["subir", "to undergo"], ["succès", "success"], ["sucer", "to suck"], ["sucre", "sugar"], ["suer", "to sweat"], ["sueur", "sweat"], ["suffire", "to suffice"], ["suite", "continuation"], ["suivant", "following"], ["sujet", "subject"], ["superbe", "superb"], ["supplémentaire", "extra"], ["supporter", "to bear"], ["supposer", "to suppose"], ["supprimer", "to delete"], ["sûr", "sure"], ["surface", "surface"], ["surprise", "surprise"], ["surtout", "especially"], ["surveiller", "to supervise"], ["symbole", "symbol"], ["sympathie", "sympathy"], ["système", "system"], ["tabac", "tobacco"], ["tache", "stain"], ["tâche", "task"], ["taille", "size"], ["taire", "to keep quiet"], ["talent", "talent"], ["talus", "embankment"], ["tandis", "while"], ["tant", "so much"], ["tante", "aunt"], ["tapis", "carpet"], ["tard", "late"], ["tarder", "to delay"], ["tas", "pile"], ["tasse", "cup"], ["te", "you"], ["technique", "technique"], ["teindre", "to dye"], ["tel", "such"], ["téléphone", "telephone"], ["télévision", "television"], ["tempête", "storm"], ["temps", "time"], ["tendre", "tender"], ["tenir", "to hold"], ["tenter", "to attempt"], ["terme", "term"], ["terminer", "to finish"], ["terrain", "ground"], ["terrasse", "terrace"], ["terrible", "terrible"], ["territoire", "territory"], ["tête", "head"], ["thé", "tea"], ["thème", "theme"], ["ticket", "ticket"], ["tien", "yours"], ["tiers", "third"], ["tiroir", "drawer"], ["tissu", "fabric"], ["toi", "you"], ["toile", "cloth"], ["toit", "roof"], ["tombe", "tomb"], ["ton", "your"], ["tondre", "to mow"], ["tonneau", "barrel"], ["tonnerre", "thunder"], ["tort", "wrong"], ["tôt", "early"], ["total", "total"], ["touché", "touched"], ["tour", "tour"], ["tourner", "to turn"], ["tout", "all"], ["trace", "trace"], ["traduction", "translation"], ["traduire", "to translate"], ["trahir", "to betray"], ["traîner", "to drag"], ["trait", "feature"], ["traiter", "to treat"], ["trajet", "journey"], ["tramway", "tram"], ["tranchant", "sharp"], ["tranche", "slice"], ["tranquille", "quiet"], ["transformer", "to transform"], ["transport", "transport"], ["travaux", "works"], ["travers", "across"], ["traverser", "to cross"], ["treize", "thirteen"], ["trembler", "to tremble"], ["trente", "thirty"], ["très", "very"], ["trésor", "treasure"], ["tresser", "to plait"], ["tribunal", "court"], ["tricoter", "to knit"], ["triomphe", "triumph"], ["tromper", "to deceive"], ["trou", "hole"], ["trouble", "trouble"], ["trouer", "to pierce"], ["troupe", "troop"], ["trouver", "to find"], ["tu", "you"], ["tuer", "to kill"], ["tuile", "tile"], ["tuner", "tuner"], ["tunnel", "tunnel"], ["turc", "Turkish"], ["type", "type"], ["un", "one"], ["unique", "unique"], ["unir", "to unite"], ["université", "university"], ["urbain", "urban"], ["urgent", "urgent"], ["usage", "use"], ["userager", "to use"], ["usine", "factory"], ["utiliser", "to use"], ["vacances", "holidays"], ["vague", "wave"], ["vaisselle", "dishes"], ["valable", "valid"], ["valeur", "value"], ["valoir", "to be worth"], ["valise", "suitcase"], ["vanter", "to praise"], ["vapeur", "steam"], ["varier", "to vary"], ["vase", "vase"], ["vaste", "vast"], ["veau", "veal"], ["vécu", "lived"], ["vedette", "star"], ["végétation", "vegetation"], ["véhicule", "vehicle"], ["veille", "eve"], ["veiller", "to watch over"], ["vein", "vein"], ["vélo", "bicycle"], ["vendeur", "seller"], ["vengeance", "revenge"], ["vente", "sale"], ["ventre", "belly"], ["véritable", "true"], ["vérité", "truth"], ["verre", "glass"], ["vers", "towards"], ["verser", "to pour"], ["version", "version"], ["vertu", "virtue"], ["vêtement", "clothing"], ["vêtir", "to clothe"], ["victime", "victim"], ["victoire", "victory"], ["vie", "life"], ["vieil", "old"], ["vierge", "virgin"], ["vif", "lively"], ["vigne", "vine"], ["vigoureux", "vigorous"], ["vilain", "ugly"], ["villa", "villa"], ["vin", "wine"], ["violoner", "violin"], ["virage", "bend"], ["visage", "face"], ["visible", "visible"], ["visite", "visit"], ["vite", "quickly"], ["vitesse", "speed"], ["vivant", "living"], ["vivre", "to live"], ["voici", "here is"], ["voilà", "there is"], ["voile", "sail"], ["voisin", "neighbour"], ["voiture", "car"], ["voix", "voice"], ["vol", "flight"], ["voler", "to fly"], ["volet", "shutter"], ["volonté", "will"], ["votre", "your"], ["vous", "you"], ["voyage", "journey"], ["vrai", "true"], ["vue", "view"], ["yeux", "eyes"], ["zéro", "zero"], ["zone", "zone"], ["zut", "darn"]]
+[
+{
+"fr": "école",
+"en": "school",
+"cat": "École"
+},
+{
+"fr": "classe",
+"en": "classroom",
+"cat": "École"
+},
+{
+"fr": "élève",
+"en": "pupil",
+"cat": "École"
+},
+{
+"fr": "enseignant",
+"en": "teacher",
+"cat": "Général"
+},
+{
+"fr": "directeur",
+"en": "headteacher",
+"cat": "Général"
+},
+{
+"fr": "cahier",
+"en": "notebook",
+"cat": "École"
+},
+{
+"fr": "livre",
+"en": "book",
+"cat": "Général"
+},
+{
+"fr": "stylo",
+"en": "pen",
+"cat": "Général"
+},
+{
+"fr": "crayon",
+"en": "pencil",
+"cat": "Général"
+},
+{
+"fr": "règle",
+"en": "ruler",
+"cat": "Général"
+},
+{
+"fr": "gomme",
+"en": "eraser",
+"cat": "Général"
+},
+{
+"fr": "tableau",
+"en": "blackboard",
+"cat": "École"
+},
+{
+"fr": "craie",
+"en": "chalk",
+"cat": "Général"
+},
+{
+"fr": "cartable",
+"en": "schoolbag",
+"cat": "Général"
+},
+{
+"fr": "récréation",
+"en": "break",
+"cat": "Général"
+},
+{
+"fr": "devoir",
+"en": "homework",
+"cat": "École"
+},
+{
+"fr": "leçon",
+"en": "lesson",
+"cat": "École"
+},
+{
+"fr": "exercice",
+"en": "exercise",
+"cat": "Général"
+},
+{
+"fr": "évaluation",
+"en": "assessment",
+"cat": "Général"
+},
+{
+"fr": "note",
+"en": "mark",
+"cat": "Général"
+},
+{
+"fr": "bulletin",
+"en": "report card",
+"cat": "Général"
+},
+{
+"fr": "moyenne",
+"en": "average",
+"cat": "Général"
+},
+{
+"fr": "rang",
+"en": "rank",
+"cat": "Général"
+},
+{
+"fr": "année scolaire",
+"en": "school year",
+"cat": "Général"
+},
+{
+"fr": "maternelle",
+"en": "kindergarten",
+"cat": "Général"
+},
+{
+"fr": "primaire",
+"en": "primary school",
+"cat": "Général"
+},
+{
+"fr": "collège",
+"en": "middle school",
+"cat": "Général"
+},
+{
+"fr": "un",
+"en": "one",
+"cat": "Nombres"
+},
+{
+"fr": "deux",
+"en": "two",
+"cat": "Nombres"
+},
+{
+"fr": "trois",
+"en": "three",
+"cat": "Nombres"
+},
+{
+"fr": "quatre",
+"en": "four",
+"cat": "Nombres"
+},
+{
+"fr": "cinq",
+"en": "five",
+"cat": "Nombres"
+},
+{
+"fr": "six",
+"en": "six",
+"cat": "Nombres"
+},
+{
+"fr": "sept",
+"en": "seven",
+"cat": "Nombres"
+},
+{
+"fr": "huit",
+"en": "eight",
+"cat": "Nombres"
+},
+{
+"fr": "neuf",
+"en": "nine",
+"cat": "Général"
+},
+{
+"fr": "dix",
+"en": "ten",
+"cat": "Général"
+},
+{
+"fr": "onze",
+"en": "eleven",
+"cat": "Général"
+},
+{
+"fr": "douze",
+"en": "twelve",
+"cat": "Général"
+},
+{
+"fr": "vingt",
+"en": "twenty",
+"cat": "Général"
+},
+{
+"fr": "trente",
+"en": "thirty",
+"cat": "Général"
+},
+{
+"fr": "cent",
+"en": "hundred",
+"cat": "Général"
+},
+{
+"fr": "mille",
+"en": "thousand",
+"cat": "Général"
+},
+{
+"fr": "nombre",
+"en": "number",
+"cat": "Nombres"
+},
+{
+"fr": "chiffre",
+"en": "digit",
+"cat": "Général"
+},
+{
+"fr": "addition",
+"en": "addition",
+"cat": "Nombres"
+},
+{
+"fr": "soustraction",
+"en": "subtraction",
+"cat": "Général"
+},
+{
+"fr": "multiplication",
+"en": "multiplication",
+"cat": "Général"
+},
+{
+"fr": "division",
+"en": "division",
+"cat": "Général"
+},
+{
+"fr": "plus",
+"en": "plus",
+"cat": "Général"
+},
+{
+"fr": "moins",
+"en": "minus",
+"cat": "Général"
+},
+{
+"fr": "égal",
+"en": "equal",
+"cat": "Général"
+},
+{
+"fr": "moitié",
+"en": "half",
+"cat": "Général"
+},
+{
+"fr": "double",
+"en": "double",
+"cat": "Général"
+},
+{
+"fr": "triple",
+"en": "triple",
+"cat": "Général"
+},
+{
+"fr": "pair",
+"en": "even",
+"cat": "Général"
+},
+{
+"fr": "impair",
+"en": "odd",
+"cat": "Général"
+},
+{
+"fr": "cercle",
+"en": "circle",
+"cat": "Général"
+},
+{
+"fr": "carré",
+"en": "square",
+"cat": "Général"
+},
+{
+"fr": "triangle",
+"en": "triangle",
+"cat": "Général"
+},
+{
+"fr": "rectangle",
+"en": "rectangle",
+"cat": "Général"
+},
+{
+"fr": "ligne",
+"en": "line",
+"cat": "Général"
+},
+{
+"fr": "point",
+"en": "point",
+"cat": "Général"
+},
+{
+"fr": "angle",
+"en": "angle",
+"cat": "Général"
+},
+{
+"fr": "longueur",
+"en": "length",
+"cat": "Général"
+},
+{
+"fr": "largeur",
+"en": "width",
+"cat": "Général"
+},
+{
+"fr": "hauteur",
+"en": "height",
+"cat": "Général"
+},
+{
+"fr": "mesure",
+"en": "measurement",
+"cat": "Général"
+},
+{
+"fr": "centimètre",
+"en": "centimetre",
+"cat": "Général"
+},
+{
+"fr": "mètre",
+"en": "metre",
+"cat": "Général"
+},
+{
+"fr": "tête",
+"en": "head",
+"cat": "Général"
+},
+{
+"fr": "œil",
+"en": "eye",
+"cat": "Général"
+},
+{
+"fr": "oreille",
+"en": "ear",
+"cat": "Général"
+},
+{
+"fr": "nez",
+"en": "nose",
+"cat": "Général"
+},
+{
+"fr": "bouche",
+"en": "mouth",
+"cat": "Général"
+},
+{
+"fr": "main",
+"en": "hand",
+"cat": "Général"
+},
+{
+"fr": "doigt",
+"en": "finger",
+"cat": "Général"
+},
+{
+"fr": "pied",
+"en": "foot",
+"cat": "Général"
+},
+{
+"fr": "bras",
+"en": "arm",
+"cat": "Général"
+},
+{
+"fr": "jambe",
+"en": "leg",
+"cat": "Général"
+},
+{
+"fr": "corps",
+"en": "body",
+"cat": "Général"
+},
+{
+"fr": "cheveux",
+"en": "hair",
+"cat": "Général"
+},
+{
+"fr": "dent",
+"en": "tooth",
+"cat": "Général"
+},
+{
+"fr": "père",
+"en": "father",
+"cat": "Famille"
+},
+{
+"fr": "mère",
+"en": "mother",
+"cat": "Famille"
+},
+{
+"fr": "frère",
+"en": "brother",
+"cat": "Famille"
+},
+{
+"fr": "sœur",
+"en": "sister",
+"cat": "Général"
+},
+{
+"fr": "enfant",
+"en": "child",
+"cat": "Général"
+},
+{
+"fr": "famille",
+"en": "family",
+"cat": "Famille"
+},
+{
+"fr": "grand-père",
+"en": "grandfather",
+"cat": "Famille"
+},
+{
+"fr": "grand-mère",
+"en": "grandmother",
+"cat": "Famille"
+},
+{
+"fr": "ami",
+"en": "friend",
+"cat": "Général"
+},
+{
+"fr": "arbre",
+"en": "tree",
+"cat": "Nature"
+},
+{
+"fr": "fleur",
+"en": "flower",
+"cat": "Général"
+},
+{
+"fr": "feuille",
+"en": "leaf",
+"cat": "Général"
+},
+{
+"fr": "herbe",
+"en": "grass",
+"cat": "Général"
+},
+{
+"fr": "forêt",
+"en": "forest",
+"cat": "Nature"
+},
+{
+"fr": "rivière",
+"en": "river",
+"cat": "Général"
+},
+{
+"fr": "mer",
+"en": "sea",
+"cat": "Général"
+},
+{
+"fr": "soleil",
+"en": "sun",
+"cat": "Nature"
+},
+{
+"fr": "lune",
+"en": "moon",
+"cat": "Nombres"
+},
+{
+"fr": "étoile",
+"en": "star",
+"cat": "Général"
+},
+{
+"fr": "pluie",
+"en": "rain",
+"cat": "Nature"
+},
+{
+"fr": "nuage",
+"en": "cloud",
+"cat": "Général"
+},
+{
+"fr": "vent",
+"en": "wind",
+"cat": "Général"
+},
+{
+"fr": "terre",
+"en": "earth",
+"cat": "Général"
+},
+{
+"fr": "ciel",
+"en": "sky",
+"cat": "Général"
+},
+{
+"fr": "animal",
+"en": "animal",
+"cat": "Nature"
+},
+{
+"fr": "oiseau",
+"en": "bird",
+"cat": "Général"
+},
+{
+"fr": "poisson",
+"en": "fish",
+"cat": "Général"
+},
+{
+"fr": "chien",
+"en": "dog",
+"cat": "Général"
+},
+{
+"fr": "chat",
+"en": "cat",
+"cat": "Général"
+},
+{
+"fr": "éléphant",
+"en": "elephant",
+"cat": "Général"
+},
+{
+"fr": "lion",
+"en": "lion",
+"cat": "Général"
+},
+{
+"fr": "singe",
+"en": "monkey",
+"cat": "Général"
+},
+{
+"fr": "serpent",
+"en": "snake",
+"cat": "Général"
+},
+{
+"fr": "jour",
+"en": "day",
+"cat": "Général"
+},
+{
+"fr": "nuit",
+"en": "night",
+"cat": "Général"
+},
+{
+"fr": "matin",
+"en": "morning",
+"cat": "Général"
+},
+{
+"fr": "soir",
+"en": "evening",
+"cat": "Général"
+},
+{
+"fr": "semaine",
+"en": "week",
+"cat": "Général"
+},
+{
+"fr": "mois",
+"en": "month",
+"cat": "Général"
+},
+{
+"fr": "année",
+"en": "year",
+"cat": "Général"
+},
+{
+"fr": "heure",
+"en": "hour",
+"cat": "Général"
+},
+{
+"fr": "minute",
+"en": "minute",
+"cat": "Général"
+},
+{
+"fr": "aujourd'hui",
+"en": "today",
+"cat": "Général"
+},
+{
+"fr": "demain",
+"en": "tomorrow",
+"cat": "Général"
+},
+{
+"fr": "hier",
+"en": "yesterday",
+"cat": "Général"
+},
+{
+"fr": "lundi",
+"en": "Monday",
+"cat": "Nombres"
+},
+{
+"fr": "mardi",
+"en": "Tuesday",
+"cat": "Général"
+},
+{
+"fr": "mercredi",
+"en": "Wednesday",
+"cat": "Général"
+},
+{
+"fr": "jeudi",
+"en": "Thursday",
+"cat": "Général"
+},
+{
+"fr": "vendredi",
+"en": "Friday",
+"cat": "Général"
+},
+{
+"fr": "samedi",
+"en": "Saturday",
+"cat": "Général"
+},
+{
+"fr": "dimanche",
+"en": "Sunday",
+"cat": "Général"
+},
+{
+"fr": "rouge",
+"en": "red",
+"cat": "Couleurs"
+},
+{
+"fr": "bleu",
+"en": "blue",
+"cat": "Couleurs"
+},
+{
+"fr": "vert",
+"en": "green",
+"cat": "Couleurs"
+},
+{
+"fr": "jaune",
+"en": "yellow",
+"cat": "Nombres"
+},
+{
+"fr": "noir",
+"en": "black",
+"cat": "Couleurs"
+},
+{
+"fr": "blanc",
+"en": "white",
+"cat": "Couleurs"
+},
+{
+"fr": "orange",
+"en": "orange",
+"cat": "Général"
+},
+{
+"fr": "rose",
+"en": "pink",
+"cat": "Général"
+},
+{
+"fr": "violet",
+"en": "purple",
+"cat": "Général"
+},
+{
+"fr": "gris",
+"en": "grey",
+"cat": "Général"
+},
+{
+"fr": "marron",
+"en": "brown",
+"cat": "Général"
+},
+{
+"fr": "lire",
+"en": "to read",
+"cat": "Verbes"
+},
+{
+"fr": "écrire",
+"en": "to write",
+"cat": "Verbes"
+},
+{
+"fr": "compter",
+"en": "to count",
+"cat": "Verbes"
+},
+{
+"fr": "calculer",
+"en": "to calculate",
+"cat": "Verbes"
+},
+{
+"fr": "dessiner",
+"en": "to draw",
+"cat": "Verbes"
+},
+{
+"fr": "chanter",
+"en": "to sing",
+"cat": "Verbes"
+},
+{
+"fr": "danser",
+"en": "to dance",
+"cat": "Verbes"
+},
+{
+"fr": "jouer",
+"en": "to play",
+"cat": "Verbes"
+},
+{
+"fr": "courir",
+"en": "to run",
+"cat": "Verbes"
+},
+{
+"fr": "marcher",
+"en": "to walk",
+"cat": "Verbes"
+},
+{
+"fr": "manger",
+"en": "to eat",
+"cat": "Verbes"
+},
+{
+"fr": "boire",
+"en": "to drink",
+"cat": "Verbes"
+},
+{
+"fr": "dormir",
+"en": "to sleep",
+"cat": "Verbes"
+},
+{
+"fr": "écouter",
+"en": "to listen",
+"cat": "Verbes"
+},
+{
+"fr": "parler",
+"en": "to speak",
+"cat": "Verbes"
+},
+{
+"fr": "voir",
+"en": "to see",
+"cat": "Verbes"
+},
+{
+"fr": "apprendre",
+"en": "to learn",
+"cat": "Verbes"
+},
+{
+"fr": "enseigner",
+"en": "to teach",
+"cat": "Verbes"
+},
+{
+"fr": "comprendre",
+"en": "to understand",
+"cat": "Verbes"
+},
+{
+"fr": "répondre",
+"en": "to answer",
+"cat": "Verbes"
+},
+{
+"fr": "demander",
+"en": "to ask",
+"cat": "Verbes"
+},
+{
+"fr": "chercher",
+"en": "to look for",
+"cat": "Verbes"
+},
+{
+"fr": "trouver",
+"en": "to find",
+"cat": "Verbes"
+},
+{
+"fr": "ouvrir",
+"en": "to open",
+"cat": "Verbes"
+},
+{
+"fr": "fermer",
+"en": "to close",
+"cat": "Verbes"
+},
+{
+"fr": "commencer",
+"en": "to start",
+"cat": "Verbes"
+},
+{
+"fr": "finir",
+"en": "to finish",
+"cat": "Verbes"
+},
+{
+"fr": "grand",
+"en": "big",
+"cat": "Général"
+},
+{
+"fr": "petit",
+"en": "small",
+"cat": "Général"
+},
+{
+"fr": "long",
+"en": "long",
+"cat": "Général"
+},
+{
+"fr": "court",
+"en": "short",
+"cat": "Général"
+},
+{
+"fr": "beau",
+"en": "beautiful",
+"cat": "Général"
+},
+{
+"fr": "bon",
+"en": "good",
+"cat": "Général"
+},
+{
+"fr": "mauvais",
+"en": "bad",
+"cat": "Général"
+},
+{
+"fr": "nouveau",
+"en": "new",
+"cat": "Général"
+},
+{
+"fr": "vieux",
+"en": "old",
+"cat": "Général"
+},
+{
+"fr": "jeune",
+"en": "young",
+"cat": "Nombres"
+},
+{
+"fr": "rapide",
+"en": "fast",
+"cat": "Général"
+},
+{
+"fr": "lent",
+"en": "slow",
+"cat": "Général"
+},
+{
+"fr": "chaud",
+"en": "hot",
+"cat": "Général"
+},
+{
+"fr": "froid",
+"en": "cold",
+"cat": "Général"
+},
+{
+"fr": "facile",
+"en": "easy",
+"cat": "Général"
+},
+{
+"fr": "difficile",
+"en": "difficult",
+"cat": "Général"
+},
+{
+"fr": "heureux",
+"en": "happy",
+"cat": "Général"
+},
+{
+"fr": "triste",
+"en": "sad",
+"cat": "Général"
+},
+{
+"fr": "pain",
+"en": "bread",
+"cat": "Général"
+},
+{
+"fr": "eau",
+"en": "water",
+"cat": "Général"
+},
+{
+"fr": "lait",
+"en": "milk",
+"cat": "Général"
+},
+{
+"fr": "riz",
+"en": "rice",
+"cat": "Général"
+},
+{
+"fr": "fruit",
+"en": "fruit",
+"cat": "Général"
+},
+{
+"fr": "légume",
+"en": "vegetable",
+"cat": "Général"
+},
+{
+"fr": "viande",
+"en": "meat",
+"cat": "Général"
+},
+{
+"fr": "banane",
+"en": "banana",
+"cat": "Général"
+},
+{
+"fr": "mangue",
+"en": "mango",
+"cat": "Général"
+},
+{
+"fr": "citron",
+"en": "lemon",
+"cat": "Général"
+},
+{
+"fr": "Ignames",
+"en": "yam",
+"cat": "Général"
+},
+{
+"fr": "manioc",
+"en": "cassava",
+"cat": "Général"
+},
+{
+"fr": "village",
+"en": "village",
+"cat": "Général"
+},
+{
+"fr": "ville",
+"en": "city",
+"cat": "Général"
+},
+{
+"fr": "maison",
+"en": "house",
+"cat": "Général"
+},
+{
+"fr": "route",
+"en": "road",
+"cat": "Général"
+},
+{
+"fr": "marché",
+"en": "market",
+"cat": "Général"
+},
+{
+"fr": "hôpital",
+"en": "hospital",
+"cat": "Général"
+},
+{
+"fr": "église",
+"en": "church",
+"cat": "Général"
+},
+{
+"fr": "mosquée",
+"en": "mosque",
+"cat": "Général"
+},
+{
+"fr": "Gabon",
+"en": "Gabon",
+"cat": "Général"
+},
+{
+"fr": "Libreville",
+"en": "Libreville",
+"cat": "Général"
+},
+{
+"fr": "Afrique",
+"en": "Africa",
+"cat": "Général"
+},
+{
+"fr": "forêt équatoriale",
+"en": "rainforest",
+"cat": "Nature"
+},
+{
+"fr": "nom",
+"en": "noun",
+"cat": "Général"
+},
+{
+"fr": "verbe",
+"en": "verb",
+"cat": "Général"
+},
+{
+"fr": "adjectif",
+"en": "adjective",
+"cat": "Général"
+},
+{
+"fr": "phrase",
+"en": "sentence",
+"cat": "Général"
+},
+{
+"fr": "lettre",
+"en": "letter",
+"cat": "Général"
+},
+{
+"fr": "mot",
+"en": "word",
+"cat": "Général"
+},
+{
+"fr": "syllabe",
+"en": "syllable",
+"cat": "Général"
+},
+{
+"fr": "voyelle",
+"en": "vowel",
+"cat": "Général"
+},
+{
+"fr": "consonne",
+"en": "consonant",
+"cat": "Général"
+},
+{
+"fr": "pluriel",
+"en": "plural",
+"cat": "Général"
+},
+{
+"fr": "singulier",
+"en": "singular",
+"cat": "Général"
+},
+{
+"fr": "masculin",
+"en": "masculine",
+"cat": "Général"
+},
+{
+"fr": "féminin",
+"en": "feminine",
+"cat": "Général"
+},
+{
+"fr": "ponctuation",
+"en": "punctuation",
+"cat": "Général"
+},
+{
+"fr": "bonjour",
+"en": "hello",
+"cat": "Politesse"
+},
+{
+"fr": "bonsoir",
+"en": "good evening",
+"cat": "Général"
+},
+{
+"fr": "merci",
+"en": "thank you",
+"cat": "Politesse"
+},
+{
+"fr": "s'il vous plaît",
+"en": "please",
+"cat": "Général"
+},
+{
+"fr": "oui",
+"en": "yes",
+"cat": "Politesse"
+},
+{
+"fr": "non",
+"en": "no",
+"cat": "Politesse"
+},
+{
+"fr": "excusez-moi",
+"en": "excuse me",
+"cat": "Général"
+},
+{
+"fr": "au revoir",
+"en": "goodbye",
+"cat": "Général"
+},
+{
+"fr": "Comment tu t'appelles ?",
+"en": "What is your name?",
+"cat": "Général"
+},
+{
+"fr": "Je m'appelle",
+"en": "My name is",
+"cat": "Général"
+},
+{
+"fr": "J'ai ... ans",
+"en": "I am ... years old",
+"cat": "Général"
+},
+{
+"fr": "Où habites-tu ?",
+"en": "Where do you live?",
+"cat": "Général"
+},
+{
+"fr": "Je vais à l'école",
+"en": "I go to school",
+"cat": "École"
+},
+{
+"fr": "Ouvre ton cahier",
+"en": "Open your notebook",
+"cat": "École"
+},
+{
+"fr": "Écoutez bien",
+"en": "Listen carefully",
+"cat": "Général"
+},
+{
+"fr": "Levez la main",
+"en": "Raise your hand",
+"cat": "Général"
+},
+{
+"fr": "Asseyez-vous",
+"en": "Sit down",
+"cat": "Général"
+},
+{
+"fr": "Silence",
+"en": "Silence",
+"cat": "Général"
+},
+{
+"fr": "Bravo",
+"en": "Well done",
+"cat": "Général"
+},
+{
+"fr": "Continue",
+"en": "Continue",
+"cat": "Général"
+},
+{
+"fr": "Répète",
+"en": "Repeat",
+"cat": "Général"
+},
+{
+"fr": "Écris au tableau",
+"en": "Write on the board",
+"cat": "École"
+},
+{
+"fr": "Copiez la leçon",
+"en": "Copy the lesson",
+"cat": "École"
+},
+{
+"fr": "sac",
+"en": "bag",
+"cat": "Général"
+},
+{
+"fr": "chaise",
+"en": "chair",
+"cat": "Général"
+},
+{
+"fr": "table",
+"en": "table",
+"cat": "Général"
+},
+{
+"fr": "porte",
+"en": "door",
+"cat": "Général"
+},
+{
+"fr": "fenêtre",
+"en": "window",
+"cat": "Général"
+},
+{
+"fr": "mur",
+"en": "wall",
+"cat": "Général"
+},
+{
+"fr": "sol",
+"en": "floor",
+"cat": "Général"
+},
+{
+"fr": "plafond",
+"en": "ceiling",
+"cat": "Général"
+},
+{
+"fr": "lumière",
+"en": "light",
+"cat": "Général"
+},
+{
+"fr": "ombre",
+"en": "shadow",
+"cat": "Général"
+},
+{
+"fr": "gauche",
+"en": "left",
+"cat": "Général"
+},
+{
+"fr": "droite",
+"en": "right",
+"cat": "Général"
+},
+{
+"fr": "haut",
+"en": "up",
+"cat": "Général"
+},
+{
+"fr": "bas",
+"en": "down",
+"cat": "Général"
+},
+{
+"fr": "milieu",
+"en": "middle",
+"cat": "Général"
+},
+{
+"fr": "premier",
+"en": "first",
+"cat": "Général"
+},
+{
+"fr": "deuxième",
+"en": "second",
+"cat": "Nombres"
+},
+{
+"fr": "dernier",
+"en": "last",
+"cat": "Général"
+},
+{
+"fr": "beaucoup",
+"en": "a lot",
+"cat": "Général"
+},
+{
+"fr": "peu",
+"en": "a little",
+"cat": "Général"
+},
+{
+"fr": "toujours",
+"en": "always",
+"cat": "Général"
+},
+{
+"fr": "jamais",
+"en": "never",
+"cat": "Général"
+},
+{
+"fr": "parfois",
+"en": "sometimes",
+"cat": "Général"
+},
+{
+"fr": "maintenant",
+"en": "now",
+"cat": "Général"
+},
+{
+"fr": "avant",
+"en": "before",
+"cat": "Général"
+},
+{
+"fr": "après",
+"en": "after",
+"cat": "Général"
+},
+{
+"fr": "avec",
+"en": "with",
+"cat": "Général"
+},
+{
+"fr": "sans",
+"en": "without",
+"cat": "Général"
+},
+{
+"fr": "pour",
+"en": "for",
+"cat": "Général"
+},
+{
+"fr": "dans",
+"en": "in",
+"cat": "Général"
+},
+{
+"fr": "sur",
+"en": "on",
+"cat": "Général"
+},
+{
+"fr": "sous",
+"en": "under",
+"cat": "Général"
+},
+{
+"fr": "près",
+"en": "near",
+"cat": "Général"
+},
+{
+"fr": "loin",
+"en": "far",
+"cat": "Général"
+},
+{
+"fr": "qui",
+"en": "who",
+"cat": "Général"
+},
+{
+"fr": "quoi",
+"en": "what",
+"cat": "Général"
+},
+{
+"fr": "où",
+"en": "where",
+"cat": "Général"
+},
+{
+"fr": "quand",
+"en": "when",
+"cat": "Général"
+},
+{
+"fr": "pourquoi",
+"en": "why",
+"cat": "Général"
+},
+{
+"fr": "comment",
+"en": "how",
+"cat": "Général"
+},
+{
+"fr": "combien",
+"en": "how many",
+"cat": "Général"
+},
+{
+"fr": "parce que",
+"en": "because",
+"cat": "Général"
+},
+{
+"fr": "mais",
+"en": "but",
+"cat": "Général"
+},
+{
+"fr": "et",
+"en": "and",
+"cat": "Général"
+},
+{
+"fr": "ou",
+"en": "or",
+"cat": "Général"
+},
+{
+"fr": "si",
+"en": "if",
+"cat": "Général"
+},
+{
+"fr": "donc",
+"en": "so",
+"cat": "Général"
+},
+{
+"fr": "très",
+"en": "very",
+"cat": "Général"
+},
+{
+"fr": "trop",
+"en": "too much",
+"cat": "Général"
+},
+{
+"fr": "aussi",
+"en": "also",
+"cat": "Général"
+},
+{
+"fr": "encore",
+"en": "again",
+"cat": "Général"
+},
+{
+"fr": "déjà",
+"en": "already",
+"cat": "Général"
+},
+{
+"fr": "presque",
+"en": "almost",
+"cat": "Général"
+},
+{
+"fr": "médecin",
+"en": "doctor",
+"cat": "Général"
+},
+{
+"fr": "infirmier",
+"en": "nurse",
+"cat": "Général"
+},
+{
+"fr": "policier",
+"en": "police officer",
+"cat": "Général"
+},
+{
+"fr": "fermier",
+"en": "farmer",
+"cat": "Général"
+},
+{
+"fr": "commerçant",
+"en": "shopkeeper",
+"cat": "Général"
+},
+{
+"fr": "chauffeur",
+"en": "driver",
+"cat": "Général"
+},
+{
+"fr": "cuisinier",
+"en": "cook",
+"cat": "Général"
+},
+{
+"fr": "musicien",
+"en": "musician",
+"cat": "Général"
+},
+{
+"fr": "danseur",
+"en": "dancer",
+"cat": "Général"
+},
+{
+"fr": "athlète",
+"en": "athlete",
+"cat": "Général"
+},
+{
+"fr": "scientifique",
+"en": "scientist",
+"cat": "Général"
+},
+{
+"fr": "santé",
+"en": "health",
+"cat": "Général"
+},
+{
+"fr": "maladie",
+"en": "illness",
+"cat": "Général"
+},
+{
+"fr": "fièvre",
+"en": "fever",
+"cat": "Général"
+},
+{
+"fr": "médicament",
+"en": "medicine",
+"cat": "Général"
+},
+{
+"fr": "propreté",
+"en": "cleanliness",
+"cat": "Général"
+},
+{
+"fr": "savon",
+"en": "soap",
+"cat": "Général"
+},
+{
+"fr": "eau potable",
+"en": "drinking water",
+"cat": "Général"
+},
+{
+"fr": "environnement",
+"en": "environment",
+"cat": "Général"
+},
+{
+"fr": "recyclage",
+"en": "recycling",
+"cat": "Général"
+},
+{
+"fr": "pollution",
+"en": "pollution",
+"cat": "Général"
+},
+{
+"fr": "droits de l'enfant",
+"en": "children's rights",
+"cat": "Général"
+},
+{
+"fr": "respect",
+"en": "respect",
+"cat": "Général"
+},
+{
+"fr": "partage",
+"en": "sharing",
+"cat": "Général"
+},
+{
+"fr": "entraide",
+"en": "mutual help",
+"cat": "Général"
+},
+{
+"fr": "citoyenneté",
+"en": "citizenship",
+"cat": "Général"
+},
+{
+"fr": "drapeau",
+"en": "flag",
+"cat": "Général"
+},
+{
+"fr": "hymne",
+"en": "anthem",
+"cat": "Général"
+},
+{
+"fr": "pomme",
+"en": "apple",
+"cat": "Général"
+},
+{
+"fr": "raisin",
+"en": "grape",
+"cat": "Général"
+},
+{
+"fr": "tomate",
+"en": "tomato",
+"cat": "Général"
+},
+{
+"fr": "oignon",
+"en": "onion",
+"cat": "Général"
+},
+{
+"fr": "sel",
+"en": "salt",
+"cat": "Général"
+},
+{
+"fr": "sucre",
+"en": "sugar",
+"cat": "Général"
+},
+{
+"fr": "huile",
+"en": "oil",
+"cat": "Général"
+},
+{
+"fr": "farine",
+"en": "flour",
+"cat": "Général"
+},
+{
+"fr": "oeuf",
+"en": "egg",
+"cat": "Général"
+},
+{
+"fr": "fromage",
+"en": "cheese",
+"cat": "Général"
+},
+{
+"fr": "thé",
+"en": "tea",
+"cat": "Général"
+},
+{
+"fr": "café",
+"en": "coffee",
+"cat": "Général"
+},
+{
+"fr": "jus",
+"en": "juice",
+"cat": "Général"
+},
+{
+"fr": "soupe",
+"en": "soup",
+"cat": "Général"
+},
+{
+"fr": "salade",
+"en": "salad",
+"cat": "Général"
+},
+{
+"fr": "chemise",
+"en": "shirt",
+"cat": "Général"
+},
+{
+"fr": "pantalon",
+"en": "trousers",
+"cat": "Général"
+},
+{
+"fr": "robe",
+"en": "dress",
+"cat": "Général"
+},
+{
+"fr": "chaussure",
+"en": "shoe",
+"cat": "Général"
+},
+{
+"fr": "chapeau",
+"en": "hat",
+"cat": "Général"
+},
+{
+"fr": "montre",
+"en": "watch",
+"cat": "Général"
+},
+{
+"fr": "téléphone",
+"en": "phone",
+"cat": "Général"
+},
+{
+"fr": "ordinateur",
+"en": "computer",
+"cat": "Général"
+},
+{
+"fr": "internet",
+"en": "internet",
+"cat": "Général"
+},
+{
+"fr": "musique",
+"en": "music",
+"cat": "Général"
+},
+{
+"fr": "film",
+"en": "film",
+"cat": "Général"
+},
+{
+"fr": "radio",
+"en": "radio",
+"cat": "Général"
+},
+{
+"fr": "télévision",
+"en": "television",
+"cat": "Général"
+},
+{
+"fr": "sport",
+"en": "sport",
+"cat": "Général"
+},
+{
+"fr": "football",
+"en": "football",
+"cat": "Général"
+},
+{
+"fr": "course",
+"en": "race",
+"cat": "Général"
+},
+{
+"fr": "saut",
+"en": "jump",
+"cat": "Général"
+},
+{
+"fr": "natation",
+"en": "swimming",
+"cat": "Général"
+},
+{
+"fr": "histoire",
+"en": "history",
+"cat": "Général"
+},
+{
+"fr": "géographie",
+"en": "geography",
+"cat": "Général"
+},
+{
+"fr": "science",
+"en": "science",
+"cat": "Général"
+},
+{
+"fr": "art",
+"en": "art",
+"cat": "Général"
+},
+{
+"fr": "mathématiques",
+"en": "mathematics",
+"cat": "Général"
+},
+{
+"fr": "français",
+"en": "French",
+"cat": "Général"
+},
+{
+"fr": "anglais",
+"en": "English",
+"cat": "Général"
+},
+{
+"fr": "problème",
+"en": "problem",
+"cat": "Général"
+},
+{
+"fr": "solution",
+"en": "solution",
+"cat": "Général"
+},
+{
+"fr": "réponse",
+"en": "answer",
+"cat": "Général"
+},
+{
+"fr": "question",
+"en": "question",
+"cat": "Général"
+},
+{
+"fr": "exemple",
+"en": "example",
+"cat": "Général"
+},
+{
+"fr": "consigne",
+"en": "instruction",
+"cat": "Général"
+},
+{
+"fr": "corriger",
+"en": "to",
+"cat": "Général"
+},
+{
+"fr": "correct",
+"en": "réussir",
+"cat": "Général"
+},
+{
+"fr": "to",
+"en": "succeed",
+"cat": "Général"
+},
+{
+"fr": "échouer",
+"en": "to",
+"cat": "Général"
+},
+{
+"fr": "fail",
+"en": "essayer",
+"cat": "Général"
+},
+{
+"fr": "groupe",
+"en": "group",
+"cat": "Général"
+},
+{
+"fr": "binôme",
+"en": "pair",
+"cat": "Général"
+},
+{
+"fr": "équipe",
+"en": "team",
+"cat": "Général"
+},
+{
+"fr": "projet",
+"en": "project",
+"cat": "Général"
+},
+{
+"fr": "salut",
+"en": "hi",
+"cat": "Général"
+},
+{
+"fr": "s'il te plaît",
+"en": "please",
+"cat": "Général"
+},
+{
+"fr": "de rien",
+"en": "you're welcome",
+"cat": "Général"
+},
+{
+"fr": "janvier",
+"en": "January",
+"cat": "Général"
+},
+{
+"fr": "février",
+"en": "February",
+"cat": "Général"
+},
+{
+"fr": "mars",
+"en": "March",
+"cat": "Général"
+},
+{
+"fr": "avril",
+"en": "April",
+"cat": "Général"
+},
+{
+"fr": "mai",
+"en": "May",
+"cat": "Général"
+},
+{
+"fr": "juin",
+"en": "June",
+"cat": "Général"
+},
+{
+"fr": "juillet",
+"en": "July",
+"cat": "Général"
+},
+{
+"fr": "août",
+"en": "August",
+"cat": "Général"
+},
+{
+"fr": "septembre",
+"en": "September",
+"cat": "Général"
+},
+{
+"fr": "octobre",
+"en": "October",
+"cat": "Général"
+},
+{
+"fr": "novembre",
+"en": "November",
+"cat": "Général"
+},
+{
+"fr": "décembre",
+"en": "December",
+"cat": "Général"
+},
+{
+"fr": "printemps",
+"en": "spring",
+"cat": "Général"
+},
+{
+"fr": "été",
+"en": "summer",
+"cat": "Général"
+},
+{
+"fr": "automne",
+"en": "autumn",
+"cat": "Général"
+},
+{
+"fr": "hiver",
+"en": "winter",
+"cat": "Général"
+},
+{
+"fr": "nord",
+"en": "north",
+"cat": "Général"
+},
+{
+"fr": "sud",
+"en": "south",
+"cat": "Général"
+},
+{
+"fr": "est",
+"en": "east",
+"cat": "Général"
+},
+{
+"fr": "ouest",
+"en": "west",
+"cat": "Général"
+},
+{
+"fr": "pays",
+"en": "country",
+"cat": "Général"
+},
+{
+"fr": "capitale",
+"en": "capital",
+"cat": "Général"
+},
+{
+"fr": "continent",
+"en": "continent",
+"cat": "Général"
+},
+{
+"fr": "océan",
+"en": "ocean",
+"cat": "Général"
+},
+{
+"fr": "montagne",
+"en": "mountain",
+"cat": "Général"
+},
+{
+"fr": "vallée",
+"en": "valley",
+"cat": "Général"
+},
+{
+"fr": "désert",
+"en": "desert",
+"cat": "Général"
+},
+{
+"fr": "île",
+"en": "island",
+"cat": "Général"
+},
+{
+"fr": "pont",
+"en": "bridge",
+"cat": "Général"
+},
+{
+"fr": "gare",
+"en": "station",
+"cat": "Général"
+},
+{
+"fr": "aéroport",
+"en": "airport",
+"cat": "Général"
+},
+{
+"fr": "port",
+"en": "harbour",
+"cat": "Général"
+},
+{
+"fr": "voiture",
+"en": "car",
+"cat": "Général"
+},
+{
+"fr": "bus",
+"en": "bus",
+"cat": "Général"
+},
+{
+"fr": "train",
+"en": "train",
+"cat": "Général"
+},
+{
+"fr": "avion",
+"en": "plane",
+"cat": "Général"
+},
+{
+"fr": "bateau",
+"en": "boat",
+"cat": "Général"
+},
+{
+"fr": "vélo",
+"en": "bicycle",
+"cat": "Général"
+},
+{
+"fr": "moto",
+"en": "motorcycle",
+"cat": "Général"
+},
+{
+"fr": "camion",
+"en": "truck",
+"cat": "Général"
+},
+{
+"fr": "rue",
+"en": "street",
+"cat": "Général"
+},
+{
+"fr": "avenue",
+"en": "avenue",
+"cat": "Général"
+},
+{
+"fr": "place",
+"en": "square",
+"cat": "Général"
+},
+{
+"fr": "feu rouge",
+"en": "traffic light",
+"cat": "Général"
+},
+{
+"fr": "panneau",
+"en": "sign",
+"cat": "Général"
+},
+{
+"fr": "dentiste",
+"en": "dentist",
+"cat": "Général"
+},
+{
+"fr": "pharmacie",
+"en": "pharmacy",
+"cat": "Général"
+},
+{
+"fr": "clinique",
+"en": "clinic",
+"cat": "Général"
+},
+{
+"fr": "police",
+"en": "police",
+"cat": "Général"
+},
+{
+"fr": "pompier",
+"en": "firefighter",
+"cat": "Général"
+},
+{
+"fr": "soldat",
+"en": "soldier",
+"cat": "Général"
+},
+{
+"fr": "roi",
+"en": "king",
+"cat": "Général"
+},
+{
+"fr": "reine",
+"en": "queen",
+"cat": "Général"
+},
+{
+"fr": "président",
+"en": "president",
+"cat": "Général"
+},
+{
+"fr": "ministre",
+"en": "minister",
+"cat": "Général"
+},
+{
+"fr": "loi",
+"en": "law",
+"cat": "Général"
+},
+{
+"fr": "justice",
+"en": "justice",
+"cat": "Général"
+},
+{
+"fr": "tribunal",
+"en": "court",
+"cat": "Général"
+},
+{
+"fr": "argent",
+"en": "money",
+"cat": "Général"
+},
+{
+"fr": "banque",
+"en": "bank",
+"cat": "Général"
+},
+{
+"fr": "prix",
+"en": "price",
+"cat": "Général"
+},
+{
+"fr": "cher",
+"en": "expensive",
+"cat": "Général"
+},
+{
+"fr": "bon marché",
+"en": "cheap",
+"cat": "Général"
+},
+{
+"fr": "acheter",
+"en": "to buy",
+"cat": "Général"
+},
+{
+"fr": "vendre",
+"en": "to sell",
+"cat": "Général"
+},
+{
+"fr": "payer",
+"en": "to pay",
+"cat": "Général"
+},
+{
+"fr": "coûter",
+"en": "to cost",
+"cat": "Général"
+},
+{
+"fr": "riche",
+"en": "rich",
+"cat": "Général"
+},
+{
+"fr": "pauvre",
+"en": "poor",
+"cat": "Général"
+},
+{
+"fr": "travail",
+"en": "work",
+"cat": "Général"
+},
+{
+"fr": "métier",
+"en": "job",
+"cat": "Général"
+},
+{
+"fr": "usine",
+"en": "factory",
+"cat": "Général"
+},
+{
+"fr": "bureau",
+"en": "office",
+"cat": "Général"
+},
+{
+"fr": "magasin",
+"en": "shop",
+"cat": "Général"
+},
+{
+"fr": "restaurant",
+"en": "restaurant",
+"cat": "Général"
+},
+{
+"fr": "hôtel",
+"en": "hotel",
+"cat": "Général"
+},
+{
+"fr": "tourisme",
+"en": "tourism",
+"cat": "Général"
+},
+{
+"fr": "plage",
+"en": "beach",
+"cat": "Général"
+},
+{
+"fr": "piscine",
+"en": "swimming pool",
+"cat": "Général"
+},
+{
+"fr": "stade",
+"en": "stadium",
+"cat": "Général"
+},
+{
+"fr": "cinéma",
+"en": "cinema",
+"cat": "Général"
+},
+{
+"fr": "théâtre",
+"en": "theatre",
+"cat": "Général"
+},
+{
+"fr": "musée",
+"en": "museum",
+"cat": "Général"
+},
+{
+"fr": "bibliothèque",
+"en": "library",
+"cat": "Général"
+},
+{
+"fr": "temple",
+"en": "temple",
+"cat": "Général"
+},
+{
+"fr": "dieu",
+"en": "god",
+"cat": "Général"
+},
+{
+"fr": "prière",
+"en": "prayer",
+"cat": "Général"
+},
+{
+"fr": "fête",
+"en": "festival",
+"cat": "Général"
+},
+{
+"fr": "mariage",
+"en": "wedding",
+"cat": "Général"
+},
+{
+"fr": "naissance",
+"en": "birth",
+"cat": "Général"
+},
+{
+"fr": "mort",
+"en": "death",
+"cat": "Général"
+},
+{
+"fr": "vie",
+"en": "life",
+"cat": "Général"
+},
+{
+"fr": "amour",
+"en": "love",
+"cat": "Général"
+},
+{
+"fr": "joie",
+"en": "joy",
+"cat": "Général"
+},
+{
+"fr": "peur",
+"en": "fear",
+"cat": "Général"
+},
+{
+"fr": "colère",
+"en": "anger",
+"cat": "Général"
+},
+{
+"fr": "surprise",
+"en": "surprise",
+"cat": "Général"
+},
+{
+"fr": "rire",
+"en": "to laugh",
+"cat": "Général"
+},
+{
+"fr": "pleurer",
+"en": "to cry",
+"cat": "Général"
+},
+{
+"fr": "sourire",
+"en": "to smile",
+"cat": "Général"
+},
+{
+"fr": "crier",
+"en": "to shout",
+"cat": "Général"
+},
+{
+"fr": "penser",
+"en": "to think",
+"cat": "Général"
+},
+{
+"fr": "savoir",
+"en": "to know",
+"cat": "Général"
+},
+{
+"fr": "connaître",
+"en": "to know person",
+"cat": "Général"
+},
+{
+"fr": "croire",
+"en": "to believe",
+"cat": "Général"
+},
+{
+"fr": "vouloir",
+"en": "to want",
+"cat": "Général"
+},
+{
+"fr": "pouvoir",
+"en": "can",
+"cat": "Général"
+},
+{
+"fr": "falloir",
+"en": "to be necessary",
+"cat": "Général"
+},
+{
+"fr": "prendre",
+"en": "to take",
+"cat": "Général"
+},
+{
+"fr": "donner",
+"en": "to give",
+"cat": "Général"
+},
+{
+"fr": "recevoir",
+"en": "to receive",
+"cat": "Général"
+},
+{
+"fr": "envoyer",
+"en": "to send",
+"cat": "Général"
+},
+{
+"fr": "mettre",
+"en": "to put",
+"cat": "Général"
+},
+{
+"fr": "enlever",
+"en": "to remove",
+"cat": "Général"
+},
+{
+"fr": "porter",
+"en": "to wear/to carry",
+"cat": "Général"
+},
+{
+"fr": "entrer",
+"en": "to enter",
+"cat": "Général"
+},
+{
+"fr": "sortir",
+"en": "to go out",
+"cat": "Général"
+},
+{
+"fr": "monter",
+"en": "to go up",
+"cat": "Général"
+},
+{
+"fr": "descendre",
+"en": "to go down",
+"cat": "Général"
+},
+{
+"fr": "rester",
+"en": "to stay",
+"cat": "Général"
+},
+{
+"fr": "partir",
+"en": "to leave",
+"cat": "Général"
+},
+{
+"fr": "arriver",
+"en": "to arrive",
+"cat": "Général"
+},
+{
+"fr": "revenir",
+"en": "to come back",
+"cat": "Général"
+},
+{
+"fr": "vivre",
+"en": "to live",
+"cat": "Général"
+},
+{
+"fr": "mourir",
+"en": "to die",
+"cat": "Général"
+},
+{
+"fr": "naître",
+"en": "to be born",
+"cat": "Général"
+},
+{
+"fr": "aimer",
+"en": "to like/to love",
+"cat": "Général"
+},
+{
+"fr": "détester",
+"en": "to hate",
+"cat": "Général"
+},
+{
+"fr": "préférer",
+"en": "to prefer",
+"cat": "Général"
+},
+{
+"fr": "aider",
+"en": "to help",
+"cat": "Général"
+},
+{
+"fr": "protéger",
+"en": "to protect",
+"cat": "Général"
+},
+{
+"fr": "partager",
+"en": "to share",
+"cat": "Général"
+},
+{
+"fr": "construire",
+"en": "to build",
+"cat": "Général"
+},
+{
+"fr": "détruire",
+"en": "to destroy",
+"cat": "Général"
+},
+{
+"fr": "réparer",
+"en": "to repair",
+"cat": "Général"
+},
+{
+"fr": "nettoyer",
+"en": "to clean",
+"cat": "Général"
+},
+{
+"fr": "laver",
+"en": "to wash",
+"cat": "Général"
+},
+{
+"fr": "essuyer",
+"en": "to wipe",
+"cat": "Général"
+},
+{
+"fr": "cuisiner",
+"en": "to cook",
+"cat": "Général"
+},
+{
+"fr": "couper",
+"en": "to cut",
+"cat": "Général"
+},
+{
+"fr": "mélanger",
+"en": "to mix",
+"cat": "Général"
+},
+{
+"fr": "planter",
+"en": "to plant",
+"cat": "Général"
+},
+{
+"fr": "récolter",
+"en": "to harvest",
+"cat": "Général"
+},
+{
+"fr": "arroser",
+"en": "to water",
+"cat": "Général"
+},
+{
+"fr": "chasser",
+"en": "to hunt",
+"cat": "Général"
+},
+{
+"fr": "pêcher",
+"en": "to fish",
+"cat": "Général"
+},
+{
+"fr": "cultiver",
+"en": "to farm",
+"cat": "Général"
+}
+]

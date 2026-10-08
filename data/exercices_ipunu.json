@@ -1,0 +1,709 @@
+[
+  {
+    "id": 1,
+    "type": "traduction",
+    "titre": "Exercice 1 — Traduisez en yipunu",
+    "niveau": "Débutant",
+    "source": "Parlons Yipunu, p.200 — I. Exercices de traduction",
+    "consigne": "Traduisez en yipunu (livre).",
+    "questions": [
+      {
+        "q": "mon nom est",
+        "a": "dine diami"
+      },
+      {
+        "q": "bonjour",
+        "a": "u ma rambuge"
+      },
+      {
+        "q": "mon papa",
+        "a": "taji yami"
+      },
+      {
+        "q": "ma mère",
+        "a": "nguli yami"
+      },
+      {
+        "q": "mon frère",
+        "a": "mwane ngwami"
+      },
+      {
+        "q": "ma mère est au village",
+        "a": "mame a jo dimbu"
+      },
+      {
+        "q": "je vais à l'école",
+        "a": "ngo ikole"
+      },
+      {
+        "q": "ils sont dans la chambre de kogu",
+        "a": "ba jo ndagu"
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "type": "traduction",
+    "titre": "Exercice 2 — Traduisez en yipunu",
+    "niveau": "Débutant",
+    "source": "Parlons Yipunu, p.200",
+    "consigne": "Traduisez en yipunu (livre).",
+    "questions": [
+      {
+        "q": "demain, nous mangerons de la viande",
+        "a": "mugése tu ji ñame"
+      },
+      {
+        "q": "nous sommes dans la cuisine",
+        "a": "tu jo gari kusini"
+      },
+      {
+        "q": "je suis malade",
+        "a": "ni ne u bèle"
+      },
+      {
+        "q": "il est joyeux",
+        "a": "a ne nzangu"
+      },
+      {
+        "q": "ma sœur est belle",
+        "a": "ibusi yami a bwéji"
+      },
+      {
+        "q": "je parle le yipunu",
+        "a": "ni vosi yipunu"
+      },
+      {
+        "q": "ils savent compter",
+        "a": "ba jabi u tale"
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "type": "questions",
+    "titre": "Exercice 3 — Traduisez et répondez",
+    "niveau": "Intermédiaire",
+    "source": "Parlons Yipunu, p.200",
+    "consigne": "Traduisez et répondez aux questions (livre).",
+    "questions": [
+      {
+        "q": "où est allé Musavu ?",
+        "a": "(réponse libre en yipunu)"
+      },
+      {
+        "q": "Matsange est-elle là ?",
+        "a": "Ee / Ve — A ji vane / A ga tsi"
+      },
+      {
+        "q": "qu'est-ce que Ikapi aime ?",
+        "a": "(réponse libre)"
+      },
+      {
+        "q": "qu'est-ce que Mombu pense ?",
+        "a": "(réponse libre)"
+      },
+      {
+        "q": "est-ce que Manombe est contente ?",
+        "a": "Ee / Ve"
+      },
+      {
+        "q": "que demande Isange à ses amis ?",
+        "a": "(réponse libre)"
+      },
+      {
+        "q": "mbongu kwé tsivu nagu ?",
+        "a": "(combien d'argent… — réponse libre)"
+      },
+      {
+        "q": "qu'est-ce que tu as acheté ?",
+        "a": "(réponse libre)"
+      },
+      {
+        "q": "pourquoi es-tu malade ?",
+        "a": "(réponse libre)"
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "type": "oral",
+    "titre": "Exercice 4 — Traduisez et dites",
+    "niveau": "Débutant",
+    "source": "Parlons Yipunu, p.201",
+    "consigne": "Traduisez et entraînez-vous à dire (livre).",
+    "questions": [
+      {
+        "q": "bonjour",
+        "a": "wuma rambuge / mbolwè"
+      },
+      {
+        "q": "comment allez-vous ?",
+        "a": "(formule de politesse du livre)"
+      },
+      {
+        "q": "je me porte bien merci",
+        "a": "… diboti"
+      },
+      {
+        "q": "et vous ?",
+        "a": "na ndéju ? / na jénu ?"
+      },
+      {
+        "q": "je te présente mes amis",
+        "a": "(présentation — livre)"
+      },
+      {
+        "q": "je te présente mon ami",
+        "a": "(présentation — livre)"
+      },
+      {
+        "q": "d'où venez-vous ?",
+        "a": "(question du livre)"
+      },
+      {
+        "q": "ce sont mes amis",
+        "a": "(réponse du livre)"
+      },
+      {
+        "q": "c'est ma femme",
+        "a": "… mugétu yami"
+      },
+      {
+        "q": "je suis étudiant",
+        "a": "ni ji …"
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "type": "questions",
+    "titre": "Exercice 5 — Répondez en yipunu",
+    "niveau": "Intermédiaire",
+    "source": "Parlons Yipunu, p.201",
+    "consigne": "Répondez aux questions suivantes (texte du livre).",
+    "questions": [
+      {
+        "q": "dine diagu yi ?",
+        "a": "dine diami …"
+      },
+      {
+        "q": "mame a ka ?",
+        "a": "mame a jo …"
+      },
+      {
+        "q": "tate a ji vane ?",
+        "a": "ee, a ji / ve, a ga tsi"
+      },
+      {
+        "q": "yi wi vagi vane ?",
+        "a": "(réponse libre)"
+      },
+      {
+        "q": "kayi mwinzi nane ?",
+        "a": "(pourquoi… — réponse libre)"
+      },
+      {
+        "q": "agune mwane yi ?",
+        "a": "(qui est cet enfant ?)"
+      },
+      {
+        "q": "u tsi dile ?",
+        "a": "(as-tu gagné/réussi ?)"
+      },
+      {
+        "q": "agu ba vu ?",
+        "a": "(où sont-ils ?)"
+      }
+    ]
+  },
+  {
+    "id": 6,
+    "type": "calcul",
+    "titre": "Exercice calcul 1 — Calculez",
+    "niveau": "Intermédiaire",
+    "source": "Parlons Yipunu, p.202 — II. Exercices de calcul",
+    "consigne": "Calculez (livre). Entraînez-vous aussi à dire les nombres en yipunu.",
+    "questions": [
+      {
+        "q": "10 + 10 =",
+        "a": "20"
+      },
+      {
+        "q": "40 : 2 =",
+        "a": "20"
+      },
+      {
+        "q": "2 : 8 =",
+        "a": "0,25 (ou fraction selon le livre)"
+      },
+      {
+        "q": "15 × 5 =",
+        "a": "75"
+      },
+      {
+        "q": "1 + 8 =",
+        "a": "9"
+      },
+      {
+        "q": "4 + 20 =",
+        "a": "24"
+      },
+      {
+        "q": "30 + 56 =",
+        "a": "86"
+      },
+      {
+        "q": "23 - 18 =",
+        "a": "5"
+      }
+    ]
+  },
+  {
+    "id": 7,
+    "type": "calcul",
+    "titre": "Exercice calcul 2 — Problème des mangues",
+    "niveau": "Intermédiaire",
+    "source": "Parlons Yipunu, p.202",
+    "consigne": "Résolvez le problème (livre) puis lisez le corrigé.",
+    "questions": [
+      {
+        "q": "J'ai acheté 40 mangues au marché. Sachant que j'ai huit enfants dans ma maison, chaque petit aura combien de mangues ?",
+        "a": "40 ÷ 8 = 5 mangues par enfant.\nCorrigé yipunu (livre) : Ni tsié sumbe 40 mimange ô dikase. Ni ne inane i bane ô ndagu… kale mwane o dila mimange mi ranu (5)."
+      }
+    ]
+  },
+  {
+    "id": 8,
+    "type": "grammaire",
+    "titre": "Grammaire 1 — Conjuguez au présent",
+    "niveau": "Intermédiaire",
+    "source": "Parlons Yipunu, p.203 — III. Exercices de grammaire",
+    "consigne": "Conjuguez les verbes au présent simple et continu (livre).",
+    "questions": [
+      {
+        "q": "u vose : parler — je / tu / il / nous / vous / ils",
+        "a": "ni vosi · wu vosi · a/é vosi · tu/twi vosi · du/dwi vosi · ba/bé vosi"
+      },
+      {
+        "q": "u ji : manger",
+        "a": "ni ji · wu ji · a ji · tu ji · du ji · ba ji"
+      },
+      {
+        "q": "u nu : boire",
+        "a": "ni nu · wu nu · a nu · tu nu · du nu · ba nu"
+      },
+      {
+        "q": "u vonde : demander",
+        "a": "(même schéma de préfixes sujets)"
+      },
+      {
+        "q": "u simbe : saluer",
+        "a": "(même schéma)"
+      },
+      {
+        "q": "u ronde : aimer",
+        "a": "(même schéma)"
+      },
+      {
+        "q": "u labe : voir",
+        "a": "(même schéma)"
+      },
+      {
+        "q": "u tase : penser",
+        "a": "(même schéma)"
+      },
+      {
+        "q": "u rombe : chercher",
+        "a": "(même schéma)"
+      }
+    ]
+  },
+  {
+    "id": 9,
+    "type": "grammaire",
+    "titre": "Grammaire 2 — Pluriels",
+    "niveau": "Intermédiaire",
+    "source": "Parlons Yipunu, p.203 — corrigé p.207",
+    "consigne": "Mettez au pluriel les mots suivants (livre).",
+    "questions": [
+      {
+        "q": "diaki",
+        "a": "maki"
+      },
+      {
+        "q": "bute",
+        "a": "mate"
+      },
+      {
+        "q": "duvinde",
+        "a": "pinde"
+      },
+      {
+        "q": "mutu",
+        "a": "batu"
+      },
+      {
+        "q": "malungu",
+        "a": "malungu (classe ma)"
+      },
+      {
+        "q": "dugaji",
+        "a": "magaji"
+      },
+      {
+        "q": "ibuku / dibuku",
+        "a": "bibuku"
+      },
+      {
+        "q": "dinu",
+        "a": "minu"
+      },
+      {
+        "q": "mulumi",
+        "a": "balumi"
+      },
+      {
+        "q": "mbèmbu",
+        "a": "bambèmbu"
+      }
+    ]
+  },
+  {
+    "id": 10,
+    "type": "grammaire",
+    "titre": "Grammaire 3 — Complétez en conjuguant",
+    "niveau": "Avancé",
+    "source": "Parlons Yipunu, p.204",
+    "consigne": "Complétez en conjuguant les verbes (livre).",
+    "questions": [
+      {
+        "q": "ni (u ronde) banumbe",
+        "a": "ni rondi banumbe (j'aime…)"
+      },
+      {
+        "q": "ni (u sale) pwèle",
+        "a": "ni sali pwèle"
+      },
+      {
+        "q": "twi (u rombe) mbongu",
+        "a": "twi rombi mbongu"
+      },
+      {
+        "q": "tate (u be) ô moabi",
+        "a": "tate a ji ô Moabi"
+      },
+      {
+        "q": "ngo (u wende) ô ikole",
+        "a": "ngo wendi ô ikole"
+      },
+      {
+        "q": "bagé (u dage) bakoku",
+        "a": "bagé ba dagi bakoku"
+      },
+      {
+        "q": "a (u bonge) bime biotsu",
+        "a": "a bongi bime biotsu"
+      },
+      {
+        "q": "bo (u ruge) mugése",
+        "a": "bo rugi mugése"
+      },
+      {
+        "q": "twi (u sane) ndèle",
+        "a": "twi sani ndèle"
+      }
+    ]
+  },
+  {
+    "id": 11,
+    "type": "conversation",
+    "titre": "Conversation 1 — Avec un parent",
+    "niveau": "Avancé",
+    "source": "Parlons Yipunu, p.205 — IV. Exercices de conversation",
+    "consigne": "Parlez avec votre parent (dialogue du livre). Lisez à deux voix.",
+    "questions": [
+      {
+        "q": "Réplique 1",
+        "a": "mame kwamusi"
+      },
+      {
+        "q": "Réplique 2",
+        "a": "ngo u gwamuse u varile u tsore"
+      },
+      {
+        "q": "Réplique 3",
+        "a": "nga ni tsore"
+      },
+      {
+        "q": "Réplique 4",
+        "a": "payi une mangolu, nangulati dwéngu dwé dune!"
+      },
+      {
+        "q": "Réplique 5",
+        "a": "hum, hum, dutsire."
+      }
+    ]
+  },
+  {
+    "id": 12,
+    "type": "conversation",
+    "titre": "Conversation 2 — Au marché",
+    "niveau": "Avancé",
+    "source": "Parlons Yipunu, p.205",
+    "consigne": "Parlez au marché avec une vendeuse (dialogue du livre).",
+    "questions": [
+      {
+        "q": "Client — prix ?",
+        "a": "batimbe atsitsi kwé ?"
+      },
+      {
+        "q": "Vendeuse",
+        "a": "diguki di mosi kame doli"
+      },
+      {
+        "q": "Client — je veux acheter",
+        "a": "ni rondi u sumbe bu timbe mosi"
+      },
+      {
+        "q": "Vendeuse — prix",
+        "a": "timbe mosi magumi ma béji"
+      },
+      {
+        "q": "Client",
+        "a": "oh! ndéwandi !"
+      },
+      {
+        "q": "Vendeuse",
+        "a": "diambu yi wi gamugili ?"
+      },
+      {
+        "q": "Client — trop cher",
+        "a": "dufunu dwagu du range"
+      },
+      {
+        "q": "Négociation",
+        "a": "kabo pégi digumi di doli"
+      },
+      {
+        "q": "Remerciement",
+        "a": "diboti di néni."
+      }
+    ]
+  },
+  {
+    "id": 100,
+    "titre": "Salutations au village",
+    "niveau": "Débutant",
+    "type": "qcm",
+    "consigne": "Choisis la bonne traduction yipunu.",
+    "questions": [
+      {
+        "q": "Comment dit-on « bonjour » / saluer ?",
+        "options": [
+          "mbolo",
+          "kamba",
+          "nzadi",
+          "mutu"
+        ],
+        "reponse": 0
+      },
+      {
+        "q": "« Merci » se rapproche de :",
+        "options": [
+          "ndayi",
+          "mèrsi (emprunt)",
+          "kuba",
+          "puma"
+        ],
+        "reponse": 1
+      },
+      {
+        "q": "« Eau » en yipunu :",
+        "options": [
+          "màtsi / màsi",
+          "mutu",
+          "nyama",
+          "dibaku"
+        ],
+        "reponse": 0
+      }
+    ]
+  },
+  {
+    "id": 101,
+    "titre": "Famille et personnes",
+    "niveau": "Débutant",
+    "type": "qcm",
+    "consigne": "Relie le mot yipunu au français.",
+    "questions": [
+      {
+        "q": "tàta désigne souvent :",
+        "options": [
+          "père",
+          "mère",
+          "enfant",
+          "ami"
+        ],
+        "reponse": 0
+      },
+      {
+        "q": "ngudi / nègu se rapporte à :",
+        "options": [
+          "mère",
+          "père",
+          "frère",
+          "maison"
+        ],
+        "reponse": 0
+      },
+      {
+        "q": "mwàna :",
+        "options": [
+          "enfant",
+          "vieillard",
+          "chef",
+          "chien"
+        ],
+        "reponse": 0
+      }
+    ]
+  },
+  {
+    "id": 102,
+    "titre": "Verbes du quotidien",
+    "niveau": "Intermédiaire",
+    "type": "qcm",
+    "consigne": "Le tiret (-) remplace le u de l'infinitif. Choisis le sens.",
+    "questions": [
+      {
+        "q": "-wende :",
+        "options": [
+          "aller",
+          "venir",
+          "manger",
+          "dormir"
+        ],
+        "reponse": 0
+      },
+      {
+        "q": "-dya / manger (sens proche) :",
+        "options": [
+          "manger",
+          "courir",
+          "écrire",
+          "pleurer"
+        ],
+        "reponse": 0
+      },
+      {
+        "q": "-bande :",
+        "options": [
+          "commencer",
+          "finir",
+          "sauter",
+          "chanter"
+        ],
+        "reponse": 0
+      }
+    ]
+  },
+  {
+    "id": 103,
+    "titre": "Nature et environnement",
+    "niveau": "Intermédiaire",
+    "type": "qcm",
+    "consigne": "Vocabulaire de la forêt et de la nature (Gabon).",
+    "questions": [
+      {
+        "q": "Mot lié à « arbre / bois » (selon dialecte) :",
+        "options": [
+          "muti / nti",
+          "màtsi",
+          "mutu",
+          "nzila"
+        ],
+        "reponse": 0
+      },
+      {
+        "q": "Chemin / route se dit souvent :",
+        "options": [
+          "nzila",
+          "màtsi",
+          "dibaku",
+          "kuba"
+        ],
+        "reponse": 0
+      },
+      {
+        "q": "Village :",
+        "options": [
+          "divuma / tsi",
+          "màtsi",
+          "nyosi",
+          "mukanda"
+        ],
+        "reponse": 0
+      }
+    ]
+  },
+  {
+    "id": 104,
+    "titre": "Évaluation — lexique A-B",
+    "niveau": "Tous",
+    "type": "evaluation",
+    "consigne": "Évaluation formative sur le début du lexique (lettres A-B).",
+    "questions": [
+      {
+        "q": "a signifie :",
+        "options": [
+          "il/elle",
+          "nous",
+          "vous",
+          "ils"
+        ],
+        "reponse": 0
+      },
+      {
+        "q": "ba signifie :",
+        "options": [
+          "ils/elles",
+          "je",
+          "tu",
+          "nous"
+        ],
+        "reponse": 0
+      },
+      {
+        "q": "-bagule :",
+        "options": [
+          "trouver",
+          "perdre",
+          "courir",
+          "dormir"
+        ],
+        "reponse": 0
+      },
+      {
+        "q": "-bèle :",
+        "options": [
+          "être malade",
+          "guérir",
+          "danser",
+          "rire"
+        ],
+        "reponse": 0
+      },
+      {
+        "q": "bande (adverbe) :",
+        "options": [
+          "en bas",
+          "en haut",
+          "loin",
+          "vite"
+        ],
+        "reponse": 0
+      }
+    ]
+  }
+]

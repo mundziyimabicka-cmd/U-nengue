@@ -1,0 +1,288 @@
+[
+  {
+    "id": 1,
+    "titre": "Évaluation 1 — Bases",
+    "niveau": "Débutant",
+    "duree": "15 min",
+    "questions": [
+      {
+        "q": "Comment dit-on « merci » ?",
+        "choices": [
+          "Diboti",
+          "Ikole",
+          "Mambe",
+          "Batu"
+        ],
+        "a": 0
+      },
+      {
+        "q": "Le u se lit…",
+        "choices": [
+          "u comme une",
+          "ou",
+          "eu",
+          "i"
+        ],
+        "a": 1
+      },
+      {
+        "q": "« Je suis » se dit…",
+        "choices": [
+          "Ni ji",
+          "Wu ji",
+          "Ba ji",
+          "Tu ne"
+        ],
+        "a": 0
+      },
+      {
+        "q": "« L'école » se dit…",
+        "choices": [
+          "Dimbu",
+          "Ikole",
+          "Ndagu",
+          "Dibuku"
+        ],
+        "a": 1
+      },
+      {
+        "q": "Pluriel de mutu ?",
+        "choices": [
+          "Mitu",
+          "Batu",
+          "Matu",
+          "Bitu"
+        ],
+        "a": 1
+      },
+      {
+        "q": "Bonjour le matin (près) ?",
+        "choices": [
+          "Wi mogi",
+          "Wuma rambuge",
+          "Samba",
+          "Twèndi"
+        ],
+        "a": 1
+      },
+      {
+        "q": "« Nous » (pronom sujet) ?",
+        "choices": [
+          "Ni",
+          "Wu",
+          "Tu",
+          "Ba"
+        ],
+        "a": 2
+      },
+      {
+        "q": "Toutes les lettres se prononcent ?",
+        "choices": [
+          "Oui",
+          "Non"
+        ],
+        "a": 0
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "titre": "Évaluation 2 — Conjugaison & vocabulaire",
+    "niveau": "Intermédiaire",
+    "duree": "20 min",
+    "questions": [
+      {
+        "q": "« Tu as » (verbe avoir) ?",
+        "choices": [
+          "Wu ne",
+          "Wu ji",
+          "Ni ne",
+          "Ba ne"
+        ],
+        "a": 0
+      },
+      {
+        "q": "« Je parle » ?",
+        "choices": [
+          "Ni vosi",
+          "Wu vosi",
+          "U vose",
+          "Ba vosi"
+        ],
+        "a": 0
+      },
+      {
+        "q": "Infinitif de « parler » ?",
+        "choices": [
+          "Ni vosi",
+          "U vose",
+          "Ba vosi",
+          "Vosi"
+        ],
+        "a": 1
+      },
+      {
+        "q": "« L'eau » ?",
+        "choices": [
+          "Mfule",
+          "Mambe",
+          "Nzambi",
+          "Dimbu"
+        ],
+        "a": 1
+      },
+      {
+        "q": "Pluriel de ikole ?",
+        "choices": [
+          "Mikole",
+          "Bikole",
+          "Makole",
+          "Ndole"
+        ],
+        "a": 1
+      },
+      {
+        "q": "« Il n'est pas » ?",
+        "choices": [
+          "A ji",
+          "A ga tsi",
+          "Ni ji",
+          "Ba ji"
+        ],
+        "a": 1
+      },
+      {
+        "q": "Ñ se lit comme…",
+        "choices": [
+          "n",
+          "gn",
+          "ni",
+          "ng"
+        ],
+        "a": 1
+      },
+      {
+        "q": "« Je vais à l'école » ?",
+        "choices": [
+          "Ngo ikole",
+          "Ni ji dimbu",
+          "Ba jo ndagu",
+          "Tu ne"
+        ],
+        "a": 0
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "titre": "Évaluation 3 — Communication",
+    "niveau": "Avancé",
+    "duree": "20 min",
+    "questions": [
+      {
+        "q": "« Bienvenue » ?",
+        "choices": [
+          "Diboti",
+          "Samba",
+          "Ikole",
+          "Gome"
+        ],
+        "a": 1
+      },
+      {
+        "q": "« Salut » (journée) ?",
+        "choices": [
+          "Mbolwè",
+          "Wi mogi",
+          "Ni ji",
+          "Batu"
+        ],
+        "a": 0
+      },
+      {
+        "q": "« Bonsoir » ?",
+        "choices": [
+          "Wuma rambuge",
+          "Wi mogi",
+          "Diboti",
+          "Twèndi"
+        ],
+        "a": 1
+      },
+      {
+        "q": "« Les personnes » ?",
+        "choices": [
+          "Mutu",
+          "Batu",
+          "Mwane",
+          "Mama"
+        ],
+        "a": 1
+      },
+      {
+        "q": "« Le livre » ?",
+        "choices": [
+          "Dibuku",
+          "Ikole",
+          "Mambe",
+          "Ndagu"
+        ],
+        "a": 0
+      },
+      {
+        "q": "« Allons ! » ?",
+        "choices": [
+          "Samba",
+          "Twèndi",
+          "Diboti",
+          "Gulu"
+        ],
+        "a": 1
+      },
+      {
+        "q": "Dieu se dit…",
+        "choices": [
+          "Nzambi",
+          "Diboti",
+          "Gome",
+          "Mfule"
+        ],
+        "a": 0
+      },
+      {
+        "q": "Forme négative de « je suis » ?",
+        "choices": [
+          "Ni ji",
+          "Nga tsi",
+          "Wu ji",
+          "Ba ji"
+        ],
+        "a": 1
+      }
+    ]
+  },
+  {
+    "id": 50,
+    "titre": "Évaluation lexique yipunu (Gabon)",
+    "niveau": "Débutant",
+    "description": "Vérifier la connaissance des mots de base tirés de Parlons Yipunu.",
+    "questions": [
+      {
+        "q": "Traduis : il/elle (a)",
+        "reponse": "a"
+      },
+      {
+        "q": "Traduis : ils/elles (ba)",
+        "reponse": "ba"
+      },
+      {
+        "q": "Que signifie -bande ?",
+        "reponse": "commencer"
+      },
+      {
+        "q": "Que signifie -bèle ?",
+        "reponse": "être malade"
+      }
+    ]
+  }
+]

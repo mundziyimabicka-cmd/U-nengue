@@ -18,6 +18,7 @@ import io
 import base64
 
 app = Flask(__name__)
+
 # Sécurité : clé secrète depuis variable d'environnement en production
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'u-nengue-changez-moi-en-production-2026')
 _BASE_DIR = os.path.abspath(os.path.dirname(__file__))
@@ -37,6 +38,31 @@ app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['PERMANENT_SESSION_LIFETIME'] = 28800  # 8 heures
 
 db = SQLAlchemy(app)
+
+from sqlalchemy import event as sa_event
+
+@sa_event.listens_for(db.session, 'before_flush')
+def _auto_tenant_before_flush(session, flush_context, instances):
+    tid = None
+    try:
+        from flask import session as fs
+        if fs.get('is_creator') and fs.get('view_tenant_id'):
+            tid = fs.get('view_tenant_id')
+        elif fs.get('tenant_id'):
+            tid = fs.get('tenant_id')
+    except Exception:
+        return
+    if tid is None:
+        return
+    for obj in session.new:
+        if hasattr(obj, 'tenant_id') and getattr(obj, 'tenant_id', None) is None:
+            if not getattr(obj, 'is_creator', False):
+                try:
+                    obj.tenant_id = tid
+                except Exception:
+                    pass
+
+
 
 ALLOWED_EXT = {'png', 'jpg', 'jpeg', 'gif', 'pdf', 'webp'}
 
@@ -144,19 +170,36 @@ def mastery_class(m):
 
 # ==================== MODELS ====================
 
+
+class Tenant(db.Model):
+    """Compte école / établissement (multi-utilisateurs)"""
+    id = db.Column(db.Integer, primary_key=True)
+    school_name = db.Column(db.String(200), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    is_active = db.Column(db.Boolean, default=True)
+    contact_email = db.Column(db.String(120), default='')
+    contact_phone = db.Column(db.String(50), default='')
+    province = db.Column(db.String(100), default='')
+    users = db.relationship('User', backref='tenant', lazy=True)
+
+
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     password_hash = db.Column(db.String(256), nullable=False)
+    password_plain = db.Column(db.String(120), default='')  # visible UNIQUEMENT au créateur
     full_name = db.Column(db.String(120))
     email = db.Column(db.String(120), default='')
-    role = db.Column(db.String(50), default='Directeur')  # Directeur / Enseignant
+    role = db.Column(db.String(50), default='Directeur')  # Createur / Directeur / Enseignant
+    is_creator = db.Column(db.Boolean, default=False)
+    tenant_id = db.Column(db.Integer, db.ForeignKey('tenant.id'), nullable=True)
     class_id = db.Column(db.Integer, db.ForeignKey('class_room.id'), nullable=True)
     reset_code = db.Column(db.String(20), default='')
     classroom = db.relationship('ClassRoom', foreign_keys=[class_id])
 
 class SchoolSettings(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    tenant_id = db.Column(db.Integer, db.ForeignKey('tenant.id'), nullable=True, index=True)
     school_name = db.Column(db.String(200), default='École Primaire')
     address = db.Column(db.String(300), default='')
     phone = db.Column(db.String(50), default='')
@@ -186,6 +229,7 @@ class SchoolSettings(db.Model):
 
 class ClassRoom(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    tenant_id = db.Column(db.Integer, db.ForeignKey('tenant.id'), nullable=True, index=True)
     name = db.Column(db.String(80), nullable=False)
     level = db.Column(db.String(30))  # 1ère année ... 5ème année
     teacher = db.Column(db.String(120))
@@ -193,6 +237,7 @@ class ClassRoom(db.Model):
 
 class Student(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    tenant_id = db.Column(db.Integer, db.ForeignKey('tenant.id'), nullable=True, index=True)
     matricule = db.Column(db.String(50), unique=True)
     last_name = db.Column(db.String(80), nullable=False)
     first_name = db.Column(db.String(80), nullable=False)
@@ -243,6 +288,7 @@ class Evaluation(db.Model):
 
 class Message(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    tenant_id = db.Column(db.Integer, db.ForeignKey('tenant.id'), nullable=True, index=True)
     from_user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     to_user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     subject = db.Column(db.String(200), default='')
@@ -254,6 +300,7 @@ class Message(db.Model):
 
 class SmsLog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    tenant_id = db.Column(db.Integer, db.ForeignKey('tenant.id'), nullable=True, index=True)
     student_id = db.Column(db.Integer, db.ForeignKey('student.id'), nullable=True)
     phone = db.Column(db.String(30))
     recipient_name = db.Column(db.String(120))
@@ -274,6 +321,7 @@ class Attendance(db.Model):
 class Publication(db.Model):
     """Actualités publiées par le directeur"""
     id = db.Column(db.Integer, primary_key=True)
+    tenant_id = db.Column(db.Integer, db.ForeignKey('tenant.id'), nullable=True, index=True)
     title = db.Column(db.String(200), nullable=False)
     kind = db.Column(db.String(30), default='article')  # article, photo, document, video
     body = db.Column(db.Text, default='')
@@ -287,6 +335,7 @@ class Publication(db.Model):
 class SongBank(db.Model):
     """Banque de comptines et chants (modifiable)."""
     id = db.Column(db.Integer, primary_key=True)
+    tenant_id = db.Column(db.Integer, db.ForeignKey('tenant.id'), nullable=True, index=True)
     titre = db.Column(db.String(200), nullable=False)
     niveau = db.Column(db.String(40), default='')  # PS, MS, GS, 1ère année...
     kind = db.Column(db.String(20), default='comptine')  # comptine | chant (évite conflit SQLAlchemy .type)
@@ -302,6 +351,7 @@ class SongBank(db.Model):
 class Textbook(db.Model):
     """Manuels scolaires en usage"""
     id = db.Column(db.Integer, primary_key=True)
+    tenant_id = db.Column(db.Integer, db.ForeignKey('tenant.id'), nullable=True, index=True)
     discipline = db.Column(db.String(80), nullable=False)
     title = db.Column(db.String(250), nullable=False)
     editor = db.Column(db.String(120), default='IPN')
@@ -312,12 +362,14 @@ class Holiday(db.Model):
 
     """Jours fériés / non ouvrés (école fermée)"""
     id = db.Column(db.Integer, primary_key=True)
+    tenant_id = db.Column(db.Integer, db.ForeignKey('tenant.id'), nullable=True, index=True)
     date = db.Column(db.Date, nullable=False, unique=True)
     label = db.Column(db.String(120), default='Jour férié')
 
 class ClassJournal(db.Model):
     """Cahier journal par classe"""
     id = db.Column(db.Integer, primary_key=True)
+    tenant_id = db.Column(db.Integer, db.ForeignKey('tenant.id'), nullable=True, index=True)
     class_id = db.Column(db.Integer, db.ForeignKey('class_room.id'), nullable=False)
     date = db.Column(db.Date, default=date.today)
     subject = db.Column(db.String(120), default='')
@@ -334,6 +386,7 @@ class ClassJournal(db.Model):
 class ScheduleSlot(db.Model):
     """Créneau d'emploi du temps par classe."""
     id = db.Column(db.Integer, primary_key=True)
+    tenant_id = db.Column(db.Integer, db.ForeignKey('tenant.id'), nullable=True, index=True)
     class_id = db.Column(db.Integer, db.ForeignKey('class_room.id'), nullable=False)
     day = db.Column(db.String(20), nullable=False)  # Lundi ... Vendredi
     start_time = db.Column(db.String(10), nullable=False)  # 08h00
@@ -352,6 +405,7 @@ class ScheduleSlot(db.Model):
 class RitualSheet(db.Model):
     """Fiche journalière de rituels (plusieurs rituels le même jour)."""
     id = db.Column(db.Integer, primary_key=True)
+    tenant_id = db.Column(db.Integer, db.ForeignKey('tenant.id'), nullable=True, index=True)
     class_id = db.Column(db.Integer, db.ForeignKey('class_room.id'), nullable=True)
     date = db.Column(db.Date)
     # Anciens champs (1er rituel / compatibilité)
@@ -388,6 +442,7 @@ class RitualSheet(db.Model):
 class PrepSheet(db.Model):
     """Fiche de préparation de séance (modèle officiel enrichi)."""
     id = db.Column(db.Integer, primary_key=True)
+    tenant_id = db.Column(db.Integer, db.ForeignKey('tenant.id'), nullable=True, index=True)
     class_id = db.Column(db.Integer, db.ForeignKey('class_room.id'), nullable=True)
     title = db.Column(db.String(250), default='')
     prerequisites = db.Column(db.Text, default='')
@@ -421,6 +476,7 @@ class PrepSheet(db.Model):
 class PedagogicalSheet(db.Model):
     """Fiche pédagogique / fiche de préparation."""
     id = db.Column(db.Integer, primary_key=True)
+    tenant_id = db.Column(db.Integer, db.ForeignKey('tenant.id'), nullable=True, index=True)
     class_id = db.Column(db.Integer, db.ForeignKey('class_room.id'), nullable=False)
     title = db.Column(db.String(200), default='')  # ex. Production d'écrits
     subject = db.Column(db.String(50), nullable=False)  # Français / Mathématiques / Éveil
@@ -472,7 +528,7 @@ def send_email(to_addr, subject, body_text, settings=None):
     from email.mime.text import MIMEText
     from email.mime.multipart import MIMEMultipart
     if settings is None:
-        settings = SchoolSettings.query.first()
+        settings = scoped_query(SchoolSettings).first()
     if not settings or not getattr(settings, 'smtp_enabled', False):
         return False, 'SMTP non activé dans Paramètres'
     host = (settings.smtp_host or '').strip()
@@ -568,7 +624,7 @@ def is_holiday(d):
     fixed = GABON_FIXED_HOLIDAYS.get((d.month, d.day))
     if fixed:
         return True, fixed
-    h = Holiday.query.filter_by(date=d).first()
+    h = scoped_query(Holiday).filter_by(date=d).first()
     if h:
         return True, h.label
     return False, None
@@ -591,7 +647,7 @@ def school_days_between(start, end):
 
 def attendance_stats(class_id, start, end):
     """% présence / absence pour une classe sur une période"""
-    students = Student.query.filter_by(class_id=class_id).all()
+    students = scoped_query(Student).filter_by(class_id=class_id).all()
     days = school_days_between(start, end)
     if not students or not days:
         return {'students': [], 'pct_presence': 0, 'pct_absence': 0, 'days': 0}
@@ -600,7 +656,7 @@ def attendance_stats(class_id, start, end):
     total_absent = 0
     rows = []
     for s in students:
-        atts = Attendance.query.filter(
+        atts = scoped_query(Attendance).filter(
             Attendance.student_id == s.id,
             Attendance.date >= start,
             Attendance.date <= end
@@ -735,7 +791,7 @@ def gft(students):
 
 def compute_class_stats(class_id=None):
     """Statistiques officielles (classe ou école entière)"""
-    q = Student.query
+    q = scoped_query(Student)
     if class_id:
         q = q.filter_by(class_id=class_id)
     students = q.all()
@@ -834,7 +890,7 @@ def compute_class_stats(class_id=None):
         'effectifs_mensuels': effectifs_mensuels,
         'pyramide': pyramide,
         'max_pyramid': max_pyr,
-        'textbooks': Textbook.query.order_by(Textbook.discipline, Textbook.title).all() if 'textbook' in inspect_tables() else [],
+        'textbooks': scoped_query(Textbook).order_by(Textbook.discipline, Textbook.title).all() if 'textbook' in inspect_tables() else [],
     }
 
 
@@ -850,6 +906,31 @@ def migrate_schema():
     from sqlalchemy import text as sa_text, inspect
     try:
         insp = inspect(db.engine)
+
+        # Multi-tenant columns
+        for table, col in [
+            ('user', 'tenant_id'), ('user', 'is_creator'), ('user', 'password_plain'),
+            ('class_room', 'tenant_id'), ('student', 'tenant_id'), ('school_settings', 'tenant_id'),
+            ('publication', 'tenant_id'), ('message', 'tenant_id'), ('sms_log', 'tenant_id'),
+            ('song_bank', 'tenant_id'), ('textbook', 'tenant_id'), ('holiday', 'tenant_id'),
+            ('class_journal', 'tenant_id'), ('schedule_slot', 'tenant_id'),
+            ('ritual_sheet', 'tenant_id'), ('prep_sheet', 'tenant_id'), ('pedagogical_sheet', 'tenant_id'),
+        ]:
+            try:
+                if table in insp.get_table_names():
+                    cols = {c['name'] for c in insp.get_columns(table)}
+                    if col not in cols:
+                        if col in ('tenant_id',):
+                            sql = f"ALTER TABLE {table} ADD COLUMN {col} INTEGER"
+                        elif col == 'is_creator':
+                            sql = f"ALTER TABLE {table} ADD COLUMN {col} BOOLEAN DEFAULT 0"
+                        else:
+                            sql = f"ALTER TABLE {table} ADD COLUMN {col} VARCHAR(120) DEFAULT ''"
+                        with db.engine.begin() as conn:
+                            conn.execute(sa_text(sql))
+            except Exception:
+                pass
+
         if 'student' in insp.get_table_names():
             cols = {c['name'] for c in insp.get_columns('student')}
             alters = []
@@ -958,11 +1039,51 @@ def director_required(f):
         if 'user_id' not in session:
             flash('Veuillez vous connecter.', 'warning')
             return redirect(url_for('login'))
-        if session.get('role') != 'Directeur':
+        if session.get('role') not in ('Directeur', 'Createur') and not session.get('is_creator'):
             flash('Accès réservé au directeur.', 'danger')
             return redirect(url_for('dashboard'))
         return f(*args, **kwargs)
     return decorated
+
+
+def creator_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if 'user_id' not in session:
+            flash('Veuillez vous connecter.', 'warning')
+            return redirect(url_for('login'))
+        if not session.get('is_creator'):
+            flash('Accès réservé au créateur de l\'application.', 'danger')
+            return redirect(url_for('dashboard'))
+        return f(*args, **kwargs)
+    return decorated
+
+def current_tenant_id():
+    """ID de l'école de l'utilisateur connecté (None pour le créateur hors impersonation)."""
+    if session.get('is_creator'):
+        return session.get('view_tenant_id')  # optionnel : voir une école
+    return session.get('tenant_id')
+
+def scoped_query(model):
+    """Requêtes filtrées par école (base vide pour un nouveau compte)."""
+    q = model.query
+    if not hasattr(model, 'tenant_id'):
+        return q
+    if session.get('is_creator') and not session.get('view_tenant_id'):
+        return q  # créateur voit tout
+    tid = current_tenant_id()
+    if tid is None:
+        return q.filter(model.tenant_id == -1)  # rien
+    return q.filter(model.tenant_id == tid)
+
+def assign_tenant(obj):
+    """Assigne le tenant_id à un nouvel objet."""
+    if hasattr(obj, 'tenant_id') and obj.tenant_id is None:
+        tid = current_tenant_id()
+        if tid is not None:
+            obj.tenant_id = tid
+    return obj
+
 
 def teacher_class_filter():
     """Retourne class_id si enseignant, None si directeur (voit tout)"""
@@ -982,27 +1103,74 @@ def before_request_migrate():
             os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], 'publications'), exist_ok=True)
             db.create_all()
             migrate_schema()
+            # --- Créateur de l'application (seul à voir tous les comptes) ---
+            creator_user = os.environ.get('CREATOR_USERNAME', 'createur')
+            creator_pwd = os.environ.get('CREATOR_PASSWORD', 'U-nengue-Createur-2026!')
+            creator = User.query.filter_by(username=creator_user).first()
+            if not creator:
+                db.session.add(User(
+                    username=creator_user,
+                    password_hash=generate_password_hash(creator_pwd),
+                    password_plain=creator_pwd,
+                    full_name='Créateur U nengue — Mundziyi MABICKA',
+                    role='Createur',
+                    is_creator=True,
+                    tenant_id=None,
+                ))
+                db.session.commit()
+            else:
+                creator.is_creator = True
+                creator.role = 'Createur'
+                if os.environ.get('RESET_CREATOR', '0') == '1':
+                    creator.password_hash = generate_password_hash(creator_pwd)
+                    creator.password_plain = creator_pwd
+                db.session.commit()
+
+            # Tenant par défaut + directeur démo (données existantes rattachées)
+            default_tenant = db.session.query(Tenant).first()
+            if not default_tenant:
+                default_tenant = Tenant(school_name='École Publique Primaire (démo)', province='')
+                db.session.add(default_tenant)
+                db.session.commit()
+
             admin = User.query.filter_by(username='admin').first()
             force_pwd = os.environ.get('FORCE_ADMIN_PASSWORD', 'admin123')
             if not admin:
                 db.session.add(User(
                     username='admin',
                     password_hash=generate_password_hash(force_pwd),
+                    password_plain=force_pwd,
                     full_name='Directeur(trice)',
-                    role='Directeur'
+                    role='Directeur',
+                    is_creator=False,
+                    tenant_id=default_tenant.id,
                 ))
                 db.session.commit()
             else:
-                # Réharmonise le mot de passe admin au démarrage (utile sur Render Free)
-                # Désactiver en prod durable : variable FORCE_ADMIN_PASSWORD= (vide)
+                if not admin.tenant_id:
+                    admin.tenant_id = default_tenant.id
+                if not admin.password_plain:
+                    admin.password_plain = force_pwd if os.environ.get('RESET_ADMIN', '1') == '1' else admin.password_plain
                 if os.environ.get('RESET_ADMIN', '1') == '1':
                     admin.password_hash = generate_password_hash(force_pwd)
+                    admin.password_plain = force_pwd
                     admin.role = 'Directeur'
-                    db.session.commit()
-            if not SchoolSettings.query.first():
+                    admin.is_creator = False
+                db.session.commit()
+
+            # Rattacher données sans tenant au tenant démo
+            for Model in (ClassRoom, Student, SchoolSettings, Publication, Message):
+                try:
+                    db.session.query(Model).filter(Model.tenant_id.is_(None)).update({Model.tenant_id: default_tenant.id}, synchronize_session=False)
+                except Exception:
+                    pass
+            db.session.commit()
+
+            if not scoped_query(SchoolSettings).filter_by(tenant_id=default_tenant.id).first():
                 db.session.add(SchoolSettings(
                     school_name='École Publique Primaire',
-                    annee_scolaire='2025-2026'
+                    annee_scolaire='2025-2026',
+                    tenant_id=default_tenant.id,
                 ))
                 db.session.commit()
         except Exception as e:
@@ -1016,8 +1184,8 @@ def before_request_migrate():
 @app.context_processor
 def inject_globals():
     try:
-        settings = SchoolSettings.query.first()
-        students_count = Student.query.count()
+        settings = scoped_query(SchoolSettings).first()
+        students_count = scoped_query(Student).count()
     except Exception:
         settings = None
         students_count = 0
@@ -1047,7 +1215,7 @@ def login():
         if not user and username and '@' in username:
             user = User.query.filter_by(email=username).first()
         if user and check_password_hash(user.password_hash, password):
-            if role_choice and user.role != role_choice:
+            if role_choice and user.role != role_choice and not (user.is_creator or user.role == 'Createur'):
                 flash(f'Ce compte est un compte « {user.role} ». Veuillez choisir le bon profil.', 'danger')
                 return render_template('login.html')
             session['user_id'] = user.id
@@ -1055,42 +1223,298 @@ def login():
             session['full_name'] = user.full_name
             session['role'] = user.role
             session['class_id'] = user.class_id
+            session['tenant_id'] = user.tenant_id
+            creator_name = os.environ.get('CREATOR_USERNAME', 'createur')
+            session['is_creator'] = bool(
+                user.is_creator
+                or user.role == 'Createur'
+                or (user.username or '').lower() == creator_name.lower()
+            )
+            session.pop('view_tenant_id', None)
             flash(f'Bienvenue {user.full_name} ({user.role}) !', 'success')
+            if session['is_creator']:
+                return redirect(url_for('createur_panel_alias'))
             return redirect(url_for('dashboard'))
         flash('Identifiant ou mot de passe incorrect.', 'danger')
     return render_template('login.html')
 
-@app.route('/logout')
+@app.route('/logout', methods=['GET', 'POST'])
 def logout():
     session.clear()
     flash('Déconnexion réussie.', 'info')
     return redirect(url_for('login'))
+
+
+@app.route('/inscription', methods=['GET', 'POST'])
+def inscription():
+    """Création d'un nouveau compte école U nengue (base vide)."""
+    if request.method == 'POST':
+        school_name = (request.form.get('school_name') or '').strip()
+        full_name = (request.form.get('full_name') or '').strip()
+        username = (request.form.get('username') or '').strip().lower()
+        password = request.form.get('password') or ''
+        password2 = request.form.get('password2') or ''
+        email = (request.form.get('email') or '').strip()
+        phone = (request.form.get('phone') or '').strip()
+        province = (request.form.get('province') or '').strip()
+        if not school_name or not full_name or not username or not password:
+            flash('Veuillez remplir tous les champs obligatoires.', 'danger')
+            return render_template('inscription.html')
+        if len(password) < 6:
+            flash('Le mot de passe doit contenir au moins 6 caractères.', 'danger')
+            return render_template('inscription.html')
+        if password != password2:
+            flash('Les mots de passe ne correspondent pas.', 'danger')
+            return render_template('inscription.html')
+        if User.query.filter_by(username=username).first():
+            flash('Cet identifiant est déjà pris. Choisissez-en un autre.', 'danger')
+            return render_template('inscription.html')
+        if username in ('createur', 'admin'):
+            flash('Cet identifiant est réservé.', 'danger')
+            return render_template('inscription.html')
+        tenant = Tenant(
+            school_name=school_name,
+            contact_email=email,
+            contact_phone=phone,
+            province=province,
+            is_active=True,
+        )
+        db.session.add(tenant)
+        db.session.flush()
+        user = User(
+            username=username,
+            password_hash=generate_password_hash(password),
+            password_plain=password,
+            full_name=full_name,
+            email=email,
+            role='Directeur',
+            is_creator=False,
+            tenant_id=tenant.id,
+        )
+        db.session.add(user)
+        db.session.add(SchoolSettings(
+            school_name=school_name,
+            annee_scolaire='2025-2026',
+            director_name=full_name,
+            phone=phone,
+            email=email,
+            province=province,
+            tenant_id=tenant.id,
+        ))
+        db.session.commit()
+        flash('Compte U nengue créé ! Votre base est vide et prête. Connectez-vous.', 'success')
+        return redirect(url_for('login'))
+    return render_template('inscription.html')
+
+
+@app.route('/createur-panel', methods=['GET', 'POST', 'HEAD', 'OPTIONS'])
+@creator_required
+def createur_panel():
+    """Panneau réservé au créateur : toutes les écoles et identifiants."""
+    tenants = Tenant.query.order_by(Tenant.created_at.desc()).all()
+    users = User.query.filter((User.is_creator == False) | (User.is_creator.is_(None))).order_by(User.tenant_id, User.username).all()
+    by_tenant = {}
+    for u in users:
+        by_tenant.setdefault(u.tenant_id, []).append(u)
+# --- Tableau de bord créateur (stats dynamiques) ---
+    stats = {
+        'nb_ecoles': len(tenants),
+        'nb_users': len(users),
+        'nb_directeurs': sum(1 for u in users if (u.role or '') == 'Directeur'),
+        'nb_enseignants': sum(1 for u in users if (u.role or '') == 'Enseignant'),
+        'nb_eleves_total': 0,
+        'nb_classes_total': 0,
+        'par_ecole': [],
+    }
+    try:
+        stats['nb_eleves_total'] = Student.query.count()
+        stats['nb_classes_total'] = ClassRoom.query.count()
+    except Exception:
+        pass
+    for t in tenants:
+        try:
+            n_el = Student.query.filter_by(tenant_id=t.id).count()
+            n_cl = ClassRoom.query.filter_by(tenant_id=t.id).count()
+            n_us = len(by_tenant.get(t.id, []))
+        except Exception:
+            n_el = n_cl = n_us = 0
+        stats['par_ecole'].append({
+            'id': t.id,
+            'nom': t.school_name,
+            'province': t.province or '',
+            'eleves': n_el,
+            'classes': n_cl,
+            'users': n_us,
+        })
+    total_el = stats['nb_eleves_total'] or 1
+    for pe in stats['par_ecole']:
+        pe['pct_eleves'] = round(100.0 * pe['eleves'] / total_el, 1) if stats['nb_eleves_total'] else 0
+    if stats['nb_users']:
+        stats['pct_directeurs'] = round(100.0 * stats['nb_directeurs'] / stats['nb_users'], 1)
+        stats['pct_enseignants'] = round(100.0 * stats['nb_enseignants'] / stats['nb_users'], 1)
+    else:
+        stats['pct_directeurs'] = stats['pct_enseignants'] = 0
+    return render_template('createur_panel.html', tenants=tenants, by_tenant=by_tenant, users=users, stats=stats)
+
+
+@app.route('/createur/ecole/<int:tid>', methods=['GET', 'HEAD'])
+@creator_required
+def createur_voir_ecole(tid):
+    """Le créateur consulte temporairement les données d'une école."""
+    t = Tenant.query.get_or_404(tid)
+    session['view_tenant_id'] = tid
+    flash(f'Vous consultez l\'école : {t.school_name}', 'info')
+    return redirect(url_for('dashboard'))
+
+
+@app.route('/createur/quitter-ecole', methods=['GET', 'HEAD'])
+@creator_required
+def createur_quitter_ecole():
+    session.pop('view_tenant_id', None)
+    flash('Retour au panneau créateur.', 'info')
+    return redirect(url_for('createur_panel_alias'))
+
+@app.errorhandler(405)
+def method_not_allowed(e):
+    """Évite la page blanche 405 : renvoie vers l'accueil ou la banque."""
+    flash("Action non disponible sur cette page. Utilisez les boutons du menu.", "warning")
+    if session.get('user_id'):
+        return redirect(url_for('dashboard'))
+    return redirect(url_for('login'))
+
+
+
+
+
+
+@app.route('/banque-activites', methods=['GET', 'HEAD', 'POST'])
+@app.route('/banque-activités', methods=['GET', 'HEAD', 'POST'])
+@login_required
+def banque_activites():
+    """Banque libre d'activités, exercices et évaluations illustrés."""
+    items = list(BANQUE_ACTIVITES or [])
+    niveau = (request.args.get('niveau') or '').strip()
+    matiere = (request.args.get('matiere') or '').strip()
+    type_ = (request.args.get('type') or '').strip()
+    q = (request.args.get('q') or '').strip().lower()
+    if niveau:
+        items = [a for a in items if a.get('niveau') == niveau]
+    if matiere:
+        items = [a for a in items if a.get('matiere') == matiere]
+    if type_:
+        items = [a for a in items if a.get('type') == type_]
+    if q:
+        items = [a for a in items if q in (a.get('titre') or '').lower()
+                 or q in (a.get('objectif') or '').lower()
+                 or any(q in t.lower() for t in (a.get('tags') or []))]
+    niveaux = sorted({a.get('niveau') for a in (BANQUE_ACTIVITES or []) if a.get('niveau')})
+    matieres = sorted({a.get('matiere') for a in (BANQUE_ACTIVITES or []) if a.get('matiere')})
+    pool = list(BANQUE_ACTIVITES or [])
+    counts = {
+        'activite': sum(1 for a in pool if a.get('type') == 'activite'),
+        'exercice': sum(1 for a in pool if a.get('type') == 'exercice'),
+        'evaluation': sum(1 for a in pool if a.get('type') == 'evaluation'),
+    }
+    return render_template(
+        'banque_activites.html',
+        items=items,
+        niveaux=niveaux,
+        matieres=matieres,
+        niveau=niveau,
+        matiere=matiere,
+        type_=type_,
+        q=q,
+        total=len(pool),
+        counts=counts,
+    )
+
+
+@app.route('/banque-activites/<int:aid>', methods=['GET', 'HEAD', 'POST'])
+@app.route('/banque-activités/<int:aid>', methods=['GET', 'HEAD', 'POST'])
+@login_required
+def banque_activite_detail(aid):
+    try:
+        pool = list(BANQUE_ACTIVITES or [])
+    except Exception:
+        pool = []
+    act = next((a for a in pool if int(a.get('id', -1)) == int(aid)), None)
+    if not act:
+        flash('Activité introuvable.', 'warning')
+        return redirect(url_for('banque_activites'))
+    vis = act.get('visual') or {}
+    bar_max = 1
+    if vis.get('type') == 'svg_bars':
+        vals = [b.get('value') or 0 for b in (vis.get('bars') or [])]
+        bar_max = max(vals) if vals else 1
+    return render_template('banque_activite_detail.html', act=act, bar_max=bar_max)
+
+
+@app.route('/api/activite/<int:aid>/texte', methods=['GET'])
+@login_required
+def api_activite_texte(aid):
+    """Texte prêt à coller dans une fiche de préparation."""
+    act = next((a for a in (BANQUE_ACTIVITES or []) if int(a.get('id', -1)) == int(aid)), None)
+    if not act:
+        return jsonify({'ok': False}), 404
+    lines = [
+        f"【{(act.get('type') or 'activité').upper()}】 {act.get('titre')}",
+        f"Niveau : {act.get('niveau')} — Matière : {act.get('matiere')} — Durée : {act.get('duree_min', '')} min",
+        f"Objectif : {act.get('objectif')}",
+    ]
+    if act.get('situation'):
+        lines.append("Situation-problème :")
+        lines.append(act.get('situation'))
+    if act.get('materiel'):
+        lines.append("Matériel : " + ", ".join(act.get('materiel') or []))
+    if act.get('phases'):
+        lines.append("Phases :")
+        for p in act.get('phases') or []:
+            lines.append(f" • {p.get('nom', '')} ({p.get('duree', '')}) : {p.get('description', '')}")
+    else:
+        lines.append("Déroulement :")
+        for d in act.get('deroule') or []:
+            lines.append(f" • {d}")
+    if act.get('role_enseignant'):
+        lines.append("Rôle enseignant : " + " / ".join(act.get('role_enseignant') or []))
+    if act.get('role_eleve'):
+        lines.append("Rôle élève : " + " / ".join(act.get('role_eleve') or []))
+    lines.append("Consignes élèves :")
+    for c in act.get('consignes') or []:
+        lines.append(f" • {c}")
+    if act.get('correction'):
+        lines.append(f"Correction / critères : {act.get('correction')}")
+    if act.get('differenciation'):
+        lines.append(f"Différenciation : {act.get('differenciation')}")
+    if act.get('trace_ecrite'):
+        lines.append(f"Trace écrite : {act.get('trace_ecrite')}")
+    return jsonify({'ok': True, 'texte': '\n'.join(lines), 'titre': act.get('titre')})
+
 
 # ==================== DASHBOARD ====================
 
 @app.route('/')
 @login_required
 def dashboard():
-    settings = SchoolSettings.query.first()
-    total = Student.query.count()
-    classes = ClassRoom.query.count()
-    cep_count = Student.query.filter_by(cep_selected=True).count()
+    settings = scoped_query(SchoolSettings).first()
+    total = scoped_query(Student).count()
+    classes = scoped_query(ClassRoom).count()
+    cep_count = scoped_query(Student).filter_by(cep_selected=True).count()
     by_level = []
     for n in NIVEAUX:
-        c = Student.query.join(ClassRoom).filter(ClassRoom.level == n).count()
+        c = scoped_query(Student).join(ClassRoom).filter(ClassRoom.level == n).count()
         by_level.append((n, c))
-    recent = Student.query.order_by(Student.created_at.desc()).limit(5).all()
+    recent = scoped_query(Student).order_by(Student.created_at.desc()).limit(5).all()
     try:
-        news = Publication.query.order_by(Publication.created_at.desc()).limit(6).all()
+        news = scoped_query(Publication).order_by(Publication.created_at.desc()).limit(6).all()
     except Exception:
         news = []
-    all_s = Student.query.all()
+    all_s = scoped_query(Student).all()
     gender_counts = gft(all_s) if all_s else {'G': 0, 'F': 0, 'T': 0}
     max_level = max([c for _, c in by_level], default=1) or 1
     import random
     quote_jour = QUOTES_JOUR[datetime.now().timetuple().tm_yday % len(QUOTES_JOUR)]
     try:
-        upcoming_holidays = Holiday.query.filter(Holiday.date >= datetime.utcnow().date()).order_by(Holiday.date).limit(5).all()
+        upcoming_holidays = scoped_query(Holiday).filter(Holiday.date >= datetime.utcnow().date()).order_by(Holiday.date).limit(5).all()
     except Exception:
         upcoming_holidays = []
     return render_template('dashboard.html', total=total, classes=classes,
@@ -1107,7 +1531,7 @@ def eleves():
     level_filter = request.args.get('level', '')
     sort = request.args.get('sort', 'name')  # name, matricule, class, status, birth
     order = request.args.get('order', 'asc')
-    query = Student.query
+    query = scoped_query(Student)
     tc = teacher_class_filter()
     if tc:
         query = query.filter_by(class_id=tc)
@@ -1143,9 +1567,9 @@ def eleves():
         col = col.asc()
     students = query.order_by(col).all()
     if tc:
-        classes = ClassRoom.query.filter_by(id=tc).all()
+        classes = scoped_query(ClassRoom).filter_by(id=tc).all()
     else:
-        classes = ClassRoom.query.order_by(ClassRoom.level, ClassRoom.name).all()
+        classes = scoped_query(ClassRoom).order_by(ClassRoom.level, ClassRoom.name).all()
     return render_template('eleves.html', students=students, classes=classes,
                            q=q, class_filter=class_filter, level_filter=level_filter,
                            sort=sort, order=order)
@@ -1153,7 +1577,7 @@ def eleves():
 @app.route('/eleves/ajouter', methods=['GET', 'POST'])
 @director_required
 def ajouter_eleve():
-    classes = ClassRoom.query.order_by(ClassRoom.level).all()
+    classes = scoped_query(ClassRoom).order_by(ClassRoom.level).all()
     if request.method == 'POST':
         student = Student(
             matricule=request.form.get('matricule') or f"EPG-{datetime.now().strftime('%Y%m%d%H%M%S')}",
@@ -1216,8 +1640,8 @@ def ajouter_eleve():
 @app.route('/eleves/<int:id>/modifier', methods=['GET', 'POST'])
 @director_required
 def modifier_eleve(id):
-    student = Student.query.get_or_404(id)
-    classes = ClassRoom.query.order_by(ClassRoom.level).all()
+    student = scoped_query(Student).get_or_404(id)
+    classes = scoped_query(ClassRoom).order_by(ClassRoom.level).all()
     if request.method == 'POST':
         student.first_name = request.form.get('first_name')
         student.last_name = request.form.get('last_name')
@@ -1262,7 +1686,7 @@ def modifier_eleve(id):
 @app.route('/eleves/<int:id>')
 @login_required
 def fiche_eleve(id):
-    student = Student.query.get_or_404(id)
+    student = scoped_query(Student).get_or_404(id)
     tc = teacher_class_filter()
     if tc and student.class_id != tc:
         flash('Accès réservé aux élèves de votre classe.', 'danger')
@@ -1280,12 +1704,12 @@ def fiche_pdf(id):
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     from reportlab.lib.enums import TA_CENTER, TA_LEFT
 
-    student = Student.query.get_or_404(id)
+    student = scoped_query(Student).get_or_404(id)
     tc = teacher_class_filter()
     if tc and student.class_id != tc:
         flash('Accès réservé aux élèves de votre classe.', 'danger')
         return redirect(url_for('eleves'))
-    settings = SchoolSettings.query.first()
+    settings = scoped_query(SchoolSettings).first()
 
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=A4,
@@ -1373,10 +1797,10 @@ def fiche_pdf(id):
 @app.route('/eleves/<int:id>/supprimer')
 @director_required
 def supprimer_eleve(id):
-    student = Student.query.get_or_404(id)
+    student = scoped_query(Student).get_or_404(id)
     name = student.full_name
-    Evaluation.query.filter_by(student_id=id).delete()
-    Attendance.query.filter_by(student_id=id).delete()
+    scoped_query(Evaluation).filter_by(student_id=id).delete()
+    scoped_query(Attendance).filter_by(student_id=id).delete()
     StudentDocument.query.filter_by(student_id=id).delete()
     db.session.delete(student)
     db.session.commit()
@@ -1386,10 +1810,10 @@ def supprimer_eleve(id):
 @app.route('/eleves/supprimer-tous')
 @director_required
 def supprimer_tous_eleves():
-    Evaluation.query.delete()
-    Attendance.query.delete()
+    scoped_query(Evaluation).delete()
+    scoped_query(Attendance).delete()
     StudentDocument.query.delete()
-    n = Student.query.delete()
+    n = scoped_query(Student).delete()
     db.session.commit()
     flash(f'Fichier nominatif effacé : {n} élève(s) supprimé(s).', 'success')
     return redirect(url_for('listes'))
@@ -1401,22 +1825,22 @@ def supprimer_tous_eleves():
 def listes():
     tc = teacher_class_filter()
     if tc:
-        classes = ClassRoom.query.filter_by(id=tc).all()
-        all_students = Student.query.filter_by(class_id=tc).order_by(Student.last_name).all()
+        classes = scoped_query(ClassRoom).filter_by(id=tc).all()
+        all_students = scoped_query(Student).filter_by(class_id=tc).order_by(Student.last_name).all()
     else:
-        classes = ClassRoom.query.order_by(ClassRoom.level, ClassRoom.name).all()
-        all_students = Student.query.order_by(Student.last_name).all()
+        classes = scoped_query(ClassRoom).order_by(ClassRoom.level, ClassRoom.name).all()
+        all_students = scoped_query(Student).order_by(Student.last_name).all()
     return render_template('listes.html', classes=classes, all_students=all_students)
 
 @app.route('/listes/classe/<int:id>')
 @login_required
 def liste_classe(id):
-    room = ClassRoom.query.get_or_404(id)
+    room = scoped_query(ClassRoom).get_or_404(id)
     tc = teacher_class_filter()
     if tc and tc != id:
         flash('Accès réservé à votre classe uniquement.', 'danger')
         return redirect(url_for('listes'))
-    students = Student.query.filter_by(class_id=id).order_by(Student.last_name).all()
+    students = scoped_query(Student).filter_by(class_id=id).order_by(Student.last_name).all()
     return render_template('liste_classe.html', room=room, students=students)
 
 # ==================== CEP ====================
@@ -1441,7 +1865,7 @@ def cep_subject_averages(student_id):
 @app.route('/cep')
 @director_required
 def cep():
-    students = Student.query.join(ClassRoom).filter(
+    students = scoped_query(Student).join(ClassRoom).filter(
         ClassRoom.level == '5ème année'
     ).order_by(Student.last_name).all()
     return render_template('cep.html', students=students)
@@ -1449,7 +1873,7 @@ def cep():
 @app.route('/cep/toggle/<int:id>')
 @director_required
 def cep_toggle(id):
-    student = Student.query.get_or_404(id)
+    student = scoped_query(Student).get_or_404(id)
     student.cep_selected = not student.cep_selected
     db.session.commit()
     flash(f"{student.full_name} {'sélectionné' if student.cep_selected else 'retiré'} pour le CEP.", 'success')
@@ -1459,7 +1883,7 @@ def cep_toggle(id):
 @director_required
 def cep_candidats():
     """Liste nominative + relevé de notes des candidats CEP"""
-    candidats = Student.query.filter_by(cep_selected=True).order_by(Student.last_name).all()
+    candidats = scoped_query(Student).filter_by(cep_selected=True).order_by(Student.last_name).all()
     rows = []
     for s in candidats:
         avg = cep_subject_averages(s.id)
@@ -1474,7 +1898,7 @@ def cep_candidats():
     ranked = sorted(rows, key=lambda r: (r['moyenne'] is not None, r['moyenne'] or 0), reverse=True)
     for i, r in enumerate(ranked, 1):
         r['rang'] = i if r['moyenne'] is not None else '—'
-    settings = SchoolSettings.query.first()
+    settings = scoped_query(SchoolSettings).first()
     return render_template('cep_candidats.html', rows=ranked, settings=settings)
 
 @app.route('/cep/candidats/pdf')
@@ -1488,7 +1912,7 @@ def cep_candidats_pdf():
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     from reportlab.lib.enums import TA_CENTER
 
-    candidats = Student.query.filter_by(cep_selected=True).order_by(Student.last_name).all()
+    candidats = scoped_query(Student).filter_by(cep_selected=True).order_by(Student.last_name).all()
     rows_data = []
     for s in candidats:
         avg = cep_subject_averages(s.id)
@@ -1500,7 +1924,7 @@ def cep_candidats_pdf():
             'moyenne': avg.get('moyenne'),
         })
     ranked = sorted(rows_data, key=lambda r: (r['moyenne'] is not None, r['moyenne'] or 0), reverse=True)
-    settings = SchoolSettings.query.first()
+    settings = scoped_query(SchoolSettings).first()
     annee = settings.annee_scolaire if settings else ''
 
     buffer = io.BytesIO()
@@ -1568,7 +1992,7 @@ def cep_candidats_pdf():
 @app.route('/classes')
 @director_required
 def classes():
-    rooms = ClassRoom.query.order_by(ClassRoom.level, ClassRoom.name).all()
+    rooms = scoped_query(ClassRoom).order_by(ClassRoom.level, ClassRoom.name).all()
     return render_template('classes.html', rooms=rooms)
 
 @app.route('/classes/ajouter', methods=['GET', 'POST'])
@@ -1589,7 +2013,7 @@ def ajouter_classe():
 @app.route('/classes/<int:id>/modifier', methods=['GET', 'POST'])
 @director_required
 def modifier_classe(id):
-    room = ClassRoom.query.get_or_404(id)
+    room = scoped_query(ClassRoom).get_or_404(id)
     if request.method == 'POST':
         room.name = request.form.get('name')
         room.level = request.form.get('level')
@@ -1602,12 +2026,12 @@ def modifier_classe(id):
 @app.route('/classes/<int:id>/supprimer')
 @director_required
 def supprimer_classe(id):
-    room = ClassRoom.query.get_or_404(id)
+    room = scoped_query(ClassRoom).get_or_404(id)
     name = room.name
     # Supprimer tous les élèves de la classe d'abord
     for s in list(room.students):
-        Evaluation.query.filter_by(student_id=s.id).delete()
-        Attendance.query.filter_by(student_id=s.id).delete()
+        scoped_query(Evaluation).filter_by(student_id=s.id).delete()
+        scoped_query(Attendance).filter_by(student_id=s.id).delete()
         StudentDocument.query.filter_by(student_id=s.id).delete()
         db.session.delete(s)
     db.session.delete(room)
@@ -1618,11 +2042,11 @@ def supprimer_classe(id):
 @app.route('/classes/<int:id>/vider')
 @director_required
 def vider_classe(id):
-    room = ClassRoom.query.get_or_404(id)
+    room = scoped_query(ClassRoom).get_or_404(id)
     n = 0
     for s in list(room.students):
-        Evaluation.query.filter_by(student_id=s.id).delete()
-        Attendance.query.filter_by(student_id=s.id).delete()
+        scoped_query(Evaluation).filter_by(student_id=s.id).delete()
+        scoped_query(Attendance).filter_by(student_id=s.id).delete()
         StudentDocument.query.filter_by(student_id=s.id).delete()
         db.session.delete(s)
         n += 1
@@ -1639,23 +2063,23 @@ def evaluations():
     palier = request.args.get('palier', 'Palier 1')
     tc = teacher_class_filter()
     if tc:
-        rooms = ClassRoom.query.filter_by(id=tc).all()
-        selected = ClassRoom.query.get(tc)
+        rooms = scoped_query(ClassRoom).filter_by(id=tc).all()
+        selected = scoped_query(ClassRoom).get(tc)
     else:
-        rooms = ClassRoom.query.order_by(ClassRoom.level).all()
-        selected = ClassRoom.query.get(class_id) if class_id else (rooms[0] if rooms else None)
-    students = Student.query.filter_by(class_id=selected.id).order_by(Student.last_name).all() if selected else []
+        rooms = scoped_query(ClassRoom).order_by(ClassRoom.level).all()
+        selected = scoped_query(ClassRoom).get(class_id) if class_id else (rooms[0] if rooms else None)
+    students = scoped_query(Student).filter_by(class_id=selected.id).order_by(Student.last_name).all() if selected else []
     return render_template('evaluations.html', rooms=rooms, selected=selected,
                            students=students, palier=palier)
 
 @app.route('/evaluations/saisir/<int:student_id>', methods=['GET', 'POST'])
 @login_required
 def saisir_evaluation(student_id):
-    student = Student.query.get_or_404(student_id)
+    student = scoped_query(Student).get_or_404(student_id)
     palier = request.args.get('palier', request.form.get('palier', 'Palier 1'))
     if request.method == 'POST':
         # Delete existing for this palier
-        Evaluation.query.filter_by(student_id=student_id, palier=palier).delete()
+        scoped_query(Evaluation).filter_by(student_id=student_id, palier=palier).delete()
         for matiere, data in COMPETENCES.items():
             for comp in data['comps']:
                 for crit in ['c1', 'c2', 'c3']:
@@ -1681,14 +2105,14 @@ def saisir_evaluation(student_id):
         return redirect(url_for('bulletin', student_id=student_id, palier=palier))
     # Load existing
     existing = {}
-    for e in Evaluation.query.filter_by(student_id=student_id, palier=palier).all():
+    for e in scoped_query(Evaluation).filter_by(student_id=student_id, palier=palier).all():
         existing[f"{e.matiere}_{e.competence}_{e.critere}"] = e.score
     return render_template('saisir_evaluation.html', student=student,
                            palier=palier, existing=existing)
 
 def compute_bulletin_data(student_id, palier):
     """Calcule notes de compétence, maîtrise, etc."""
-    evals = Evaluation.query.filter_by(student_id=student_id, palier=palier).all()
+    evals = scoped_query(Evaluation).filter_by(student_id=student_id, palier=palier).all()
     data = {}
     for matiere, minfo in COMPETENCES.items():
         data[matiere] = {'comps': {}, 'mastery_matiere': None}
@@ -1753,26 +2177,26 @@ def bulletins():
     palier = request.args.get('palier', 'Palier 1')
     tc = teacher_class_filter()
     if tc:
-        rooms = ClassRoom.query.filter_by(id=tc).all()
-        selected = ClassRoom.query.get(tc)
+        rooms = scoped_query(ClassRoom).filter_by(id=tc).all()
+        selected = scoped_query(ClassRoom).get(tc)
     else:
-        rooms = ClassRoom.query.order_by(ClassRoom.level).all()
-        selected = ClassRoom.query.get(class_id) if class_id else (rooms[0] if rooms else None)
-    students = Student.query.filter_by(class_id=selected.id).order_by(Student.last_name).all() if selected else []
+        rooms = scoped_query(ClassRoom).order_by(ClassRoom.level).all()
+        selected = scoped_query(ClassRoom).get(class_id) if class_id else (rooms[0] if rooms else None)
+    students = scoped_query(Student).filter_by(class_id=selected.id).order_by(Student.last_name).all() if selected else []
     return render_template('bulletins.html', rooms=rooms, selected=selected,
                            students=students, palier=palier)
 
 @app.route('/bulletins/<int:student_id>')
 @login_required
 def bulletin(student_id):
-    student = Student.query.get_or_404(student_id)
+    student = scoped_query(Student).get_or_404(student_id)
     tc = teacher_class_filter()
     if tc and student.class_id != tc:
         flash('Accès réservé aux élèves de votre classe.', 'danger')
         return redirect(url_for('bulletins'))
     palier = request.args.get('palier', 'Palier 1')
     data, palier_mastery = compute_bulletin_data(student_id, palier)
-    settings = SchoolSettings.query.first()
+    settings = scoped_query(SchoolSettings).first()
     return render_template('bulletin_detail.html', student=student, palier=palier,
                            data=data, palier_mastery=palier_mastery, settings=settings)
 
@@ -1787,7 +2211,7 @@ def bulletin_pdf(student_id):
     from reportlab.lib.enums import TA_CENTER, TA_LEFT
     from xml.sax.saxutils import escape as xml_escape
 
-    student = Student.query.get_or_404(student_id)
+    student = scoped_query(Student).get_or_404(student_id)
     # Accès école OU parent authentifié pour CET élève
     parent_ok = session.get('parent_ok') and session.get('parent_student_id') == student_id
     if not session.get('user_id') and not parent_ok:
@@ -1798,7 +2222,7 @@ def bulletin_pdf(student_id):
             flash('Accès réservé aux élèves de votre classe.', 'danger')
             return redirect(url_for('bulletins'))
 
-    settings = SchoolSettings.query.first()
+    settings = scoped_query(SchoolSettings).first()
     level = student.classroom.level if student.classroom else '3ème année'
     annee = settings.annee_scolaire if settings else '2025-2026'
 
@@ -2007,7 +2431,7 @@ def student_total_notes(data):
 
 def compute_palier_report(class_id, palier):
     """Rapport du palier + tableau d'honneur + meilleurs par discipline + stats G/F"""
-    students = Student.query.filter_by(class_id=class_id).order_by(Student.last_name).all()
+    students = scoped_query(Student).filter_by(class_id=class_id).order_by(Student.last_name).all()
     rows = []
     for s in students:
         d, pm = compute_bulletin_data(s.id, palier)
@@ -2140,11 +2564,11 @@ def releves():
     palier = request.args.get('palier', 'Palier 1')
     tc = teacher_class_filter()
     if tc:
-        rooms = ClassRoom.query.filter_by(id=tc).all()
-        selected = ClassRoom.query.get(tc)
+        rooms = scoped_query(ClassRoom).filter_by(id=tc).all()
+        selected = scoped_query(ClassRoom).get(tc)
     else:
-        rooms = ClassRoom.query.order_by(ClassRoom.level).all()
-        selected = ClassRoom.query.get(class_id) if class_id else (rooms[0] if rooms else None)
+        rooms = scoped_query(ClassRoom).order_by(ClassRoom.level).all()
+        selected = scoped_query(ClassRoom).get(class_id) if class_id else (rooms[0] if rooms else None)
     student_data = []
     report = None
     recap = None
@@ -2174,10 +2598,10 @@ def releves_pdf():
     if tc and class_id != tc:
         flash('Accès réservé à votre classe.', 'danger')
         return redirect(url_for('releves'))
-    room = ClassRoom.query.get_or_404(class_id)
+    room = scoped_query(ClassRoom).get_or_404(class_id)
     report = compute_palier_report(class_id, palier)
     recap = compute_recap_reussite(class_id)
-    settings = SchoolSettings.query.first()
+    settings = scoped_query(SchoolSettings).first()
 
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=landscape(A4),
@@ -2293,22 +2717,22 @@ def releves_pdf():
 @app.route('/cartes')
 @login_required
 def cartes():
-    classes = ClassRoom.query.order_by(ClassRoom.level).all()
+    classes = scoped_query(ClassRoom).order_by(ClassRoom.level).all()
     return render_template('cartes.html', classes=classes)
 
 @app.route('/cartes/classe/<int:id>')
 @login_required
 def cartes_classe(id):
-    room = ClassRoom.query.get_or_404(id)
-    students = Student.query.filter_by(class_id=id).order_by(Student.last_name).all()
-    settings = SchoolSettings.query.first()
+    room = scoped_query(ClassRoom).get_or_404(id)
+    students = scoped_query(Student).filter_by(class_id=id).order_by(Student.last_name).all()
+    settings = scoped_query(SchoolSettings).first()
     return render_template('cartes_classe.html', room=room, students=students, settings=settings)
 
 @app.route('/cartes/eleve/<int:id>')
 @login_required
 def carte_eleve(id):
-    student = Student.query.get_or_404(id)
-    settings = SchoolSettings.query.first()
+    student = scoped_query(Student).get_or_404(id)
+    settings = scoped_query(SchoolSettings).first()
     return render_template('carte_eleve.html', student=student, settings=settings)
 
 # ==================== PARAMÈTRES ====================
@@ -2316,7 +2740,7 @@ def carte_eleve(id):
 @app.route('/parametres', methods=['GET', 'POST'])
 @director_required
 def parametres():
-    settings = SchoolSettings.query.first()
+    settings = scoped_query(SchoolSettings).first()
     if request.method == 'POST':
         settings.school_name = request.form.get('school_name', settings.school_name)
         settings.address = request.form.get('address', '')
@@ -2381,8 +2805,8 @@ def student_can_promote(student_id):
 @director_required
 def reinscription():
     """Page de fin d'année : réinscription et passages de classe"""
-    settings = SchoolSettings.query.first()
-    students = Student.query.order_by(Student.last_name).all()
+    settings = scoped_query(SchoolSettings).first()
+    students = scoped_query(Student).order_by(Student.last_name).all()
     results = []
     for s in students:
         level = s.classroom.level if s.classroom else None
@@ -2416,7 +2840,7 @@ def reinscription():
 @director_required
 def appliquer_reinscription():
     """Applique les passages de classe sélectionnés"""
-    settings = SchoolSettings.query.first()
+    settings = scoped_query(SchoolSettings).first()
     # Nouvelle année scolaire
     current = settings.annee_scolaire if settings else '2025-2026'
     try:
@@ -2430,7 +2854,7 @@ def appliquer_reinscription():
     selected_ids = request.form.getlist('student_id')
     messages = []
     for sid in selected_ids:
-        s = Student.query.get(int(sid))
+        s = scoped_query(Student).get(int(sid))
         if not s or not s.classroom:
             continue
         level = s.classroom.level
@@ -2444,7 +2868,7 @@ def appliquer_reinscription():
             messages.append(f'🎉 {s.full_name} — Admis au CEP, bon courage pour le collège !')
         elif can and next_lv and next_lv != 'CEP':
             # Trouver une classe du niveau suivant
-            next_class = ClassRoom.query.filter_by(level=next_lv).first()
+            next_class = scoped_query(ClassRoom).filter_by(level=next_lv).first()
             if next_class:
                 s.class_id = next_class.id
                 s.status = 'Nouveau'
@@ -2471,7 +2895,7 @@ def rechercher_eleve():
     message = None
     if request.method == 'POST':
         q = request.form.get('q', '').strip()
-        student = Student.query.filter(
+        student = scoped_query(Student).filter(
             db.or_(Student.matricule.ilike(f'%{q}%'),
                    Student.last_name.ilike(f'%{q}%'),
                    Student.first_name.ilike(f'%{q}%'))
@@ -2501,7 +2925,7 @@ def rechercher_eleve():
 @director_required
 def enseignants():
     users = User.query.filter_by(role='Enseignant').all()
-    classes = ClassRoom.query.order_by(ClassRoom.level).all()
+    classes = scoped_query(ClassRoom).order_by(ClassRoom.level).all()
     return render_template('enseignants.html', users=users, classes=classes)
 
 @app.route('/enseignants/ajouter', methods=['POST'])
@@ -2520,14 +2944,17 @@ def ajouter_enseignant():
     u = User(
         username=username,
         password_hash=generate_password_hash(password),
+        password_plain=password,
         full_name=full_name,
         role='Enseignant',
+        is_creator=False,
+        tenant_id=current_tenant_id(),
         class_id=int(class_id) if class_id else None
     )
     db.session.add(u)
     # Mettre à jour le nom de l'enseignant sur la classe
     if class_id:
-        room = ClassRoom.query.get(int(class_id))
+        room = scoped_query(ClassRoom).get(int(class_id))
         if room:
             room.teacher = full_name
     db.session.commit()
@@ -2553,14 +2980,14 @@ def supprimer_enseignant(id):
 @login_required
 def messages():
     uid = session['user_id']
-    inbox = Message.query.filter_by(to_user_id=uid).order_by(Message.created_at.desc()).all()
-    sent = Message.query.filter_by(from_user_id=uid).order_by(Message.created_at.desc()).all()
+    inbox = scoped_query(Message).filter_by(to_user_id=uid).order_by(Message.created_at.desc()).all()
+    sent = scoped_query(Message).filter_by(from_user_id=uid).order_by(Message.created_at.desc()).all()
     # Destinataires possibles
     if session.get('role') == 'Directeur':
         contacts = User.query.filter_by(role='Enseignant').order_by(User.full_name).all()
     else:
         contacts = User.query.filter_by(role='Directeur').order_by(User.full_name).all()
-    unread = Message.query.filter_by(to_user_id=uid, is_read=False).count()
+    unread = scoped_query(Message).filter_by(to_user_id=uid, is_read=False).count()
     return render_template('messages.html', inbox=inbox, sent=sent, contacts=contacts, unread=unread)
 
 @app.route('/messages/envoyer', methods=['POST'])
@@ -2586,7 +3013,7 @@ def envoyer_message():
 @app.route('/messages/<int:id>/lu')
 @login_required
 def message_lu(id):
-    msg = Message.query.get_or_404(id)
+    msg = scoped_query(Message).get_or_404(id)
     if msg.to_user_id == session['user_id']:
         msg.is_read = True
         db.session.commit()
@@ -2599,11 +3026,11 @@ def message_lu(id):
 def whatsapp():
     tc = teacher_class_filter()
     if tc:
-        classes = ClassRoom.query.filter_by(id=tc).all()
-        students = Student.query.filter_by(class_id=tc).order_by(Student.last_name).all()
+        classes = scoped_query(ClassRoom).filter_by(id=tc).all()
+        students = scoped_query(Student).filter_by(class_id=tc).order_by(Student.last_name).all()
     else:
-        classes = ClassRoom.query.order_by(ClassRoom.level, ClassRoom.name).all()
-        students = Student.query.order_by(Student.last_name).all()
+        classes = scoped_query(ClassRoom).order_by(ClassRoom.level, ClassRoom.name).all()
+        students = scoped_query(Student).order_by(Student.last_name).all()
     return render_template('whatsapp.html', classes=classes, students=students)
 
 @app.route('/whatsapp/preparer', methods=['POST'])
@@ -2618,7 +3045,7 @@ def whatsapp_preparer():
 
     targets = []
     if mode == 'individual' and student_id:
-        s = Student.query.get(int(student_id))
+        s = scoped_query(Student).get(int(student_id))
         if s and (not tc or s.class_id == tc):
             targets = [s]
     elif mode == 'class' and class_id:
@@ -2626,12 +3053,12 @@ def whatsapp_preparer():
         if tc and tc != cid:
             flash('Accès réservé à votre classe.', 'danger')
             return redirect(url_for('whatsapp'))
-        targets = Student.query.filter_by(class_id=cid).order_by(Student.last_name).all()
+        targets = scoped_query(Student).filter_by(class_id=cid).order_by(Student.last_name).all()
     elif mode == 'school':
-        if session.get('role') != 'Directeur':
+        if session.get('role') not in ('Directeur', 'Createur') and not session.get('is_creator'):
             flash('Seul le directeur peut écrire à toute l\'école.', 'danger')
             return redirect(url_for('whatsapp'))
-        targets = Student.query.order_by(Student.last_name).all()
+        targets = scoped_query(Student).order_by(Student.last_name).all()
     else:
         flash('Sélection invalide.', 'warning')
         return redirect(url_for('whatsapp'))
@@ -2655,22 +3082,22 @@ def whatsapp_preparer():
 @app.route('/sms')
 @login_required
 def sms_notifications():
-    settings = SchoolSettings.query.first()
+    settings = scoped_query(SchoolSettings).first()
     tc = teacher_class_filter()
     if tc:
-        classes = ClassRoom.query.filter_by(id=tc).all()
-        students = Student.query.filter_by(class_id=tc).order_by(Student.last_name).all()
+        classes = scoped_query(ClassRoom).filter_by(id=tc).all()
+        students = scoped_query(Student).filter_by(class_id=tc).order_by(Student.last_name).all()
     else:
-        classes = ClassRoom.query.order_by(ClassRoom.level, ClassRoom.name).all()
-        students = Student.query.order_by(Student.last_name).all()
-    logs = SmsLog.query.order_by(SmsLog.created_at.desc()).limit(50).all()
+        classes = scoped_query(ClassRoom).order_by(ClassRoom.level, ClassRoom.name).all()
+        students = scoped_query(Student).order_by(Student.last_name).all()
+    logs = scoped_query(SmsLog).order_by(SmsLog.created_at.desc()).limit(50).all()
     return render_template('sms.html', classes=classes, students=students,
                            settings=settings, logs=logs)
 
 @app.route('/sms/envoyer', methods=['POST'])
 @login_required
 def sms_envoyer():
-    settings = SchoolSettings.query.first()
+    settings = scoped_query(SchoolSettings).first()
     mode = request.form.get('mode')
     body = request.form.get('message', '').strip()
     student_id = request.form.get('student_id')
@@ -2683,7 +3110,7 @@ def sms_envoyer():
 
     targets = []
     if mode == 'individual' and student_id:
-        s = Student.query.get(int(student_id))
+        s = scoped_query(Student).get(int(student_id))
         if s and (not tc or s.class_id == tc):
             targets = [s]
     elif mode == 'class' and class_id:
@@ -2691,12 +3118,12 @@ def sms_envoyer():
         if tc and tc != cid:
             flash('Accès réservé à votre classe.', 'danger')
             return redirect(url_for('sms_notifications'))
-        targets = Student.query.filter_by(class_id=cid).all()
+        targets = scoped_query(Student).filter_by(class_id=cid).all()
     elif mode == 'school':
         if session.get('role') != 'Directeur':
             flash('Seul le directeur peut écrire à toute l\'école.', 'danger')
             return redirect(url_for('sms_notifications'))
-        targets = Student.query.all()
+        targets = scoped_query(Student).all()
     else:
         flash('Sélection invalide.', 'warning')
         return redirect(url_for('sms_notifications'))
@@ -2758,9 +3185,9 @@ def sms_envoyer():
 def appels():
     tc = teacher_class_filter()
     if tc:
-        rooms = ClassRoom.query.filter_by(id=tc).all()
+        rooms = scoped_query(ClassRoom).filter_by(id=tc).all()
     else:
-        rooms = ClassRoom.query.order_by(ClassRoom.level, ClassRoom.name).all()
+        rooms = scoped_query(ClassRoom).order_by(ClassRoom.level, ClassRoom.name).all()
     class_id = request.args.get('class_id', type=int) or (tc or (rooms[0].id if rooms else None))
     date_str = request.args.get('date', date.today().isoformat())
     try:
@@ -2769,15 +3196,15 @@ def appels():
         selected = date.today()
     hol, hol_label = is_holiday(selected)
     weekend = selected.weekday() >= 5
-    students = Student.query.filter_by(class_id=class_id).order_by(Student.last_name).all() if class_id else []
+    students = scoped_query(Student).filter_by(class_id=class_id).order_by(Student.last_name).all() if class_id else []
     atts = {}
     if class_id:
-        for a in Attendance.query.filter(
+        for a in scoped_query(Attendance).filter(
             Attendance.date == selected,
             Attendance.student_id.in_([s.id for s in students] or [0])
         ).all():
             atts[a.student_id] = a
-    room = ClassRoom.query.get(class_id) if class_id else None
+    room = scoped_query(ClassRoom).get(class_id) if class_id else None
     freq = compute_frequentation(class_id) if class_id else None
     return render_template('appels.html', rooms=rooms, room=room, students=students,
                            selected=selected, atts=atts, is_holiday=hol, holiday_label=hol_label,
@@ -2790,7 +3217,7 @@ def appels_marquer():
     date_str = request.form.get('date')
     status = request.form.get('status', 'Présent')
     selected = datetime.strptime(date_str, '%Y-%m-%d').date()
-    student = Student.query.get_or_404(student_id)
+    student = scoped_query(Student).get_or_404(student_id)
     tc = teacher_class_filter()
     if tc and student.class_id != tc:
         flash('Accès réservé à votre classe.', 'danger')
@@ -2798,7 +3225,7 @@ def appels_marquer():
     if not is_school_day(selected):
         flash("Ce jour n'est pas un jour de classe (week-end ou ferie).", "warning")
         return redirect(url_for('appels', class_id=student.class_id, date=date_str))
-    att = Attendance.query.filter_by(student_id=student_id, date=selected).first()
+    att = scoped_query(Attendance).filter_by(student_id=student_id, date=selected).first()
     if att:
         att.status = status
     else:
@@ -2820,9 +3247,9 @@ def appels_marquer_tous():
     if not is_school_day(selected):
         flash('Jour non ouvrable.', 'warning')
         return redirect(url_for('appels', class_id=class_id, date=date_str))
-    students = Student.query.filter_by(class_id=class_id).all()
+    students = scoped_query(Student).filter_by(class_id=class_id).all()
     for s in students:
-        att = Attendance.query.filter_by(student_id=s.id, date=selected).first()
+        att = scoped_query(Attendance).filter_by(student_id=s.id, date=selected).first()
         if att:
             att.status = status
         else:
@@ -2836,16 +3263,16 @@ def appels_marquer_tous():
 def appels_stats():
     tc = teacher_class_filter()
     if tc:
-        rooms = ClassRoom.query.filter_by(id=tc).all()
+        rooms = scoped_query(ClassRoom).filter_by(id=tc).all()
     else:
-        rooms = ClassRoom.query.order_by(ClassRoom.level).all()
+        rooms = scoped_query(ClassRoom).order_by(ClassRoom.level).all()
     class_id = request.args.get('class_id', type=int) or (tc or (rooms[0].id if rooms else None))
     start_s = request.args.get('start', (date.today().replace(day=1)).isoformat())
     end_s = request.args.get('end', date.today().isoformat())
     start = datetime.strptime(start_s, '%Y-%m-%d').date()
     end = datetime.strptime(end_s, '%Y-%m-%d').date()
     stats = attendance_stats(class_id, start, end) if class_id else None
-    room = ClassRoom.query.get(class_id) if class_id else None
+    room = scoped_query(ClassRoom).get(class_id) if class_id else None
     freq = compute_frequentation(class_id) if class_id else None
     return render_template('appels_stats.html', rooms=rooms, room=room, stats=stats,
                            start=start, end=end, freq=freq)
@@ -2858,7 +3285,7 @@ def appels_recap():
     end_s = request.args.get('end', date.today().isoformat())
     start = datetime.strptime(start_s, '%Y-%m-%d').date()
     end = datetime.strptime(end_s, '%Y-%m-%d').date()
-    rooms = ClassRoom.query.order_by(ClassRoom.level, ClassRoom.name).all()
+    rooms = scoped_query(ClassRoom).order_by(ClassRoom.level, ClassRoom.name).all()
     recap = []
     for r in rooms:
         st = attendance_stats(r.id, start, end)
@@ -2884,9 +3311,9 @@ def appels_pdf():
     if tc and class_id != tc:
         flash('Accès réservé à votre classe.', 'danger')
         return redirect(url_for('appels_stats'))
-    room = ClassRoom.query.get_or_404(class_id)
+    room = scoped_query(ClassRoom).get_or_404(class_id)
     stats = attendance_stats(class_id, start, end)
-    settings = SchoolSettings.query.first()
+    settings = scoped_query(SchoolSettings).first()
 
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=landscape(A4),
@@ -2930,19 +3357,19 @@ def jours_feries():
         label = request.form.get('label', 'Jour férié')
         if d:
             dd = datetime.strptime(d, '%Y-%m-%d').date()
-            if not Holiday.query.filter_by(date=dd).first():
+            if not scoped_query(Holiday).filter_by(date=dd).first():
                 db.session.add(Holiday(date=dd, label=label))
                 db.session.commit()
                 flash('Jour férié ajouté.', 'success')
         return redirect(url_for('jours_feries'))
-    holidays = Holiday.query.order_by(Holiday.date.desc()).all()
+    holidays = scoped_query(Holiday).order_by(Holiday.date.desc()).all()
     return render_template('jours_feries.html', holidays=holidays,
                            fixed=GABON_FIXED_HOLIDAYS)
 
 @app.route('/jours-feries/<int:id>/supprimer')
 @director_required
 def supprimer_ferie(id):
-    h = Holiday.query.get_or_404(id)
+    h = scoped_query(Holiday).get_or_404(id)
     db.session.delete(h)
     db.session.commit()
     flash('Jour férié supprimé.', 'success')
@@ -2955,14 +3382,14 @@ def supprimer_ferie(id):
 def cahier_journal():
     tc = teacher_class_filter()
     if tc:
-        rooms = ClassRoom.query.filter_by(id=tc).all()
+        rooms = scoped_query(ClassRoom).filter_by(id=tc).all()
     else:
-        rooms = ClassRoom.query.order_by(ClassRoom.level).all()
+        rooms = scoped_query(ClassRoom).order_by(ClassRoom.level).all()
     class_id = request.args.get('class_id', type=int) or (tc or (rooms[0].id if rooms else None))
-    room = ClassRoom.query.get(class_id) if class_id else None
+    room = scoped_query(ClassRoom).get(class_id) if class_id else None
     entries = []
     if class_id:
-        entries = ClassJournal.query.filter_by(class_id=class_id).order_by(
+        entries = scoped_query(ClassJournal).filter_by(class_id=class_id).order_by(
             ClassJournal.date.desc(), ClassJournal.id.desc()).limit(60).all()
     return render_template('cahier_journal.html', rooms=rooms, room=room, entries=entries, today=date.today().isoformat())
 
@@ -2991,7 +3418,7 @@ def cahier_ajouter():
 @app.route('/cahier-journal/<int:id>/supprimer')
 @login_required
 def cahier_supprimer(id):
-    entry = ClassJournal.query.get_or_404(id)
+    entry = scoped_query(ClassJournal).get_or_404(id)
     tc = teacher_class_filter()
     if tc and entry.class_id != tc:
         flash('Accès refusé.', 'danger')
@@ -3017,8 +3444,8 @@ def cahier_pdf():
     if tc and class_id != tc:
         flash('Accès réservé à votre classe.', 'danger')
         return redirect(url_for('cahier_journal'))
-    room = ClassRoom.query.get_or_404(class_id)
-    entries = ClassJournal.query.filter_by(class_id=class_id).order_by(ClassJournal.date.desc()).limit(40).all()
+    room = scoped_query(ClassRoom).get_or_404(class_id)
+    entries = scoped_query(ClassJournal).filter_by(class_id=class_id).order_by(ClassJournal.date.desc()).limit(40).all()
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=A4, leftMargin=1.2*cm, rightMargin=1.2*cm,
                             topMargin=1*cm, bottomMargin=1*cm)
@@ -3055,8 +3482,8 @@ def classe_pdf():
     if tc and class_id != tc:
         flash('Accès réservé à votre classe.', 'danger')
         return redirect(url_for('listes'))
-    room = ClassRoom.query.get_or_404(class_id)
-    students = Student.query.filter_by(class_id=class_id).order_by(Student.last_name).all()
+    room = scoped_query(ClassRoom).get_or_404(class_id)
+    students = scoped_query(Student).filter_by(class_id=class_id).order_by(Student.last_name).all()
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=A4, leftMargin=1.5*cm, rightMargin=1.5*cm)
     styles = getSampleStyleSheet()
@@ -3092,7 +3519,7 @@ def test_smtp():
     if session.get('role') != 'Directeur':
         flash('Accès réservé au directeur.', 'danger')
         return redirect(url_for('dashboard'))
-    settings = SchoolSettings.query.first()
+    settings = scoped_query(SchoolSettings).first()
     to = request.form.get('test_email') or (settings.email if settings else '') or session.get('username', '')
     user = User.query.get(session.get('user_id'))
     if user and user.email:
@@ -3114,15 +3541,15 @@ PEDAGO_SUBJECTS = ['Français', 'Mathématiques', 'Éveil']
 @app.route('/fiches-pedagogiques')
 @login_required
 def fiches_pedagogiques():
-    rooms = ClassRoom.query.order_by(ClassRoom.level, ClassRoom.name).all()
+    rooms = scoped_query(ClassRoom).order_by(ClassRoom.level, ClassRoom.name).all()
     if session.get('role') == 'Enseignant':
         u = User.query.get(session.get('user_id'))
         if u and u.class_id:
             rooms = [r for r in rooms if r.id == u.class_id]
     class_id = request.args.get('class_id', type=int)
     subject = request.args.get('subject', '')
-    selected = ClassRoom.query.get(class_id) if class_id else (rooms[0] if rooms else None)
-    q = PedagogicalSheet.query
+    selected = scoped_query(ClassRoom).get(class_id) if class_id else (rooms[0] if rooms else None)
+    q = scoped_query(PedagogicalSheet)
     if selected:
         q = q.filter_by(class_id=selected.id)
     if subject:
@@ -3136,8 +3563,8 @@ def fiches_pedagogiques():
 @login_required
 def fiche_pedagogique_form(id=None):
     import json
-    sheet = PedagogicalSheet.query.get(id) if id else None
-    rooms = ClassRoom.query.order_by(ClassRoom.level, ClassRoom.name).all()
+    sheet = scoped_query(PedagogicalSheet).get(id) if id else None
+    rooms = scoped_query(ClassRoom).order_by(ClassRoom.level, ClassRoom.name).all()
     if session.get('role') == 'Enseignant':
         u = User.query.get(session.get('user_id'))
         if u and u.class_id:
@@ -3202,7 +3629,7 @@ def fiche_pedagogique_form(id=None):
 @app.route('/fiches-pedagogiques/<int:id>')
 @login_required
 def fiche_pedagogique_detail(id):
-    sheet = PedagogicalSheet.query.get_or_404(id)
+    sheet = scoped_query(PedagogicalSheet).get_or_404(id)
     if session.get('role') == 'Enseignant':
         u = User.query.get(session.get('user_id'))
         if not u or u.class_id != sheet.class_id:
@@ -3213,7 +3640,7 @@ def fiche_pedagogique_detail(id):
 @app.route('/fiches-pedagogiques/<int:id>/supprimer', methods=['POST'])
 @login_required
 def fiche_pedagogique_delete(id):
-    sheet = PedagogicalSheet.query.get_or_404(id)
+    sheet = scoped_query(PedagogicalSheet).get_or_404(id)
     if session.get('role') == 'Enseignant':
         u = User.query.get(session.get('user_id'))
         if not u or u.class_id != sheet.class_id:
@@ -3235,13 +3662,13 @@ def fiche_pedagogique_pdf(id):
     from reportlab.lib.units import cm, mm
     from reportlab.lib.enums import TA_CENTER, TA_LEFT
 
-    sheet = PedagogicalSheet.query.get_or_404(id)
+    sheet = scoped_query(PedagogicalSheet).get_or_404(id)
     if session.get('role') == 'Enseignant':
         u = User.query.get(session.get('user_id'))
         if not u or u.class_id != sheet.class_id:
             flash('Accès refusé.', 'danger')
             return redirect(url_for('fiches_pedagogiques'))
-    settings = SchoolSettings.query.first()
+    settings = scoped_query(SchoolSettings).first()
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=A4,
                             leftMargin=1.5*cm, rightMargin=1.5*cm,
@@ -3392,7 +3819,7 @@ def _build_timetable_rows(slots, days=None):
 @app.route('/emploi-du-temps')
 @login_required
 def emploi_du_temps():
-    rooms = ClassRoom.query.order_by(ClassRoom.level, ClassRoom.name).all()
+    rooms = scoped_query(ClassRoom).order_by(ClassRoom.level, ClassRoom.name).all()
     if session.get('role') == 'Enseignant':
         u = User.query.get(session.get('user_id'))
         if u and u.class_id:
@@ -3402,7 +3829,7 @@ def emploi_du_temps():
     slots = []
     rows = []
     if class_id:
-        selected = ClassRoom.query.get(class_id)
+        selected = scoped_query(ClassRoom).get(class_id)
     elif rooms:
         selected = rooms[0]
         class_id = selected.id
@@ -3412,10 +3839,10 @@ def emploi_du_temps():
             if u and u.class_id and selected.id != u.class_id:
                 flash('Accès réservé à votre classe.', 'danger')
                 return redirect(url_for('emploi_du_temps'))
-        slots = ScheduleSlot.query.filter_by(class_id=selected.id).order_by(
+        slots = scoped_query(ScheduleSlot).filter_by(class_id=selected.id).order_by(
             ScheduleSlot.start_time, ScheduleSlot.day).all()
         rows = _build_timetable_rows(slots)
-    settings = SchoolSettings.query.first()
+    settings = scoped_query(SchoolSettings).first()
     logos = _public_logo_urls(settings)
     return render_template(
         'emploi_du_temps.html',
@@ -3500,7 +3927,7 @@ def ajouter_creneau():
 @app.route('/emploi-du-temps/<int:id>/modifier', methods=['POST'])
 @login_required
 def modifier_creneau(id):
-    slot = ScheduleSlot.query.get_or_404(id)
+    slot = scoped_query(ScheduleSlot).get_or_404(id)
     if session.get('role') == 'Enseignant':
         u = User.query.get(session.get('user_id'))
         if not u or u.class_id != slot.class_id:
@@ -3522,7 +3949,7 @@ def modifier_creneau(id):
 @app.route('/emploi-du-temps/<int:id>/supprimer', methods=['POST', 'GET'])
 @login_required
 def supprimer_creneau(id):
-    slot = ScheduleSlot.query.get_or_404(id)
+    slot = scoped_query(ScheduleSlot).get_or_404(id)
     cid = slot.class_id
     if session.get('role') == 'Enseignant':
         u = User.query.get(session.get('user_id'))
@@ -3542,7 +3969,7 @@ def vider_emploi(class_id):
         if not u or u.class_id != class_id:
             flash('Accès refusé.', 'danger')
             return redirect(url_for('emploi_du_temps'))
-    ScheduleSlot.query.filter_by(class_id=class_id).delete()
+    scoped_query(ScheduleSlot).filter_by(class_id=class_id).delete()
     db.session.commit()
     flash('Emploi du temps vidé.', 'success')
     return redirect(url_for('emploi_du_temps', class_id=class_id))
@@ -3554,7 +3981,7 @@ def upload_logos():
     if session.get('role') != 'Directeur':
         flash('Accès réservé au directeur.', 'danger')
         return redirect(url_for('dashboard'))
-    settings = SchoolSettings.query.first()
+    settings = scoped_query(SchoolSettings).first()
     if not settings:
         settings = SchoolSettings()
         db.session.add(settings)
@@ -3629,14 +4056,14 @@ def emploi_pdf(class_id):
     from reportlab.lib.units import cm, mm
     from reportlab.lib.enums import TA_CENTER
 
-    room = ClassRoom.query.get_or_404(class_id)
+    room = scoped_query(ClassRoom).get_or_404(class_id)
     if session.get('role') == 'Enseignant':
         u = User.query.get(session.get('user_id'))
         if not u or u.class_id != class_id:
             flash('Accès refusé.', 'danger')
             return redirect(url_for('emploi_du_temps'))
-    settings = SchoolSettings.query.first()
-    slots = ScheduleSlot.query.filter_by(class_id=class_id).all()
+    settings = scoped_query(SchoolSettings).first()
+    slots = scoped_query(ScheduleSlot).filter_by(class_id=class_id).all()
     rows_data = _build_timetable_rows(slots)
 
     buffer = io.BytesIO()
@@ -3795,6 +4222,8 @@ def _load_dictionary():
         for item in data:
             if isinstance(item, (list, tuple)) and len(item) >= 2:
                 out.append((str(item[0]), str(item[1])))
+            elif isinstance(item, dict) and item.get('fr') and item.get('en'):
+                out.append((str(item['fr']), str(item['en'])))
         if out:
             return out
     except Exception:
@@ -3827,6 +4256,42 @@ def _load_ipunu_lecons():
 
 IPUNU_DICT = _load_ipunu_dict()
 IPUNU_LECONS = _load_ipunu_lecons()
+
+def _load_ipunu_pron():
+    import json
+    p = os.path.join(_BASE_DIR, 'data', 'prononciation_ipunu.json')
+    try:
+        with open(p, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+IPUNU_PRON = _load_ipunu_pron()
+
+def _load_json_data(name):
+    import json
+    p = os.path.join(_BASE_DIR, 'data', name)
+    try:
+        with open(p, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except Exception:
+        return {} if name.startswith('cours') else []
+
+IPUNU_COURS = _load_json_data('cours_ipunu.json')
+IPUNU_EXERCICES = _load_json_data('exercices_ipunu.json') or []
+IPUNU_EVALS = _load_json_data('evaluations_ipunu.json') or []
+
+def _load_banque_activites():
+    import json
+    p = os.path.join(_BASE_DIR, 'data', 'banque_activites.json')
+    try:
+        with open(p, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except Exception:
+        return []
+
+BANQUE_ACTIVITES = _load_banque_activites()
+
 
 def _load_hebreu_dict():
     import json
@@ -4473,7 +4938,7 @@ for niv, data in PROGRAMMES_OFFICIELS.items():
 def seed_song_bank():
     """Remplit la banque à partir de COMPTINES si vide."""
     try:
-        if SongBank.query.count() > 0:
+        if scoped_query(SongBank).count() > 0:
             return
         for c in COMPTINES:
             db.session.add(SongBank(
@@ -4781,7 +5246,7 @@ def comptines():
     items = []
     try:
         seed_song_bank()
-        query = SongBank.query
+        query = scoped_query(SongBank)
         if niveau:
             query = query.filter_by(niveau=niveau)
         if type_f:
@@ -4850,7 +5315,7 @@ def comptines_supprimer(id):
     if session.get('role') != 'Directeur':
         flash('Réservé au directeur.', 'danger')
         return redirect(url_for('comptines'))
-    s = SongBank.query.get_or_404(id)
+    s = scoped_query(SongBank).get_or_404(id)
     db.session.delete(s)
     db.session.commit()
     flash('Supprimé de la banque.', 'success')
@@ -4863,7 +5328,7 @@ def comptines_recharger():
     if session.get('role') != 'Directeur':
         flash('Réservé au directeur.', 'danger')
         return redirect(url_for('comptines'))
-    existing = {(x.titre, x.niveau) for x in SongBank.query.all()}
+    existing = {(x.titre, x.niveau) for x in scoped_query(SongBank).all()}
     n = 0
     for c in COMPTINES:
         key = (c.get('titre'), c.get('niveau'))
@@ -4906,6 +5371,7 @@ def ipunu():
         n_mots=len(IPUNU_DICT),
         n_lecons=len(IPUNU_LECONS),
         has_pdf=os.path.isfile(os.path.join(app.root_path, 'static', 'programmes', 'langue-ipunu.pdf')),
+        has_pron=bool(IPUNU_PRON),
     )
 
 @app.route('/ipunu/dictionnaire')
@@ -4929,6 +5395,73 @@ def ipunu_dictionnaire():
         'ipunu_dictionnaire.html', items=chunk, q=q, cat=cat, cats=cats,
         total=len(IPUNU_DICT), total_r=total_r, page=page, pages=pages,
     )
+
+
+
+@app.route('/ipunu/cours')
+@login_required
+def ipunu_cours():
+    return render_template('ipunu_cours.html', cours=IPUNU_COURS or {})
+
+@app.route('/ipunu/conjugaisons')
+@login_required
+def ipunu_conjugaisons():
+    c = IPUNU_COURS or {}
+    return render_template('ipunu_conjugaisons.html', conjugaisons=c.get('conjugaisons', []), pronoms=c.get('pronoms', {}))
+
+@app.route('/ipunu/alphabet')
+@login_required
+def ipunu_alphabet():
+    c = IPUNU_COURS or {}
+    return render_template('ipunu_alphabet.html', alphabet=c.get('alphabet', {}), orthographe=c.get('orthographe', []))
+
+@app.route('/ipunu/exercices')
+@login_required
+def ipunu_exercices():
+    return render_template('ipunu_exercices.html', exercices=IPUNU_EXERCICES)
+
+@app.route('/ipunu/exercices/<int:eid>')
+@login_required
+def ipunu_exercice_detail(eid):
+    ex = next((e for e in IPUNU_EXERCICES if e.get('id') == eid), None)
+    if not ex:
+        flash('Exercice introuvable.', 'danger')
+        return redirect(url_for('ipunu_exercices'))
+    return render_template('ipunu_exercice_detail.html', ex=ex, exercices=IPUNU_EXERCICES)
+
+@app.route('/ipunu/evaluations')
+@login_required
+def ipunu_evaluations():
+    return render_template('ipunu_evaluations.html', evaluations=IPUNU_EVALS)
+
+@app.route('/ipunu/evaluations/<int:eid>', methods=['GET', 'POST'])
+@login_required
+def ipunu_evaluation_detail(eid):
+    ev = next((e for e in IPUNU_EVALS if e.get('id') == eid), None)
+    if not ev:
+        flash('Évaluation introuvable.', 'danger')
+        return redirect(url_for('ipunu_evaluations'))
+    result = None
+    if request.method == 'POST':
+        score = 0
+        total = len(ev.get('questions', []))
+        details = []
+        for i, q in enumerate(ev.get('questions', [])):
+            try:
+                ans = int(request.form.get(f'q{i}', -1))
+            except ValueError:
+                ans = -1
+            ok = ans == q.get('a')
+            if ok:
+                score += 1
+            details.append({'q': q['q'], 'ok': ok, 'correct': q['choices'][q['a']], 'yours': q['choices'][ans] if 0 <= ans < len(q['choices']) else '—'})
+        result = {'score': score, 'total': total, 'pct': round(100 * score / total) if total else 0, 'details': details}
+    return render_template('ipunu_evaluation_detail.html', ev=ev, result=result)
+
+@app.route('/ipunu/prononciation')
+@login_required
+def ipunu_prononciation():
+    return render_template('ipunu_prononciation.html', pron=IPUNU_PRON or {})
 
 @app.route('/ipunu/lecons')
 @login_required
@@ -5017,7 +5550,7 @@ def hebreu_pdf():
 @app.route('/calendrier-scolaire')
 @login_required
 def calendrier_scolaire():
-    holidays = Holiday.query.order_by(Holiday.date).all()
+    holidays = scoped_query(Holiday).order_by(Holiday.date).all()
     return render_template('calendrier_scolaire.html',
                            calendrier=CALENDRIER_SCOLAIRE_GABON,
                            holidays=holidays)
@@ -5030,7 +5563,7 @@ def espace_parents():
     if request.method == 'POST':
         mat = (request.form.get('matricule') or '').strip()
         pin = (request.form.get('pin') or '').strip()
-        student = Student.query.filter_by(matricule=mat).first()
+        student = scoped_query(Student).filter_by(matricule=mat).first()
         if not student:
             error = 'Matricule introuvable.'
             student = None
@@ -5053,9 +5586,9 @@ def export_eleves_xlsx():
         return redirect(url_for('eleves'))
     if session.get('role') == 'Enseignant':
         u = User.query.get(session.get('user_id'))
-        students = Student.query.filter_by(class_id=u.class_id).order_by(Student.last_name).all() if u else []
+        students = scoped_query(Student).filter_by(class_id=u.class_id).order_by(Student.last_name).all() if u else []
     else:
-        students = Student.query.order_by(Student.last_name).all()
+        students = scoped_query(Student).order_by(Student.last_name).all()
     wb = Workbook()
     ws = wb.active
     ws.title = 'Élèves'
@@ -5097,8 +5630,8 @@ def export_classes_xlsx():
     for cell in ws[1]:
         cell.font = Font(bold=True, color='FFFFFF')
         cell.fill = PatternFill('solid', fgColor='C026D3')
-    for r in ClassRoom.query.order_by(ClassRoom.level, ClassRoom.name).all():
-        n = Student.query.filter_by(class_id=r.id).count()
+    for r in scoped_query(ClassRoom).order_by(ClassRoom.level, ClassRoom.name).all():
+        n = scoped_query(Student).filter_by(class_id=r.id).count()
         ws.append([r.name, r.level, r.teacher or '', n])
     buf = io.BytesIO()
     wb.save(buf)
@@ -5113,13 +5646,13 @@ def export_classes_xlsx():
 @app.route('/fiches-rituels')
 @login_required
 def fiches_rituels():
-    rooms = ClassRoom.query.order_by(ClassRoom.level, ClassRoom.name).all()
+    rooms = scoped_query(ClassRoom).order_by(ClassRoom.level, ClassRoom.name).all()
     if session.get('role') == 'Enseignant':
         u = User.query.get(session.get('user_id'))
         if u and u.class_id:
             rooms = [r for r in rooms if r.id == u.class_id]
     class_id = request.args.get('class_id', type=int)
-    q = RitualSheet.query.order_by(RitualSheet.date.desc(), RitualSheet.created_at.desc())
+    q = scoped_query(RitualSheet).order_by(RitualSheet.date.desc(), RitualSheet.created_at.desc())
     if class_id:
         q = q.filter_by(class_id=class_id)
     elif session.get('role') == 'Enseignant':
@@ -5134,8 +5667,8 @@ def fiches_rituels():
 @login_required
 def fiche_rituel_form(id=None):
     import json
-    sheet = RitualSheet.query.get(id) if id else None
-    rooms = ClassRoom.query.order_by(ClassRoom.level, ClassRoom.name).all()
+    sheet = scoped_query(RitualSheet).get(id) if id else None
+    rooms = scoped_query(ClassRoom).order_by(ClassRoom.level, ClassRoom.name).all()
     if session.get('role') == 'Enseignant':
         u = User.query.get(session.get('user_id'))
         if u and u.class_id:
@@ -5201,8 +5734,8 @@ def fiche_rituel_pdf(id):
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     from reportlab.lib.units import cm, mm
     from reportlab.lib.enums import TA_CENTER, TA_LEFT
-    sheet = RitualSheet.query.get_or_404(id)
-    settings = SchoolSettings.query.first()
+    sheet = scoped_query(RitualSheet).get_or_404(id)
+    settings = scoped_query(SchoolSettings).first()
     items = sheet.items()
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=A4, leftMargin=1.4*cm, rightMargin=1.4*cm,
@@ -5297,13 +5830,13 @@ def fiche_rituel_pdf(id):
 @app.route('/fiches-preparation')
 @login_required
 def fiches_preparation():
-    rooms = ClassRoom.query.order_by(ClassRoom.level, ClassRoom.name).all()
+    rooms = scoped_query(ClassRoom).order_by(ClassRoom.level, ClassRoom.name).all()
     if session.get('role') == 'Enseignant':
         u = User.query.get(session.get('user_id'))
         if u and u.class_id:
             rooms = [r for r in rooms if r.id == u.class_id]
     class_id = request.args.get('class_id', type=int)
-    q = PrepSheet.query.order_by(PrepSheet.created_at.desc())
+    q = scoped_query(PrepSheet).order_by(PrepSheet.created_at.desc())
     if class_id:
         q = q.filter_by(class_id=class_id)
     elif session.get('role') == 'Enseignant':
@@ -5318,8 +5851,8 @@ def fiches_preparation():
 @login_required
 def fiche_preparation_form(id=None):
     import json
-    sheet = PrepSheet.query.get(id) if id else None
-    rooms = ClassRoom.query.order_by(ClassRoom.level, ClassRoom.name).all()
+    sheet = scoped_query(PrepSheet).get(id) if id else None
+    rooms = scoped_query(ClassRoom).order_by(ClassRoom.level, ClassRoom.name).all()
     if session.get('role') == 'Enseignant':
         u = User.query.get(session.get('user_id'))
         if u and u.class_id:
@@ -5386,8 +5919,8 @@ def fiche_preparation_pdf(id):
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     from reportlab.lib.units import cm, mm
     from reportlab.lib.enums import TA_CENTER, TA_LEFT
-    sheet = PrepSheet.query.get_or_404(id)
-    settings = SchoolSettings.query.first()
+    sheet = scoped_query(PrepSheet).get_or_404(id)
+    settings = scoped_query(SchoolSettings).first()
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=A4, leftMargin=1.2*cm, rightMargin=1.2*cm,
                             topMargin=1*cm, bottomMargin=1*cm)
@@ -5533,18 +6066,18 @@ def backup_json():
         'classes': [],
         'students': [],
     }
-    s = SchoolSettings.query.first()
+    s = scoped_query(SchoolSettings).first()
     if s:
         data['settings'] = {
             'school_name': s.school_name, 'address': s.address, 'phone': s.phone,
             'email': s.email, 'province': s.province, 'circonscription': s.circonscription,
             'director_name': s.director_name, 'annee_scolaire': s.annee_scolaire,
         }
-    for c in ClassRoom.query.all():
+    for c in scoped_query(ClassRoom).all():
         data['classes'].append({
             'id': c.id, 'name': c.name, 'level': c.level, 'teacher': c.teacher or '',
         })
-    for st in Student.query.all():
+    for st in scoped_query(Student).all():
         data['students'].append({
             'matricule': st.matricule, 'last_name': st.last_name, 'first_name': st.first_name,
             'birth_date': st.birth_date.isoformat() if st.birth_date else None,
@@ -5580,7 +6113,7 @@ def restore_json():
         # Classes
         class_map = {}  # name -> id
         for c in data.get('classes') or []:
-            room = ClassRoom.query.filter_by(name=c.get('name')).first()
+            room = scoped_query(ClassRoom).filter_by(name=c.get('name')).first()
             if not room:
                 room = ClassRoom(name=c.get('name') or 'Classe', level=c.get('level') or '',
                                  teacher=c.get('teacher') or '')
@@ -5594,7 +6127,7 @@ def restore_json():
         n_new = n_upd = 0
         for st in data.get('students') or []:
             mat = (st.get('matricule') or '').strip()
-            student = Student.query.filter_by(matricule=mat).first() if mat else None
+            student = scoped_query(Student).filter_by(matricule=mat).first() if mat else None
             if not student:
                 student = Student(matricule=mat or None)
                 db.session.add(student)
@@ -5622,13 +6155,13 @@ def restore_json():
             if cn and cn in class_map:
                 student.class_id = class_map[cn]
             elif cn:
-                room = ClassRoom.query.filter_by(name=cn).first()
+                room = scoped_query(ClassRoom).filter_by(name=cn).first()
                 if room:
                     student.class_id = room.id
         # Settings
         sett = data.get('settings') or {}
         if sett:
-            s = SchoolSettings.query.first()
+            s = scoped_query(SchoolSettings).first()
             if not s:
                 s = SchoolSettings()
                 db.session.add(s)
@@ -5652,7 +6185,7 @@ def eleves_pdf():
     q = request.args.get('q', '')
     class_filter = request.args.get('class_id', '')
     level_filter = request.args.get('level', '')
-    query = Student.query
+    query = scoped_query(Student)
     tc = teacher_class_filter()
     if tc:
         query = query.filter_by(class_id=tc)
@@ -5668,7 +6201,7 @@ def eleves_pdf():
     if level_filter and not tc:
         query = query.join(ClassRoom).filter(ClassRoom.level == level_filter)
     students = query.order_by(Student.last_name).all()
-    settings = SchoolSettings.query.first()
+    settings = scoped_query(SchoolSettings).first()
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=landscape(A4),
                             leftMargin=1*cm, rightMargin=1*cm, topMargin=1*cm, bottomMargin=1*cm)
@@ -5778,7 +6311,7 @@ def mot_de_passe_oublie():
         code = ''.join(random.choices(string.digits, k=6))
         user.reset_code = code
         db.session.commit()
-        settings = SchoolSettings.query.first()
+        settings = scoped_query(SchoolSettings).first()
         if user.email and settings and getattr(settings, 'smtp_enabled', False):
             ok, msg = send_email(
                 user.email,
@@ -5835,7 +6368,7 @@ def reset_mdp_enseignant(id):
 @app.route('/actualites')
 @login_required
 def actualites():
-    items = Publication.query.order_by(Publication.created_at.desc()).all()
+    items = scoped_query(Publication).order_by(Publication.created_at.desc()).all()
     return render_template('actualites.html', items=items)
 
 @app.route('/actualites/ajouter', methods=['GET', 'POST'])
@@ -5871,7 +6404,7 @@ def actualite_ajouter():
 @app.route('/actualites/<int:id>/supprimer')
 @director_required
 def actualite_supprimer(id):
-    pub = Publication.query.get_or_404(id)
+    pub = scoped_query(Publication).get_or_404(id)
     db.session.delete(pub)
     db.session.commit()
     flash('Publication supprimée.', 'success')
@@ -5891,10 +6424,10 @@ def statistiques():
         class_id = request.args.get('class_id', type=int)
         if tc:
             class_id = tc
-            rooms = ClassRoom.query.filter_by(id=tc).all()
+            rooms = scoped_query(ClassRoom).filter_by(id=tc).all()
         else:
-            rooms = ClassRoom.query.order_by(ClassRoom.level).all()
-        room = ClassRoom.query.get(class_id) if class_id else None
+            rooms = scoped_query(ClassRoom).order_by(ClassRoom.level).all()
+        room = scoped_query(ClassRoom).get(class_id) if class_id else None
         stats = compute_class_stats(class_id)
         return render_template('statistiques.html', stats=stats, rooms=rooms, room=room, class_id=class_id)
     except Exception as e:
@@ -5915,9 +6448,9 @@ def statistiques_pdf():
     class_id = request.args.get('class_id', type=int)
     if tc:
         class_id = tc
-    room = ClassRoom.query.get(class_id) if class_id else None
+    room = scoped_query(ClassRoom).get(class_id) if class_id else None
     stats = compute_class_stats(class_id)
-    settings = SchoolSettings.query.first()
+    settings = scoped_query(SchoolSettings).first()
     scope = room.name if room else 'École entière'
 
     buffer = io.BytesIO()
@@ -6053,13 +6586,13 @@ def manuels():
             db.session.commit()
             flash('Manuel ajouté.', 'success')
         return redirect(url_for('manuels'))
-    books = Textbook.query.order_by(Textbook.discipline).all()
+    books = scoped_query(Textbook).order_by(Textbook.discipline).all()
     return render_template('manuels.html', books=books)
 
 @app.route('/manuels/<int:id>/supprimer')
 @director_required
 def manuels_supprimer(id):
-    b = Textbook.query.get_or_404(id)
+    b = scoped_query(Textbook).get_or_404(id)
     db.session.delete(b)
     db.session.commit()
     flash('Manuel supprimé.', 'success')
@@ -6086,7 +6619,7 @@ def init_db():
         elif os.environ.get('RESET_ADMIN', '1') == '1':
             admin.password_hash = generate_password_hash(force_pwd)
             admin.role = 'Directeur'
-        if not SchoolSettings.query.first():
+        if not scoped_query(SchoolSettings).first():
             db.session.add(SchoolSettings(
                 school_name='École Publique Primaire',
                 province='Estuaire',
@@ -6094,14 +6627,14 @@ def init_db():
                 director_name='M./Mme le Directeur',
                 annee_scolaire='2025-2026'
             ))
-        if ClassRoom.query.count() == 0:
+        if scoped_query(ClassRoom).count() == 0:
             for n in NIVEAUX:
                 db.session.add(ClassRoom(name=f"{n} A", level=n, teacher=''))
                 db.session.add(ClassRoom(name=f"{n} B", level=n, teacher=''))
         db.session.commit()
-        if Student.query.count() == 0:
-            c3 = ClassRoom.query.filter_by(level='3ème année').first()
-            c5 = ClassRoom.query.filter_by(level='5ème année').first()
+        if scoped_query(Student).count() == 0:
+            c3 = scoped_query(ClassRoom).filter_by(level='3ème année').first()
+            c5 = scoped_query(ClassRoom).filter_by(level='5ème année').first()
             demos = [
                 ('MBINA', 'Jean-Pierre', '2016-03-15', 'Libreville', 'M', c3, 'Nouveau'),
                 ('NZENGUE', 'Aisha', '2016-07-22', 'Port-Gentil', 'F', c3, 'Nouveau'),
@@ -6126,6 +6659,186 @@ try:
     init_db()
 except Exception as _e:
     print('startup init_db:', _e)
+
+
+# ========== ACCES CREATEUR (routes de secours) ==========
+@app.route('/createur/', methods=['GET', 'POST', 'HEAD', 'OPTIONS'])
+@app.route('/panneau-createur', methods=['GET', 'POST', 'HEAD', 'OPTIONS'])
+@app.route('/panneau-createur/', methods=['GET', 'POST', 'HEAD', 'OPTIONS'])
+def createur_panel_alias():
+    """Alias du panneau créateur (évite les 405 selon les navigateurs)."""
+    if 'user_id' not in session:
+        flash('Veuillez vous connecter avec le compte createur.', 'warning')
+        return redirect(url_for('login'))
+    creator_name = os.environ.get('CREATOR_USERNAME', 'createur')
+    is_c = bool(
+        session.get('is_creator')
+        or session.get('role') == 'Createur'
+        or (session.get('username') or '').lower() == creator_name.lower()
+    )
+    if not is_c:
+        flash('Accès réservé au créateur (identifiant : createur).', 'danger')
+        return redirect(url_for('dashboard'))
+    session['is_creator'] = True
+    try:
+        tenants = Tenant.query.order_by(Tenant.created_at.desc()).all()
+    except Exception:
+        tenants = []
+    try:
+        users = User.query.filter((User.is_creator == False) | (User.is_creator.is_(None))).order_by(User.username).all()
+    except Exception:
+        users = User.query.all()
+    by_tenant = {}
+    for u in users:
+        by_tenant.setdefault(getattr(u, 'tenant_id', None), []).append(u)
+# --- Tableau de bord créateur (stats dynamiques) ---
+    stats = {
+        'nb_ecoles': len(tenants),
+        'nb_users': len(users),
+        'nb_directeurs': sum(1 for u in users if (u.role or '') == 'Directeur'),
+        'nb_enseignants': sum(1 for u in users if (u.role or '') == 'Enseignant'),
+        'nb_eleves_total': 0,
+        'nb_classes_total': 0,
+        'par_ecole': [],
+    }
+    try:
+        stats['nb_eleves_total'] = Student.query.count()
+        stats['nb_classes_total'] = ClassRoom.query.count()
+    except Exception:
+        pass
+    for t in tenants:
+        try:
+            n_el = Student.query.filter_by(tenant_id=t.id).count()
+            n_cl = ClassRoom.query.filter_by(tenant_id=t.id).count()
+            n_us = len(by_tenant.get(t.id, []))
+        except Exception:
+            n_el = n_cl = n_us = 0
+        stats['par_ecole'].append({
+            'id': t.id,
+            'nom': t.school_name,
+            'province': t.province or '',
+            'eleves': n_el,
+            'classes': n_cl,
+            'users': n_us,
+        })
+    total_el = stats['nb_eleves_total'] or 1
+    for pe in stats['par_ecole']:
+        pe['pct_eleves'] = round(100.0 * pe['eleves'] / total_el, 1) if stats['nb_eleves_total'] else 0
+    if stats['nb_users']:
+        stats['pct_directeurs'] = round(100.0 * stats['nb_directeurs'] / stats['nb_users'], 1)
+        stats['pct_enseignants'] = round(100.0 * stats['nb_enseignants'] / stats['nb_users'], 1)
+    else:
+        stats['pct_directeurs'] = stats['pct_enseignants'] = 0
+    return render_template('createur_panel.html', tenants=tenants, by_tenant=by_tenant, users=users, stats=stats)
+
+
+@app.route('/createur', methods=['GET', 'POST', 'HEAD', 'OPTIONS'])
+def createur_panel_safe():
+    return createur_panel_alias()
+
+
+
+
+@app.route('/panneau-createur/nouvelle-ecole', methods=['GET', 'POST'])
+@app.route('/createur/nouvelle-ecole', methods=['GET', 'POST'])
+def createur_nouvelle_ecole():
+    """Le créateur inscrit une école et son directeur (base vide)."""
+    creator_name = os.environ.get('CREATOR_USERNAME', 'createur')
+    if 'user_id' not in session:
+        flash('Connexion requise.', 'warning')
+        return redirect(url_for('login'))
+    is_c = bool(session.get('is_creator') or session.get('role') == 'Createur'
+                or (session.get('username') or '').lower() == creator_name.lower())
+    if not is_c:
+        flash('Réservé au créateur.', 'danger')
+        return redirect(url_for('dashboard'))
+    if request.method == 'POST':
+        school_name = (request.form.get('school_name') or '').strip()
+        full_name = (request.form.get('full_name') or '').strip()
+        username = (request.form.get('username') or '').strip().lower()
+        password = request.form.get('password') or ''
+        email = (request.form.get('email') or '').strip()
+        phone = (request.form.get('phone') or '').strip()
+        province = (request.form.get('province') or '').strip()
+        role = (request.form.get('role') or 'Directeur').strip()
+        if not school_name or not full_name or not username or not password:
+            flash('Champs obligatoires manquants.', 'danger')
+            return redirect(url_for('createur_nouvelle_ecole'))
+        if len(password) < 6:
+            flash('Mot de passe : 6 caractères minimum.', 'danger')
+            return redirect(url_for('createur_nouvelle_ecole'))
+        if User.query.filter_by(username=username).first():
+            flash('Identifiant déjà utilisé.', 'danger')
+            return redirect(url_for('createur_nouvelle_ecole'))
+        if username in ('createur', 'admin') or username == creator_name.lower():
+            flash('Identifiant réservé.', 'danger')
+            return redirect(url_for('createur_nouvelle_ecole'))
+        tenant = Tenant(school_name=school_name, contact_email=email, contact_phone=phone, province=province, is_active=True)
+        db.session.add(tenant)
+        db.session.flush()
+        user = User(
+            username=username,
+            password_hash=generate_password_hash(password),
+            password_plain=password,
+            full_name=full_name,
+            email=email,
+            role=role if role in ('Directeur', 'Enseignant') else 'Directeur',
+            is_creator=False,
+            tenant_id=tenant.id,
+        )
+        db.session.add(user)
+        db.session.add(SchoolSettings(
+            school_name=school_name, annee_scolaire='2025-2026',
+            director_name=full_name if role == 'Directeur' else '',
+            phone=phone, email=email, province=province, tenant_id=tenant.id,
+        ))
+        db.session.commit()
+        flash(f'École « {school_name} » créée. Identifiant : {username} — base vide prête.', 'success')
+        return redirect(url_for('createur_panel_alias'))
+    return render_template('createur_nouvelle_ecole.html')
+
+
+@app.route('/panneau-createur/utilisateur', methods=['GET', 'POST'])
+def createur_ajout_utilisateur():
+    """Ajouter un utilisateur (directeur ou enseignant) à une école existante."""
+    creator_name = os.environ.get('CREATOR_USERNAME', 'createur')
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    is_c = bool(session.get('is_creator') or (session.get('username') or '').lower() == creator_name.lower())
+    if not is_c:
+        flash('Réservé au créateur.', 'danger')
+        return redirect(url_for('dashboard'))
+    tenants = Tenant.query.order_by(Tenant.school_name).all()
+    if request.method == 'POST':
+        tid = request.form.get('tenant_id', type=int)
+        full_name = (request.form.get('full_name') or '').strip()
+        username = (request.form.get('username') or '').strip().lower()
+        password = request.form.get('password') or ''
+        role = (request.form.get('role') or 'Enseignant').strip()
+        email = (request.form.get('email') or '').strip()
+        if not tid or not full_name or not username or not password:
+            flash('Champs obligatoires manquants.', 'danger')
+            return redirect(url_for('createur_ajout_utilisateur'))
+        if User.query.filter_by(username=username).first():
+            flash('Identifiant déjà pris.', 'danger')
+            return redirect(url_for('createur_ajout_utilisateur'))
+        u = User(
+            username=username,
+            password_hash=generate_password_hash(password),
+            password_plain=password,
+            full_name=full_name,
+            email=email,
+            role=role if role in ('Directeur', 'Enseignant') else 'Enseignant',
+            is_creator=False,
+            tenant_id=tid,
+        )
+        db.session.add(u)
+        db.session.commit()
+        flash(f'Utilisateur {username} créé pour l\'école sélectionnée.', 'success')
+        return redirect(url_for('createur_panel_alias'))
+    return render_template('createur_ajout_utilisateur.html', tenants=tenants)
+
+
 
 if __name__ == '__main__':
     debug = os.environ.get('FLASK_DEBUG', '0') == '1'

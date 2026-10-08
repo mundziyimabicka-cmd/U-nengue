@@ -1,0 +1,182 @@
+[
+  {
+    "id": 1,
+    "titre": "Salutations",
+    "niveau": "Débutant",
+    "contenu": "Dire bonjour, merci et au revoir en hébreu.",
+    "phrases": [
+      [
+        "Bonjour / Paix",
+        "Shalom / שלום"
+      ],
+      [
+        "Bon matin",
+        "Boker tov / בוקר טוב"
+      ],
+      [
+        "Merci",
+        "Toda / תודה"
+      ],
+      [
+        "Merci beaucoup",
+        "Toda raba / תודה רבה"
+      ],
+      [
+        "S'il vous plaît",
+        "Bevakasha / בבקשה"
+      ],
+      [
+        "Au revoir",
+        "Lehitraot / להתראות"
+      ]
+    ]
+  },
+  {
+    "id": 2,
+    "titre": "À l'école",
+    "niveau": "Débutant",
+    "contenu": "Vocabulaire de la classe en hébreu.",
+    "phrases": [
+      [
+        "École",
+        "Beit sefer / בית ספר"
+      ],
+      [
+        "Enseignant",
+        "More / מורה"
+      ],
+      [
+        "Élève",
+        "Talmid / תלמיד"
+      ],
+      [
+        "Livre",
+        "Sefer / ספר"
+      ],
+      [
+        "Lire",
+        "Likro / לקרוא"
+      ],
+      [
+        "Écrire",
+        "Likhtov / לכתוב"
+      ]
+    ]
+  },
+  {
+    "id": 3,
+    "titre": "Les nombres 1 à 10",
+    "niveau": "Débutant",
+    "contenu": "Compter en hébreu.",
+    "phrases": [
+      [
+        "Un",
+        "Ekhad / אחד"
+      ],
+      [
+        "Deux",
+        "Shnayim / שניים"
+      ],
+      [
+        "Trois",
+        "Shloshua / שלושה"
+      ],
+      [
+        "Quatre",
+        "Arba'a / ארבעה"
+      ],
+      [
+        "Cinq",
+        "Khamisha / חמישה"
+      ],
+      [
+        "Six",
+        "Shisha / שישה"
+      ],
+      [
+        "Sept",
+        "Shiv'a / שבעה"
+      ],
+      [
+        "Huit",
+        "Shmona / שמונה"
+      ],
+      [
+        "Neuf",
+        "Tish'a / תשעה"
+      ],
+      [
+        "Dix",
+        "Asara / עשרה"
+      ]
+    ]
+  },
+  {
+    "id": 4,
+    "titre": "La famille",
+    "niveau": "Débutant",
+    "contenu": "Membres de la famille.",
+    "phrases": [
+      [
+        "Père",
+        "Aba / אבא"
+      ],
+      [
+        "Mère",
+        "Ima / אמא"
+      ],
+      [
+        "Enfant (garçon)",
+        "Yeled / ילד"
+      ],
+      [
+        "Enfant (fille)",
+        "Yalda / ילדה"
+      ],
+      [
+        "Frère",
+        "Akh / אח"
+      ],
+      [
+        "Sœur",
+        "Akhot / אחות"
+      ]
+    ]
+  },
+  {
+    "id": 5,
+    "titre": "Expressions utiles",
+    "niveau": "Intermédiaire",
+    "contenu": "Phrases de la vie quotidienne.",
+    "phrases": [
+      [
+        "Oui",
+        "Ken / כן"
+      ],
+      [
+        "Non",
+        "Lo / לא"
+      ],
+      [
+        "Ça va",
+        "Beseder / בסדר"
+      ],
+      [
+        "Eau",
+        "Mayim / מים"
+      ],
+      [
+        "Maison",
+        "Bayit / בית"
+      ],
+      [
+        "Aujourd'hui",
+        "Hayom / היום"
+      ],
+      [
+        "Demain",
+        "Makhar / מחר"
+      ]
+    ]
+  }
+]

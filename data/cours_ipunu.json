@@ -1,0 +1,529 @@
+{
+  "meta": {
+    "titre": "Cours complet de Yipunu",
+    "source": "Parlons Yipunu — Mabik-ma-Kombil (L'Harmattan)",
+    "description": "Alphabet, orthographe, prononciation, conjugaisons, vocabulaire, exercices et évaluations inspirés du livre."
+  },
+  "alphabet": {
+    "lettres_simples": [
+      "A",
+      "B",
+      "D",
+      "E",
+      "F",
+      "G",
+      "I",
+      "J",
+      "K",
+      "L",
+      "M",
+      "N",
+      "O",
+      "P",
+      "R",
+      "S",
+      "T",
+      "U",
+      "V",
+      "W",
+      "Y"
+    ],
+    "lettres_combinees": [
+      "MB",
+      "MF",
+      "ND",
+      "NG",
+      "Ñ",
+      "NZ",
+      "TS"
+    ],
+    "voyelles": [
+      "A",
+      "E",
+      "I",
+      "O",
+      "U"
+    ],
+    "notes": [
+      "Le yipunu emploie l'alphabet latin.",
+      "Toutes les lettres écrites se prononcent.",
+      "On écrit comme on prononce.",
+      "Le u se lit toujours « ou ».",
+      "G est gutturale (comme en espagnol).",
+      "Ñ se lit « gn » (igname).",
+      "Syllabes ouvertes : bu-di-lu, i-ko-le…"
+    ]
+  },
+  "orthographe": [
+    {
+      "regle": "Écriture phonétique",
+      "detail": "Chaque lettre se prononce ; pas de lettre muette."
+    },
+    {
+      "regle": "U = OU",
+      "detail": "mutu se lit moutou ; yipunu se lit yipounou."
+    },
+    {
+      "regle": "Semi-voyelle W",
+      "detail": "Devant a, e, i : u devient souvent w (mwane = enfant)."
+    },
+    {
+      "regle": "Tons",
+      "detail": "Accents possibles pour distinguer le sens des mots."
+    },
+    {
+      "regle": "Classes nominales",
+      "detail": "Le préfixe change au pluriel : mutu/batu, ikole/bikole, disu/misu."
+    },
+    {
+      "regle": "Infinitif des verbes",
+      "detail": "Préfixe U : u vose (parler), u be (être), u ne (avoir). Dans le lexique, - remplace u."
+    },
+    {
+      "regle": "Emprunts",
+      "detail": "pitali (hôpital), dibuku (livre), fure (franc), magasi (magasin)."
+    }
+  ],
+  "conjugaisons": [
+    {
+      "verbe": "U be — être",
+      "temps": "Présent simple",
+      "formes": [
+        [
+          "Ni ji",
+          "je suis"
+        ],
+        [
+          "Wu ji",
+          "tu es"
+        ],
+        [
+          "A ji",
+          "il/elle est"
+        ],
+        [
+          "Tu ji",
+          "nous sommes"
+        ],
+        [
+          "Du ji",
+          "vous êtes"
+        ],
+        [
+          "Ba ji",
+          "ils/elles sont"
+        ]
+      ],
+      "negatif": [
+        [
+          "Nga tsi",
+          "je ne suis pas"
+        ],
+        [
+          "Wu ga tsi",
+          "tu n'es pas"
+        ],
+        [
+          "A ga tsi",
+          "il n'est pas"
+        ],
+        [
+          "Tu ga tsi",
+          "nous ne sommes pas"
+        ],
+        [
+          "Du ga tsi",
+          "vous n'êtes pas"
+        ],
+        [
+          "Ba ga tsi",
+          "ils ne sont pas"
+        ]
+      ]
+    },
+    {
+      "verbe": "U be — être",
+      "temps": "Passé composé",
+      "formes": [
+        [
+          "Ni ma be",
+          "j'ai été"
+        ],
+        [
+          "Wu ma be",
+          "tu as été"
+        ],
+        [
+          "A ma be",
+          "il/elle a été"
+        ],
+        [
+          "Tu ma be",
+          "nous avons été"
+        ],
+        [
+          "Du ma be",
+          "vous avez été"
+        ],
+        [
+          "Ba ma be",
+          "ils ont été"
+        ]
+      ],
+      "negatif": [
+        [
+          "Ni sa ma be",
+          "je n'ai pas été"
+        ],
+        [
+          "Wu sa ma be",
+          "tu n'as pas été"
+        ],
+        [
+          "A sa ma be",
+          "il n'a pas été"
+        ],
+        [
+          "Tu sa ma be",
+          "nous n'avons pas été"
+        ],
+        [
+          "Du sa ma be",
+          "vous n'avez pas été"
+        ],
+        [
+          "Ba sa ma be",
+          "ils n'ont pas été"
+        ]
+      ]
+    },
+    {
+      "verbe": "U be — être",
+      "temps": "Imparfait",
+      "formes": [
+        [
+          "Ni bétsi",
+          "j'étais"
+        ],
+        [
+          "Wu bétsi",
+          "tu étais"
+        ],
+        [
+          "A bétsi",
+          "il/elle était"
+        ],
+        [
+          "Tu bétsi",
+          "nous étions"
+        ],
+        [
+          "Du bétsi",
+          "vous étiez"
+        ],
+        [
+          "Ba bétsi",
+          "ils étaient"
+        ]
+      ],
+      "negatif": [
+        [
+          "Nga bétsi",
+          "je n'étais pas"
+        ],
+        [
+          "Wu ga bétsi",
+          "tu n'étais pas"
+        ],
+        [
+          "A ga bétsi",
+          "il n'était pas"
+        ],
+        [
+          "Tu ga bétsi",
+          "nous n'étions pas"
+        ],
+        [
+          "Du ga bétsi",
+          "vous n'étiez pas"
+        ],
+        [
+          "Ba ga bétsi",
+          "ils n'étaient pas"
+        ]
+      ]
+    },
+    {
+      "verbe": "U be — être",
+      "temps": "Futur",
+      "formes": [
+        [
+          "Ni u be",
+          "je serai"
+        ],
+        [
+          "Wu be",
+          "tu seras"
+        ],
+        [
+          "A be",
+          "il sera"
+        ],
+        [
+          "Tu be",
+          "nous serons"
+        ],
+        [
+          "Du be",
+          "vous serez"
+        ],
+        [
+          "Ba be",
+          "ils seront"
+        ]
+      ],
+      "negatif": [
+        [
+          "Ngo be",
+          "je ne serai pas"
+        ],
+        [
+          "Wu go be",
+          "tu ne seras pas"
+        ],
+        [
+          "A go be",
+          "il ne sera pas"
+        ],
+        [
+          "Tu go be",
+          "nous ne serons pas"
+        ],
+        [
+          "Du go be",
+          "vous ne serez pas"
+        ],
+        [
+          "Ba go be",
+          "ils ne seront pas"
+        ]
+      ]
+    },
+    {
+      "verbe": "U be — être",
+      "temps": "Impératif",
+      "formes": [
+        [
+          "Ba",
+          "sois"
+        ],
+        [
+          "Banu",
+          "soyez"
+        ],
+        [
+          "Tubianu",
+          "soyons"
+        ]
+      ],
+      "negatif": []
+    },
+    {
+      "verbe": "U ne — avoir",
+      "temps": "Présent simple",
+      "formes": [
+        [
+          "Ni ne",
+          "j'ai"
+        ],
+        [
+          "Wu ne",
+          "tu as"
+        ],
+        [
+          "A ne",
+          "il/elle a"
+        ],
+        [
+          "Tu ne",
+          "nous avons"
+        ],
+        [
+          "Du ne",
+          "vous avez"
+        ],
+        [
+          "Ba ne",
+          "ils ont"
+        ]
+      ],
+      "negatif": [
+        [
+          "Nga ne",
+          "je n'ai pas"
+        ],
+        [
+          "Wu ga ne",
+          "tu n'as pas"
+        ],
+        [
+          "A ga ne",
+          "il n'a pas"
+        ],
+        [
+          "Tu ga ne",
+          "nous n'avons pas"
+        ],
+        [
+          "Du ga ne",
+          "vous n'avez pas"
+        ],
+        [
+          "Ba ga ne",
+          "ils n'ont pas"
+        ]
+      ]
+    },
+    {
+      "verbe": "U vose — parler",
+      "temps": "Présent simple",
+      "formes": [
+        [
+          "Ni vosi",
+          "je parle"
+        ],
+        [
+          "Wu vosi",
+          "tu parles"
+        ],
+        [
+          "A vosi",
+          "il/elle parle"
+        ],
+        [
+          "Tu vosi",
+          "nous parlons"
+        ],
+        [
+          "Du vosi",
+          "vous parlez"
+        ],
+        [
+          "Ba vosi",
+          "ils parlent"
+        ]
+      ],
+      "negatif": [
+        [
+          "Nga vosi",
+          "je ne parle pas"
+        ],
+        [
+          "Wu ga vosi",
+          "tu ne parles pas"
+        ],
+        [
+          "A ga vosi",
+          "il ne parle pas"
+        ],
+        [
+          "Tu ga vosi",
+          "nous ne parlons pas"
+        ],
+        [
+          "Du ga vosi",
+          "vous ne parlez pas"
+        ],
+        [
+          "Ba ga vosi",
+          "ils ne parlent pas"
+        ]
+      ]
+    },
+    {
+      "verbe": "Expressions utiles (livre)",
+      "temps": "Présent",
+      "formes": [
+        [
+          "Ngo ikole",
+          "je vais à l'école"
+        ],
+        [
+          "A jo dimbu",
+          "il est au village"
+        ],
+        [
+          "Va ji batu",
+          "il y a des personnes"
+        ],
+        [
+          "Va ga mutu",
+          "il n'y a personne"
+        ],
+        [
+          "Ni vosi yipunu",
+          "je parle yipunu"
+        ],
+        [
+          "Tu vosianu yipunu",
+          "parlons yipunu"
+        ]
+      ],
+      "negatif": []
+    }
+  ],
+  "pronoms": {
+    "sujets_affirmatifs": [
+      [
+        "Ni",
+        "je"
+      ],
+      [
+        "Wu",
+        "tu"
+      ],
+      [
+        "A",
+        "il/elle"
+      ],
+      [
+        "Tu",
+        "nous"
+      ],
+      [
+        "Du",
+        "vous"
+      ],
+      [
+        "Ba",
+        "ils/elles"
+      ]
+    ],
+    "isolés": [
+      [
+        "Ménu",
+        "moi"
+      ],
+      [
+        "Ndéju",
+        "toi"
+      ],
+      [
+        "Jandi",
+        "lui"
+      ],
+      [
+        "Jétu",
+        "nous"
+      ],
+      [
+        "Jénu",
+        "vous"
+      ],
+      [
+        "Jogu",
+        "eux"
+      ]
+    ]
+  }
+}
