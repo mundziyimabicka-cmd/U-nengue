@@ -5,6 +5,8 @@ U nengue — Na buranghe ô dji icole di Gabu
 Système APC (Approche Par Compétences)
 """
 
+from werkzeug.middleware.proxy_fix import ProxyFix
+from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 from flask import (Flask, render_template, request, redirect, url_for,
                    flash, session, send_file, send_from_directory, jsonify)
 from flask_sqlalchemy import SQLAlchemy
@@ -18,9 +20,26 @@ import io
 import base64
 
 app = Flask(__name__)
+app.url_map.strict_slashes = False
+# Derrière Render / reverse proxy (HTTPS)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
+
 
 # Sécurité : clé secrète depuis variable d'environnement en production
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'u-nengue-changez-moi-en-production-2026')
+# Sessions stables (surtout sur Render HTTPS)
+_is_render = bool(os.environ.get('RENDER') or os.environ.get('RENDER_EXTERNAL_URL'))
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+# Cookie sécurisé uniquement en HTTPS (Render)
+app.config['SESSION_COOKIE_SECURE'] = _is_render or os.environ.get('SESSION_COOKIE_SECURE', '0') == '1'
+app.config['PREFERRED_URL_SCHEME'] = 'https' if _is_render else 'http'
+app.config['PERMANENT_SESSION_LIFETIME'] = int(os.environ.get('SESSION_LIFETIME', '604800'))  # 7 jours
+app.config['SESSION_REFRESH_EACH_REQUEST'] = True
+app.config['SESSION_COOKIE_NAME'] = 'unengue_session'
+app.config['SESSION_COOKIE_PATH'] = '/'
+app.config['SESSION_COOKIE_DOMAIN'] = None
+
 _BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 _DB_PATH = os.path.join(_BASE_DIR, 'kyaf_edu.db')
 _db_uri = os.environ.get('DATABASE_URL', '').strip()
@@ -33,12 +52,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = _db_uri or ('sqlite:///' + _DB_PATH)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(__file__), 'static', 'uploads')
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16 MB
-app.config['SESSION_COOKIE_HTTPONLY'] = True
-app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-app.config['SESSION_COOKIE_SECURE'] = os.environ.get('SESSION_COOKIE_SECURE', '0') == '1'
 app.config['PERMANENT_SESSION_LIFETIME'] = int(os.environ.get('SESSION_LIFETIME', '28800'))
-app.config['SESSION_REFRESH_EACH_REQUEST'] = True
-app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
 db = SQLAlchemy(app)
 
@@ -1056,13 +1070,75 @@ def migrate_schema():
     except Exception as e:
         print('migrate_schema:', e)
 
+
+def _auth_serializer():
+    return URLSafeTimedSerializer(app.config['SECRET_KEY'], salt='unengue-auth-v1')
+
+def _set_auth_cookie(response, user_id):
+    """Cookie d'auth de secours (7 jours) si la session Flask est perdue derrière le proxy Render."""
+    try:
+        token = _auth_serializer().dumps({'uid': int(user_id)})
+        secure = bool(app.config.get('SESSION_COOKIE_SECURE'))
+        response.set_cookie(
+            'unengue_auth', token,
+            max_age=7 * 24 * 3600,
+            httponly=True,
+            samesite='Lax',
+            secure=secure,
+            path='/',
+        )
+    except Exception as e:
+        print('set_auth_cookie', e)
+    return response
+
+def _clear_auth_cookie(response):
+    response.set_cookie('unengue_auth', '', max_age=0, path='/')
+    return response
+
+def _restore_session_from_cookie():
+    """Si session vide, tente de restaurer depuis le cookie unengue_auth."""
+    if session.get('user_id'):
+        return True
+    token = request.cookies.get('unengue_auth')
+    if not token:
+        return False
+    try:
+        data = _auth_serializer().loads(token, max_age=7 * 24 * 3600)
+        uid = data.get('uid')
+        user = User.query.get(uid) if uid else None
+        if not user:
+            return False
+        session.permanent = True
+        session['user_id'] = user.id
+        session['username'] = user.username
+        session['full_name'] = user.full_name or user.username
+        session['role'] = user.role
+        session['class_id'] = user.class_id
+        session['tenant_id'] = user.tenant_id
+        creator_name = os.environ.get('CREATOR_USERNAME', 'createur')
+        session['is_creator'] = bool(
+            getattr(user, 'is_creator', False)
+            or user.role == 'Createur'
+            or (user.username or '').lower() == creator_name.lower()
+        )
+        session.modified = True
+        return True
+    except (BadSignature, SignatureExpired, Exception) as e:
+        print('restore_session', type(e).__name__)
+        return False
+
+
 def login_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        if 'user_id' not in session:
+        if not session.get('user_id'):
+            _restore_session_from_cookie()
+        if not session.get('user_id'):
             flash('Veuillez vous connecter.', 'warning')
-            return redirect(url_for('login', next=request.path))
-        # Rafraîchir la session à chaque requête authentifiée
+            nxt = request.full_path if request.query_string else request.path
+            if nxt.endswith('?'):
+                nxt = nxt[:-1]
+            return redirect(url_for('login', next=nxt))
         session.modified = True
         return f(*args, **kwargs)
     return decorated
@@ -1070,7 +1146,9 @@ def login_required(f):
 def director_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        if 'user_id' not in session:
+        if not session.get('user_id'):
+            _restore_session_from_cookie()
+        if not session.get('user_id'):
             flash('Veuillez vous connecter.', 'warning')
             return redirect(url_for('login'))
         if session.get('role') not in ('Directeur', 'Createur') and not session.get('is_creator'):
@@ -1287,19 +1365,24 @@ def login():
             session.pop('view_tenant_id', None)
             flash(f'Bienvenue {session["full_name"]} ({user.role}) !', 'success')
             if session['is_creator']:
-                return redirect(url_for('createur_panel_alias'))
-            nxt = request.args.get('next') or request.form.get('next') or ''
-            if nxt.startswith('/') and not nxt.startswith('//'):
-                return redirect(nxt)
-            return redirect(url_for('dashboard'))
+                resp = redirect(url_for('createur_panel_alias'))
+            else:
+                nxt = request.args.get('next') or request.form.get('next') or ''
+                if nxt.startswith('/') and not nxt.startswith('//'):
+                    resp = redirect(nxt)
+                else:
+                    resp = redirect(url_for('dashboard'))
+            return _set_auth_cookie(resp, user.id)
         flash('Identifiant ou mot de passe incorrect. Essayez admin / admin123 ou createur / U-nengue-Createur-2026!', 'danger')
     return render_template('login.html')
 
 @app.route('/logout', methods=['GET', 'POST'])
 def logout():
     session.clear()
+    resp = redirect(url_for('login'))
+    resp = _clear_auth_cookie(resp)
     flash('Déconnexion réussie.', 'info')
-    return redirect(url_for('login'))
+    return resp
 
 
 @app.route('/inscription', methods=['GET', 'POST'])
@@ -1862,7 +1945,7 @@ def fiche_pdf(id):
     return send_file(buffer, mimetype='application/pdf', as_attachment=True, download_name=fname)
 
 
-@app.route('/eleves/<int:id>/supprimer')
+@app.route('/eleves/<int:id>/supprimer', methods=['GET', 'POST'])
 @director_required
 def supprimer_eleve(id):
     """Supprimer un élève (GET confirmé ou POST)."""
@@ -2119,7 +2202,7 @@ def modifier_classe(id):
         return redirect(url_for('classes'))
     return render_template('classe_form.html', room=room)
 
-@app.route('/classes/<int:id>/supprimer')
+@app.route('/classes/<int:id>/supprimer', methods=['GET', 'POST'])
 @director_required
 def supprimer_classe(id):
     room = scoped_query(ClassRoom).get_or_404(id)
@@ -2135,7 +2218,7 @@ def supprimer_classe(id):
     flash(f'Classe {name} et ses élèves supprimés.', 'success')
     return redirect(url_for('classes'))
 
-@app.route('/classes/<int:id>/vider')
+@app.route('/classes/<int:id>/vider', methods=['GET', 'POST'])
 @director_required
 def vider_classe(id):
     room = scoped_query(ClassRoom).get_or_404(id)
@@ -2152,7 +2235,7 @@ def vider_classe(id):
 
 # ==================== ÉVALUATIONS / NOTES ====================
 
-@app.route('/evaluations')
+@app.route('/evaluations', methods=['GET', 'HEAD'])
 @login_required
 def evaluations():
     class_id = request.args.get('class_id')
@@ -2266,7 +2349,7 @@ def compute_bulletin_data(student_id, palier):
         palier_mastery = 'NM'
     return data, palier_mastery
 
-@app.route('/bulletins')
+@app.route('/bulletins', methods=['GET', 'HEAD'])
 @login_required
 def bulletins():
     class_id = request.args.get('class_id')
@@ -2296,7 +2379,8 @@ def bulletin(student_id):
     return render_template('bulletin_detail.html', student=student, palier=palier,
                            data=data, palier_mastery=palier_mastery, settings=settings)
 
-@app.route('/bulletins/<int:student_id>/pdf')
+@app.route('/bulletins/<int:student_id>/pdf', methods=['GET', 'HEAD'])
+@login_required
 def bulletin_pdf(student_id):
     """Bulletin officiel 2 pages — note critère 0-4, note compétence = somme"""
     from reportlab.lib.pagesizes import A4, landscape
@@ -2652,7 +2736,7 @@ def compute_recap_reussite(class_id):
     return recap
 
 
-@app.route('/releves')
+@app.route('/releves', methods=['GET', 'HEAD'])
 @login_required
 def releves():
     """Liste des relevés de notes par classe + rapports automatiques"""
@@ -3071,7 +3155,7 @@ def ajouter_enseignant():
     flash(f'Enseignant {full_name} créé. Identifiant : {username}', 'success')
     return redirect(url_for('enseignants'))
 
-@app.route('/enseignants/<int:id>/supprimer')
+@app.route('/enseignants/<int:id>/supprimer', methods=['GET', 'POST'])
 @director_required
 def supprimer_enseignant(id):
     u = User.query.get_or_404(id)
@@ -3481,7 +3565,7 @@ def jours_feries():
     return render_template('jours_feries.html', holidays=holidays,
                            fixed=GABON_FIXED_HOLIDAYS)
 
-@app.route('/jours-feries/<int:id>/supprimer')
+@app.route('/jours-feries/<int:id>/supprimer', methods=['GET', 'POST'])
 @director_required
 def supprimer_ferie(id):
     h = scoped_query(Holiday).get_or_404(id)
@@ -5432,7 +5516,7 @@ def comptines_ajouter():
     flash('Ajouté à la banque de comptines & chants.', 'success')
     return redirect(url_for('comptines', niveau=s.niveau or None))
 
-@app.route('/comptines/<int:id>/supprimer')
+@app.route('/comptines/<int:id>/supprimer', methods=['GET', 'POST'])
 @login_required
 def comptines_supprimer(id):
     if session.get('role') != 'Directeur':
@@ -6524,7 +6608,7 @@ def actualite_ajouter():
         return redirect(url_for('actualites'))
     return render_template('actualite_form.html')
 
-@app.route('/actualites/<int:id>/supprimer')
+@app.route('/actualites/<int:id>/supprimer', methods=['GET', 'POST'])
 @director_required
 def actualite_supprimer(id):
     pub = scoped_query(Publication).get_or_404(id)
@@ -6712,7 +6796,7 @@ def manuels():
     books = scoped_query(Textbook).order_by(Textbook.discipline).all()
     return render_template('manuels.html', books=books)
 
-@app.route('/manuels/<int:id>/supprimer')
+@app.route('/manuels/<int:id>/supprimer', methods=['GET', 'POST'])
 @director_required
 def manuels_supprimer(id):
     b = scoped_query(Textbook).get_or_404(id)
